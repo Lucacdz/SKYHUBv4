@@ -662,7 +662,7 @@ local function expandHitboxes()
     for _, target in pairs(Players:GetPlayers()) do
         if target ~= player and target.Character and target.Character:FindFirstChild("HumanoidRootPart") then
             local hrp = target.Character.HumanoidRootPart
-            hrp.Size = Vector3.new(20, 20, 20)
+            hrp.Size = Vector3.new(10, 10, 10)
             hrp.Transparency = 0.7
             hrp.Material = Enum.Material.Neon
             hrp.Color = Color3.fromRGB(255, 0, 0)

@@ -220,9 +220,8 @@ local hideNamesButton = createStandardButton(SettingsTab, "Ẩn tên: OFF", 210)
 
 -- Thêm nút vào ModTab
 local noClipButton = createStandardButton(ModTab, "NoClip: OFF", 10)
-local speedHackButton = createStandardButton(ModTab, "Tăng tốc: OFF", 60)
 local infJumpButton = createStandardButton(ModTab, "Nhảy vô hạn: OFF", 110)
-local flyButton = createStandardButton(ModTab, "Bay: OFF", 160)
+local hitboxButton = createStandardButton(ModTab, "Hitbox: OFF", 160)
 
 -- Kích hoạt tab mặc định
 MainTab.Visible = true
@@ -630,26 +629,6 @@ noClipButton.MouseButton1Click:Connect(function()
     end
 end)
 
--- ⚙️ TĂNG TỐC DI CHUYỂN
-local isSpeedHack = false
-local originalWalkSpeed = 16
-
-speedHackButton.MouseButton1Click:Connect(function()
-    isSpeedHack = not isSpeedHack
-    speedHackButton.Text = "Tăng tốc: " .. (isSpeedHack and "ON" or "OFF")
-    
-    local humanoid = player.Character and player.Character:FindFirstChildOfClass("Humanoid")
-    if humanoid then
-        humanoid.WalkSpeed = isSpeedHack and 50 or originalWalkSpeed
-    end
-    
-    -- Xử lý khi respawn
-    player.CharacterAdded:Connect(function(char)
-        humanoid = char:WaitForChild("Humanoid")
-        humanoid.WalkSpeed = isSpeedHack and 50 or originalWalkSpeed
-    end)
-end)
-
 -- ⚙️ NHẢY VÔ HẠN
 local isInfJump = false
 local jumpConnection = nil
@@ -676,51 +655,31 @@ infJumpButton.MouseButton1Click:Connect(function()
     end
 end)
 
--- ⚙️ CHỨC NĂNG BAY
-local isFlying = false
-local flyConnection = nil
-local flySpeed = 50
+-- ⚙️ HITBOX
+local hitboxEnabled = false
 
-flyButton.MouseButton1Click:Connect(function()
-    isFlying = not isFlying
-    flyButton.Text = "Bay: " .. (isFlying and "ON" or "OFF")
-    
-    if isFlying then
-        local character = player.Character or player.CharacterAdded:Wait()
-        local humanoid = character:WaitForChild("Humanoid")
-        humanoid.PlatformStand = true
-        
-        flyConnection = RunService.Stepped:Connect(function()
-            if character and character:FindFirstChild("HumanoidRootPart") then
-                local root = character.HumanoidRootPart
-                local cam = workspace.CurrentCamera.CFrame
-                
-                local flyVector = Vector3.new()
-                if UserInputService:IsKeyDown(Enum.KeyCode.W) then
-                    flyVector = flyVector + (cam.LookVector * flySpeed)
-                end
-                if UserInputService:IsKeyDown(Enum.KeyCode.S) then
-                    flyVector = flyVector - (cam.LookVector * flySpeed)
-                end
-                if UserInputService:IsKeyDown(Enum.KeyCode.A) then
-                    flyVector = flyVector - (cam.RightVector * flySpeed)
-                end
-                if UserInputService:IsKeyDown(Enum.KeyCode.D) then
-                    flyVector = flyVector + (cam.RightVector * flySpeed)
-                end
-                
-                root.Velocity = flyVector
-                root.RotVelocity = Vector3.new()
-            end
-        end)
-    else
-        if flyConnection then
-            flyConnection:Disconnect()
-            flyConnection = nil
-        end
-        local character = player.Character
-        if character and character:FindFirstChild("Humanoid") then
-            character.Humanoid.PlatformStand = false
+local function expandHitboxes()
+    for _, target in pairs(Players:GetPlayers()) do
+        if target ~= player and target.Character and target.Character:FindFirstChild("HumanoidRootPart") then
+            local hrp = target.Character.HumanoidRootPart
+            hrp.Size = Vector3.new(10, 10, 10)
+            hrp.Transparency = 0.7
+            hrp.Material = Enum.Material.Neon
+            hrp.Color = Color3.fromRGB(255, 0, 0)
+            hrp.CanCollide = false
         end
     end
+end
+
+-- Liên tục cập nhật nếu bật
+RunService.RenderStepped:Connect(function()
+    if hitboxEnabled then
+        pcall(expandHitboxes)
+    end
+end)
+
+-- Khi nhấn nút hitbox
+hitboxButton.MouseButton1Click:Connect(function()
+    hitboxEnabled = not hitboxEnabled
+    hitboxButton.Text = "Hitbox: " .. (hitboxEnabled and "ON" or "OFF")
 end)

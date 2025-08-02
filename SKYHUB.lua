@@ -41,7 +41,7 @@ local keyTitle = Instance.new("TextLabel")
 keyTitle.Size = UDim2.new(1, -20, 0, 40)
 keyTitle.Position = UDim2.new(0, 10, 0, 10)
 keyTitle.BackgroundTransparency = 1
-keyTitle.Text = "🔑 DUNGSKY HUB - KEY SYSTEM 🔑"
+keyTitle.Text = "🔑 SKY HUB - KEY SYSTEM 🔑"
 keyTitle.Font = Enum.Font.GothamBlack
 keyTitle.TextSize = 18
 keyTitle.TextColor3 = Color3.fromRGB(0, 255, 128)
@@ -92,7 +92,7 @@ statusLabel.BackgroundTransparency = 1
 statusLabel.Font = Enum.Font.Gotham
 statusLabel.TextSize = 14
 statusLabel.TextColor3 = Color3.fromRGB(255, 50, 50)
-statusLabel.Text = "Vui lòng nhập key để sử dụng DungSky Hub"
+statusLabel.Text = "Vui lòng nhập key để sử dụng Sky Hub"
 statusLabel.Parent = keyGui
 
 -- Hàm kiểm tra key
@@ -151,6 +151,13 @@ submitButton.MouseButton1Click:Connect(function()
         statusLabel.Text = "✅ Key hợp lệ - Đang mở menu..."
         statusLabel.TextColor3 = Color3.fromRGB(0, 255, 0)
         
+        game.StarterGui:SetCore("SendNotification", {
+            Title = "SKY HUB",
+            Text = "Chào mừng "..player.Name.." đã trở lại!",
+            Duration = 5,
+            Icon = "rbxassetid://57254792"
+        })
+        
         wait(1)
         keyGui.Visible = false
         iconButton.Visible = true
@@ -162,6 +169,14 @@ end)
 
 -- Kiểm tra key khi khởi chạy
 if hasValidKey() then
+    -- Thông báo khi tự động đăng nhập bằng key đã lưu
+    game.StarterGui:SetCore("SendNotification", {
+        Title = "DUNGSKY HUB",
+        Text = "Chào mừng "..player.Name.." đã trở lại!",
+        Duration = 5,
+        Icon = "rbxassetid://57254792"
+    })
+    
     keyGui.Visible = false
     iconButton.Visible = true
 else
@@ -239,7 +254,7 @@ local titleLabel = Instance.new("TextLabel")
 titleLabel.Size = UDim2.new(1, -20, 0, 40)
 titleLabel.Position = UDim2.new(0, 10, 0, 10)
 titleLabel.BackgroundTransparency = 1
-titleLabel.Text = "⚡ DUNGSKY HUB ⚡"
+titleLabel.Text = "⚡ SKY HUB ⚡"
 titleLabel.Font = Enum.Font.GothamBlack
 titleLabel.TextSize = 22
 titleLabel.TextColor3 = Color3.fromRGB(0, 255, 128)
@@ -843,7 +858,7 @@ local function expandHitboxes()
     for _, target in pairs(Players:GetPlayers()) do
         if target ~= player and target.Character and target.Character:FindFirstChild("HumanoidRootPart") then
             local hrp = target.Character.HumanoidRootPart
-            hrp.Size = Vector3.new(20, 20, 20)
+            hrp.Size = Vector3.new(10, 10, 10)
             hrp.Transparency = 0.7
             hrp.Material = Enum.Material.Neon
             hrp.Color = Color3.fromRGB(255, 0, 0)
@@ -913,6 +928,8 @@ task.spawn(function()
 		local version = game.JobId or "Không rõ"
 
 		infoText.Text = string.format([[
+💫 SKYHUB BY DUNGSKY
+✨ Phiên Bản v2.0
 👥 Người chơi: %d
 🕒 Server đã chạy: %d phút %02d giây
 🛡️ Loại server: %s

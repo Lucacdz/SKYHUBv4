@@ -80,7 +80,7 @@ local function createKeySystemGUI()
     inputStroke.Color = Color3.fromRGB(0, 255, 128)
     inputStroke.Thickness = 1
 
-    local submitBtn = Instance.new("TextButton")
+    local submitBtn = Instance.new("Nhập Key Ở Đây")
     submitBtn.Size = UDim2.new(1, -40, 0, 40)
     submitBtn.Position = UDim2.new(0, 20, 0, 130)
     submitBtn.Text = "XÁC NHẬN"
@@ -114,19 +114,104 @@ local function createKeySystemGUI()
         TweenService:Create(submitBtn, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(0, 150, 80)}):Play()
     end)
 
-    -- Xử lý sự kiện nhấn nút
-    submitBtn.MouseButton1Click:Connect(function()
-        local enteredKey = inputBox.Text
-        if enteredKey == KeySystem.Key then
-            KeySystem.Whitelisted[player.UserId] = true
-            keyGui.Enabled = false -- Ẩn GUI key thay vì xóa
-            -- Kích hoạt GUI chính
-            screenGui.Enabled = true
-        else
-            inputBox.Text = ""
-            inputBox.PlaceholderText = "Key sai! Vui lòng thử lại..."
+-- Thêm hàm tạo thông báo
+local function createNotification(title, message, color)
+    local notifyGui = Instance.new("ScreenGui")
+    notifyGui.Name = "Notification"
+    notifyGui.Parent = playerGui
+    notifyGui.ResetOnSpawn = false
+
+    local mainFrame = Instance.new("Frame")
+    mainFrame.Size = UDim2.new(0, 300, 0, 150)
+    mainFrame.Position = UDim2.new(0.5, -150, 0.7, -75)
+    mainFrame.AnchorPoint = Vector2.new(0.5, 0.5)
+    mainFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+    mainFrame.BorderSizePixel = 0
+    mainFrame.Parent = notifyGui
+
+    local corner = Instance.new("UICorner", mainFrame)
+    corner.CornerRadius = UDim.new(0, 12)
+
+    local stroke = Instance.new("UIStroke", mainFrame)
+    stroke.Color = color or Color3.fromRGB(0, 255, 128)
+    stroke.Thickness = 3
+
+    local titleLabel = Instance.new("TextLabel")
+    titleLabel.Size = UDim2.new(1, -20, 0, 40)
+    titleLabel.Position = UDim2.new(0, 10, 0, 10)
+    titleLabel.BackgroundTransparency = 1
+    titleLabel.Text = title
+    titleLabel.Font = Enum.Font.GothamBlack
+    titleLabel.TextSize = 20
+    titleLabel.TextColor3 = color or Color3.fromRGB(0, 255, 128)
+    titleLabel.Parent = mainFrame
+
+    local messageLabel = Instance.new("TextLabel")
+    messageLabel.Size = UDim2.new(1, -20, 0, 60)
+    messageLabel.Position = UDim2.new(0, 10, 0, 50)
+    messageLabel.BackgroundTransparency = 1
+    messageLabel.Text = message
+    messageLabel.Font = Enum.Font.Gotham
+    messageLabel.TextSize = 16
+    messageLabel.TextColor3 = Color3.new(1, 1, 1)
+    messageLabel.TextWrapped = true
+    messageLabel.Parent = mainFrame
+
+    local closeBtn = Instance.new("TextButton")
+    closeBtn.Size = UDim2.new(0.6, 0, 0, 30)
+    closeBtn.Position = UDim2.new(0.2, 0, 0, 110)
+    closeBtn.Text = "ĐÓNG"
+    closeBtn.Font = Enum.Font.GothamBold
+    closeBtn.TextSize = 16
+    closeBtn.TextColor3 = Color3.new(1, 1, 1)
+    closeBtn.BackgroundColor3 = Color3.fromRGB(0, 100, 50)
+    closeBtn.Parent = mainFrame
+
+    local btnCorner = Instance.new("UICorner", closeBtn)
+    btnCorner.CornerRadius = UDim.new(0, 8)
+
+    closeBtn.MouseButton1Click:Connect(function()
+        notifyGui:Destroy()
+    end)
+
+    -- Tự động đóng sau 5 giây
+    delay(5, function()
+        if notifyGui and notifyGui.Parent then
+            notifyGui:Destroy()
         end
     end)
+end
+
+-- Sửa lại sự kiện nhập key
+submitBtn.MouseButton1Click:Connect(function()
+    local enteredKey = inputBox.Text
+    if enteredKey == KeySystem.Key then
+        KeySystem.Whitelisted[player.UserId] = true
+        keyGui.Enabled = false
+        
+        -- Hiển thị thông báo chào mừng
+        createNotification(
+            "THÀNH CÔNG", 
+            "Chào mừng "..player.Name.." đã kích hoạt SKY HUB!\nKey của bạn: "..enteredKey,
+            Color3.fromRGB(0, 255, 128)
+        
+        -- Mở menu chính
+        screenGui.Enabled = true
+        mainFrame.Visible = true
+        mainFrame.Size = UDim2.new(0, 300, 0, 200)
+        
+        TweenService:Create(mainFrame, TweenInfo.new(0.3), {
+            Size = UDim2.new(0, 300, 0, 200)
+        }):Play()
+    else
+        inputBox.Text = ""
+        inputBox.PlaceholderText = "Key sai! Vui lòng thử lại..."
+        createNotification(
+            "THẤT BẠI", 
+            "Key bạn nhập không chính xác!\nVui lòng thử lại.",
+            Color3.fromRGB(255, 50, 50))
+    end
+end)
 
     -- Thêm nút đóng
     local closeButton = Instance.new("TextButton")

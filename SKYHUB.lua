@@ -741,3 +741,42 @@ task.spawn(function()
         wait(1)
     end
 end)
+
+local draggingInfo = false
+local dragInputInfo, dragStartInfo, startPosInfo
+
+local function updateInfoInput(input)
+	local delta = input.Position - dragStartInfo
+	infoGui.Position = UDim2.new(
+		startPosInfo.X.Scale,
+		startPosInfo.X.Offset + delta.X,
+		startPosInfo.Y.Scale,
+		startPosInfo.Y.Offset + delta.Y
+	)
+end
+
+infoGui.InputBegan:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.MouseButton1 then
+		draggingInfo = true
+		dragStartInfo = input.Position
+		startPosInfo = infoGui.Position
+
+		input.Changed:Connect(function()
+			if input.UserInputState == Enum.UserInputState.End then
+				draggingInfo = false
+			end
+		end)
+	end
+end)
+
+infoGui.InputChanged:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.MouseMovement and draggingInfo then
+		dragInputInfo = input
+	end
+end)
+
+UserInputService.InputChanged:Connect(function(input)
+	if input == dragInputInfo and draggingInfo then
+		updateInfoInput(input)
+	end
+end)

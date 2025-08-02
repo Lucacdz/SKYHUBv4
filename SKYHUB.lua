@@ -217,6 +217,7 @@ local afkButton = createStandardButton(SettingsTab, "Bật AFK", 10)
 local fixLagButton = createStandardButton(SettingsTab, "Fix Lag: OFF", 60)
 local espButton = createStandardButton(SettingsTab, "ESP: OFF", 110)
 local hideNamesButton = createStandardButton(SettingsTab, "Ẩn tên: OFF", 210)
+local infoButton = createStandardButton(SettingsTab, "Thông Tin Server", 210)
 
 -- Thêm nút vào ModTab
 local noClipButton = createStandardButton(ModTab, "NoClip: OFF", 10)
@@ -682,4 +683,61 @@ end)
 hitboxButton.MouseButton1Click:Connect(function()
     hitboxEnabled = not hitboxEnabled
     hitboxButton.Text = "Hitbox: " .. (hitboxEnabled and "ON" or "OFF")
+end)
+
+local infoGui = Instance.new("Frame")
+infoGui.Size = UDim2.new(0, 260, 0, 130)
+infoGui.Position = UDim2.new(0.5, -130, 0.5, -65)
+infoGui.AnchorPoint = Vector2.new(0.5, 0.5)
+infoGui.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+infoGui.Visible = false
+infoGui.Parent = screenGui
+
+local infoCorner = Instance.new("UICorner", infoGui)
+infoCorner.CornerRadius = UDim.new(0, 10)
+
+local infoStroke = Instance.new("UIStroke", infoGui)
+infoStroke.Color = Color3.fromRGB(0, 255, 128)
+infoStroke.Thickness = 2
+
+local infoText = Instance.new("TextLabel")
+infoText.Size = UDim2.new(1, -20, 1, -20)
+infoText.Position = UDim2.new(0, 10, 0, 10)
+infoText.BackgroundTransparency = 1
+infoText.TextColor3 = Color3.new(1, 1, 1)
+infoText.Font = Enum.Font.Gotham
+infoText.TextSize = 14
+infoText.TextXAlignment = Enum.TextXAlignment.Left
+infoText.TextYAlignment = Enum.TextYAlignment.Top
+infoText.TextWrapped = true
+infoText.Text = "Đang tải thông tin..."
+infoText.Parent = infoGui
+
+local infoVisible = false
+
+infoButton.MouseButton1Click:Connect(function()
+    infoVisible = not infoVisible
+    infoGui.Visible = infoVisible
+end)
+
+local startTime = tick()
+
+task.spawn(function()
+    while true do
+        local playerCount = #Players:GetPlayers()
+        local vipServer = game.VIPServerId ~= "" and game.VIPServerOwnerId ~= 0
+        local elapsed = math.floor(tick() - startTime)
+        local minutes = math.floor(elapsed / 60)
+        local seconds = elapsed % 60
+        local version = game.JobId or "Không rõ"
+
+        infoText.Text = string.format([[
+👥 Người chơi: %d
+🕒 Server đã chạy: %d phút %02d giây
+🛡️ Loại server: %s
+🧩 Server JobId: %s
+]], playerCount, minutes, seconds, vipServer and "VIP" or "Thường", version)
+
+        wait(1)
+    end
 end)

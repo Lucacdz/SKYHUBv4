@@ -8,22 +8,30 @@ local player = Players.LocalPlayer
 local playerGui = player:WaitForChild("PlayerGui")
 
 --[[
-    HỆ THỐNG KEY SYSTEM
+    HỆ THỐNG KEY SYSTEM (BẢN CẬP NHẬT)
 ]]
 local KeySystem = {
     Enabled = true, -- Bật/tắt hệ thống key
     Key = "DUNGSKY", -- Key mặc định
     Whitelisted = {}, -- Danh sách người dùng được phép
     KeyFrame = nil, -- Frame nhập key
-    KeyInput = nil -- Ô nhập key
+    KeyInput = nil, -- Ô nhập key
+    KeyGUI = nil -- ScreenGui chứa key system
 }
 
 -- Tạo GUI cho hệ thống key
 local function createKeySystemGUI()
+    -- Kiểm tra nếu đã có GUI key tồn tại thì chỉ cần hiển thị lại
+    if KeySystem.KeyGUI and KeySystem.KeyGUI.Parent then
+        KeySystem.KeyGUI.Enabled = true
+        return
+    end
+
     local keyGui = Instance.new("ScreenGui")
     keyGui.Name = "KeySystemGUI"
     keyGui.Parent = playerGui
     keyGui.ResetOnSpawn = false
+    KeySystem.KeyGUI = keyGui
 
     local mainFrame = Instance.new("Frame")
     mainFrame.Size = UDim2.new(0, 300, 0, 200)
@@ -33,6 +41,7 @@ local function createKeySystemGUI()
     mainFrame.BorderSizePixel = 0
     mainFrame.ClipsDescendants = true
     mainFrame.Parent = keyGui
+    KeySystem.KeyFrame = mainFrame
 
     local corner = Instance.new("UICorner", mainFrame)
     corner.CornerRadius = UDim.new(0, 12)
@@ -62,6 +71,7 @@ local function createKeySystemGUI()
     inputBox.TextColor3 = Color3.new(1, 1, 1)
     inputBox.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
     inputBox.Parent = mainFrame
+    KeySystem.KeyInput = inputBox
 
     local inputCorner = Instance.new("UICorner", inputBox)
     inputCorner.CornerRadius = UDim.new(0, 8)
@@ -109,7 +119,7 @@ local function createKeySystemGUI()
         local enteredKey = inputBox.Text
         if enteredKey == KeySystem.Key then
             KeySystem.Whitelisted[player.UserId] = true
-            keyGui:Destroy()
+            keyGui.Enabled = false -- Ẩn GUI key thay vì xóa
             -- Kích hoạt GUI chính
             screenGui.Enabled = true
         else
@@ -118,11 +128,29 @@ local function createKeySystemGUI()
         end
     end)
 
-    KeySystem.KeyFrame = keyGui
-    KeySystem.KeyInput = inputBox
+    -- Thêm nút đóng
+    local closeButton = Instance.new("TextButton")
+    closeButton.Name = "CloseButton"
+    closeButton.Size = UDim2.new(0, 30, 0, 30)
+    closeButton.Position = UDim2.new(1, -35, 0, 5)
+    closeButton.Text = "×"
+    closeButton.Font = Enum.Font.GothamBold
+    closeButton.TextSize = 24
+    closeButton.TextColor3 = Color3.fromRGB(255, 80, 80)
+    closeButton.BackgroundTransparency = 1
+    closeButton.Parent = mainFrame
 
-    -- Tắt GUI chính nếu chưa nhập key
-    screenGui.Enabled = false
+    closeButton.MouseEnter:Connect(function()
+        closeButton.TextColor3 = Color3.fromRGB(255, 120, 120)
+    end)
+
+    closeButton.MouseLeave:Connect(function()
+        closeButton.TextColor3 = Color3.fromRGB(255, 80, 80)
+    end)
+
+    closeButton.MouseButton1Click:Connect(function()
+        keyGui.Enabled = false
+    end)
 end
 
 -- Kiểm tra key khi script khởi chạy
@@ -131,7 +159,26 @@ if KeySystem.Enabled then
 else
     -- Nếu không bật key system thì cho phép sử dụng luôn
     KeySystem.Whitelisted[player.UserId] = true
+    screenGui.Enabled = true
 end
+
+-- Sửa lại phần toggle menu icon
+iconButton.MouseButton1Click:Connect(function()
+    -- Kiểm tra key system trước khi hiển thị menu
+    if KeySystem.Enabled and not KeySystem.Whitelisted[player.UserId] then
+        -- Hiển thị lại GUI key nếu chưa nhập
+        KeySystem.KeyGUI.Enabled = true
+        return
+    end
+    
+    mainFrame.Visible = not mainFrame.Visible
+    if mainFrame.Visible then
+        mainFrame.Size = UDim2.new(0, 300, 0, 0)
+        TweenService:Create(mainFrame, TweenInfo.new(0.3), {
+            Size = UDim2.new(0, 300, 0, 200)
+        }):Play()
+    end
+end)
 
 --[[
     PHẦN GUI CHÍNH

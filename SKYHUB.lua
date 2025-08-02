@@ -193,7 +193,7 @@ submitBtn.MouseButton1Click:Connect(function()
         createNotification(
             "THÀNH CÔNG", 
             "Chào mừng "..player.Name.." đã kích hoạt SKY HUB!\nKey của bạn: "..enteredKey,
-            Color3.fromRGB(0, 255, 128)
+            Color3.fromRGB(0, 255, 128))
         
         -- Mở menu chính
         screenGui.Enabled = true

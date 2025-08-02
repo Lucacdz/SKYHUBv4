@@ -2,15 +2,146 @@ local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
+local HttpService = game:GetService("HttpService")
 
 local player = Players.LocalPlayer
 local playerGui = player:WaitForChild("PlayerGui")
 
+--[[
+    HỆ THỐNG KEY SYSTEM
+]]
+local KeySystem = {
+    Enabled = true, -- Bật/tắt hệ thống key
+    Key = "DUNGSKY", -- Key mặc định
+    Whitelisted = {}, -- Danh sách người dùng được phép
+    KeyFrame = nil, -- Frame nhập key
+    KeyInput = nil -- Ô nhập key
+}
+
+-- Tạo GUI cho hệ thống key
+local function createKeySystemGUI()
+    local keyGui = Instance.new("ScreenGui")
+    keyGui.Name = "KeySystemGUI"
+    keyGui.Parent = playerGui
+    keyGui.ResetOnSpawn = false
+
+    local mainFrame = Instance.new("Frame")
+    mainFrame.Size = UDim2.new(0, 300, 0, 200)
+    mainFrame.Position = UDim2.new(0.5, -150, 0.5, -100)
+    mainFrame.AnchorPoint = Vector2.new(0.5, 0.5)
+    mainFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
+    mainFrame.BorderSizePixel = 0
+    mainFrame.ClipsDescendants = true
+    mainFrame.Parent = keyGui
+
+    local corner = Instance.new("UICorner", mainFrame)
+    corner.CornerRadius = UDim.new(0, 12)
+
+    local stroke = Instance.new("UIStroke", mainFrame)
+    stroke.Color = Color3.fromRGB(0, 255, 128)
+    stroke.Thickness = 3
+
+    local title = Instance.new("TextLabel")
+    title.Size = UDim2.new(1, -20, 0, 40)
+    title.Position = UDim2.new(0, 10, 0, 10)
+    title.BackgroundTransparency = 1
+    title.Text = "🔑 SKYHUB KEY SYSTEM"
+    title.Font = Enum.Font.GothamBlack
+    title.TextSize = 20
+    title.TextColor3 = Color3.fromRGB(0, 255, 128)
+    title.TextStrokeTransparency = 0
+    title.TextStrokeColor3 = Color3.fromRGB(0, 100, 50)
+    title.Parent = mainFrame
+
+    local inputBox = Instance.new("TextBox")
+    inputBox.Size = UDim2.new(1, -40, 0, 40)
+    inputBox.Position = UDim2.new(0, 20, 0, 70)
+    inputBox.PlaceholderText = "Nhập key tại đây..."
+    inputBox.Font = Enum.Font.Gotham
+    inputBox.TextSize = 16
+    inputBox.TextColor3 = Color3.new(1, 1, 1)
+    inputBox.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+    inputBox.Parent = mainFrame
+
+    local inputCorner = Instance.new("UICorner", inputBox)
+    inputCorner.CornerRadius = UDim.new(0, 8)
+
+    local inputStroke = Instance.new("UIStroke", inputBox)
+    inputStroke.Color = Color3.fromRGB(0, 255, 128)
+    inputStroke.Thickness = 1
+
+    local submitBtn = Instance.new("TextButton")
+    submitBtn.Size = UDim2.new(1, -40, 0, 40)
+    submitBtn.Position = UDim2.new(0, 20, 0, 130)
+    submitBtn.Text = "XÁC NHẬN"
+    submitBtn.Font = Enum.Font.GothamBold
+    submitBtn.TextSize = 16
+    submitBtn.TextColor3 = Color3.new(1, 1, 1)
+    submitBtn.BackgroundColor3 = Color3.fromRGB(0, 100, 50)
+    submitBtn.Parent = mainFrame
+
+    local btnCorner = Instance.new("UICorner", submitBtn)
+    btnCorner.CornerRadius = UDim.new(0, 8)
+
+    local btnStroke = Instance.new("UIStroke", submitBtn)
+    btnStroke.Color = Color3.fromRGB(0, 255, 128)
+    btnStroke.Thickness = 1
+
+    -- Hiệu ứng nút
+    submitBtn.MouseEnter:Connect(function()
+        TweenService:Create(submitBtn, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(0, 150, 80)}):Play()
+    end)
+    
+    submitBtn.MouseLeave:Connect(function()
+        TweenService:Create(submitBtn, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(0, 100, 50)}):Play()
+    end)
+    
+    submitBtn.MouseButton1Down:Connect(function()
+        TweenService:Create(submitBtn, TweenInfo.new(0.1), {BackgroundColor3 = Color3.fromRGB(0, 170, 255)}):Play()
+    end)
+    
+    submitBtn.MouseButton1Up:Connect(function()
+        TweenService:Create(submitBtn, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(0, 150, 80)}):Play()
+    end)
+
+    -- Xử lý sự kiện nhấn nút
+    submitBtn.MouseButton1Click:Connect(function()
+        local enteredKey = inputBox.Text
+        if enteredKey == KeySystem.Key then
+            KeySystem.Whitelisted[player.UserId] = true
+            keyGui:Destroy()
+            -- Kích hoạt GUI chính
+            screenGui.Enabled = true
+        else
+            inputBox.Text = ""
+            inputBox.PlaceholderText = "Key sai! Vui lòng thử lại..."
+        end
+    end)
+
+    KeySystem.KeyFrame = keyGui
+    KeySystem.KeyInput = inputBox
+
+    -- Tắt GUI chính nếu chưa nhập key
+    screenGui.Enabled = false
+end
+
+-- Kiểm tra key khi script khởi chạy
+if KeySystem.Enabled then
+    createKeySystemGUI()
+else
+    -- Nếu không bật key system thì cho phép sử dụng luôn
+    KeySystem.Whitelisted[player.UserId] = true
+end
+
+--[[
+    PHẦN GUI CHÍNH
+]]
 -- GUI - Neon Xanh
 local screenGui = Instance.new("ScreenGui")
 screenGui.Name = "DungSkyMenu"
 screenGui.Parent = playerGui
 screenGui.ResetOnSpawn = false
+screenGui.Enabled = false -- Tắt ban đầu cho đến khi nhập key
 
 -- Icon (TextButton)
 local iconButton = Instance.new("TextButton")
@@ -44,6 +175,30 @@ mainFrame.BorderSizePixel = 0
 mainFrame.Visible = false
 mainFrame.ClipsDescendants = true
 mainFrame.Parent = screenGui
+
+-- Thêm nút đóng ở góc phải trên
+local closeButton = Instance.new("TextButton")
+closeButton.Name = "CloseButton"
+closeButton.Size = UDim2.new(0, 30, 0, 30)
+closeButton.Position = UDim2.new(1, -35, 0, 5)
+closeButton.Text = "×"
+closeButton.Font = Enum.Font.GothamBold
+closeButton.TextSize = 24
+closeButton.TextColor3 = Color3.fromRGB(255, 80, 80)
+closeButton.BackgroundTransparency = 1
+closeButton.Parent = mainFrame
+
+closeButton.MouseEnter:Connect(function()
+    closeButton.TextColor3 = Color3.fromRGB(255, 120, 120)
+end)
+
+closeButton.MouseLeave:Connect(function()
+    closeButton.TextColor3 = Color3.fromRGB(255, 80, 80)
+end)
+
+closeButton.MouseButton1Click:Connect(function()
+    mainFrame.Visible = false
+end)
 
 -- Cho phép di chuyển mainFrame
 local dragging = false
@@ -97,7 +252,7 @@ local titleLabel = Instance.new("TextLabel")
 titleLabel.Size = UDim2.new(1, -20, 0, 40)
 titleLabel.Position = UDim2.new(0, 10, 0, 10)
 titleLabel.BackgroundTransparency = 1
-titleLabel.Text = "⚡ DUNGSKY HUB ⚡"
+titleLabel.Text = "⚡ SKY HUB ⚡"
 titleLabel.Font = Enum.Font.GothamBlack
 titleLabel.TextSize = 22
 titleLabel.TextColor3 = Color3.fromRGB(0, 255, 128)
@@ -260,6 +415,12 @@ end)
 
 -- Toggle hiển thị menu với hiệu ứng
 iconButton.MouseButton1Click:Connect(function()
+    -- Kiểm tra key system trước khi hiển thị menu
+    if KeySystem.Enabled and not KeySystem.Whitelisted[player.UserId] then
+        createKeySystemGUI()
+        return
+    end
+    
     mainFrame.Visible = not mainFrame.Visible
     if mainFrame.Visible then
         mainFrame.Size = UDim2.new(0, 300, 0, 0)
@@ -663,7 +824,7 @@ local function expandHitboxes()
     for _, target in pairs(Players:GetPlayers()) do
         if target ~= player and target.Character and target.Character:FindFirstChild("HumanoidRootPart") then
             local hrp = target.Character.HumanoidRootPart
-            hrp.Size = Vector3.new(10, 10, 10)
+            hrp.Size = Vector3.new(20, 20, 20)
             hrp.Transparency = 0.7
             hrp.Material = Enum.Material.Neon
             hrp.Color = Color3.fromRGB(255, 0, 0)
@@ -685,6 +846,7 @@ hitboxButton.MouseButton1Click:Connect(function()
     hitboxButton.Text = "Hitbox: " .. (hitboxEnabled and "ON" or "OFF")
 end)
 
+-- ⚙️ INFOSERVER
 local infoGui = Instance.new("Frame")
 infoGui.Size = UDim2.new(0, 260, 0, 130)
 infoGui.Position = UDim2.new(0.5, -130, 0.5, -65)
@@ -712,6 +874,29 @@ infoText.TextYAlignment = Enum.TextYAlignment.Top
 infoText.TextWrapped = true
 infoText.Text = "Đang tải thông tin..."
 infoText.Parent = infoGui
+
+local infoCloseButton = Instance.new("TextButton")
+infoCloseButton.Name = "CloseButton"
+infoCloseButton.Size = UDim2.new(0, 30, 0, 30)
+infoCloseButton.Position = UDim2.new(1, -35, 0, 5)
+infoCloseButton.Text = "×"
+infoCloseButton.Font = Enum.Font.GothamBold
+infoCloseButton.TextSize = 24
+infoCloseButton.TextColor3 = Color3.fromRGB(255, 80, 80)
+infoCloseButton.BackgroundTransparency = 1
+infoCloseButton.Parent = infoGui
+
+infoCloseButton.MouseEnter:Connect(function()
+    infoCloseButton.TextColor3 = Color3.fromRGB(255, 120, 120)
+end)
+
+infoCloseButton.MouseLeave:Connect(function()
+    infoCloseButton.TextColor3 = Color3.fromRGB(255, 80, 80)
+end)
+
+infoCloseButton.MouseButton1Click:Connect(function()
+    infoGui.Visible = false
+end)
 
 local infoVisible = false
 
@@ -746,37 +931,37 @@ local draggingInfo = false
 local dragInputInfo, dragStartInfo, startPosInfo
 
 local function updateInfoInput(input)
-	local delta = input.Position - dragStartInfo
-	infoGui.Position = UDim2.new(
-		startPosInfo.X.Scale,
-		startPosInfo.X.Offset + delta.X,
-		startPosInfo.Y.Scale,
-		startPosInfo.Y.Offset + delta.Y
-	)
+    local delta = input.Position - dragStartInfo
+    infoGui.Position = UDim2.new(
+        startPosInfo.X.Scale,
+        startPosInfo.X.Offset + delta.X,
+        startPosInfo.Y.Scale,
+        startPosInfo.Y.Offset + delta.Y
+    )
 end
 
 infoGui.InputBegan:Connect(function(input)
-	if input.UserInputType == Enum.UserInputType.MouseButton1 then
-		draggingInfo = true
-		dragStartInfo = input.Position
-		startPosInfo = infoGui.Position
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        draggingInfo = true
+        dragStartInfo = input.Position
+        startPosInfo = infoGui.Position
 
-		input.Changed:Connect(function()
-			if input.UserInputState == Enum.UserInputState.End then
-				draggingInfo = false
-			end
-		end)
-	end
+        input.Changed:Connect(function()
+            if input.UserInputState == Enum.UserInputState.End then
+                draggingInfo = false
+            end
+        end)
+    end
 end)
 
 infoGui.InputChanged:Connect(function(input)
-	if input.UserInputType == Enum.UserInputType.MouseMovement and draggingInfo then
-		dragInputInfo = input
-	end
+    if input.UserInputType == Enum.UserInputType.MouseMovement and draggingInfo then
+        dragInputInfo = input
+    end
 end)
 
 UserInputService.InputChanged:Connect(function(input)
-	if input == dragInputInfo and draggingInfo then
-		updateInfoInput(input)
-	end
+    if input == dragInputInfo and draggingInfo then
+        updateInfoInput(input)
+    end
 end)

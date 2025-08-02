@@ -229,20 +229,33 @@ MainTab.Visible = true
 settingsTabButton.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
 mainTabButton.BackgroundColor3 = Color3.fromRGB(0, 100, 50)
 
--- Xử lý chuyển tab
-local function switchTab(tabToShow, tabToHide, activeButton, inactiveButton)
+-- Sửa lại hàm switchTab
+local function switchTab(tabToShow)
+    -- Ẩn tất cả các tab
+    MainTab.Visible = false
+    SettingsTab.Visible = false
+    ModTab.Visible = false
+    
+    -- Hiển thị tab được chọn
     tabToShow.Visible = true
-    tabToHide.Visible = false
-    activeButton.BackgroundColor3 = Color3.fromRGB(0, 100, 50)
-    inactiveButton.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+    
+    -- Cập nhật màu nút tab
+    mainTabButton.BackgroundColor3 = tabToShow == MainTab and Color3.fromRGB(0, 100, 50) or Color3.fromRGB(20, 20, 20)
+    settingsTabButton.BackgroundColor3 = tabToShow == SettingsTab and Color3.fromRGB(0, 100, 50) or Color3.fromRGB(20, 20, 20)
+    modTabButton.BackgroundColor3 = tabToShow == ModTab and Color3.fromRGB(0, 100, 50) or Color3.fromRGB(20, 20, 20)
 end
 
+-- Cập nhật sự kiện click cho các tab
 mainTabButton.MouseButton1Click:Connect(function()
-    switchTab(MainTab, SettingsTab, mainTabButton, settingsTabButton)
+    switchTab(MainTab)
 end)
 
 settingsTabButton.MouseButton1Click:Connect(function()
-    switchTab(SettingsTab, MainTab, settingsTabButton, mainTabButton)
+    switchTab(SettingsTab)
+end)
+
+modTabButton.MouseButton1Click:Connect(function()
+    switchTab(ModTab)
 end)
 
 -- Toggle hiển thị menu với hiệu ứng

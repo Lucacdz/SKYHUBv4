@@ -475,133 +475,101 @@ closeButton.MouseButton1Click:Connect(function()
     mainFrame.Visible = false
 end)
 
--- Thêm biến quản lý tab
+-- Thêm biến quản lý
+local tabStartPos = nil
+local tabIsDragging = false
 local currentTabIndex = 1
-local tabList = {"Main", "Settings", "Mod", "Shop"} -- Thêm Shop vào danh sách
-local tabFrames = {MainTab, SettingsTab, ModTab, ShopTab} -- Thêm ShopTab vào danh sách frame
+local tabList = {"Main", "Settings", "Mod", "Shop"}
+local tabFrames = {MainTab, SettingsTab, ModTab, ShopTab}
 
--- Thêm navigation buttons (nút điều hướng trái/phải)
-local navButtons = Instance.new("Frame")
-navButtons.Size = UDim2.new(1, -20, 0, 30)
-navButtons.Position = UDim2.new(0, 10, 0, 60)
-navButtons.BackgroundTransparency = 1
-navButtons.Parent = mainFrame
+-- Tạo container chứa các tab (thay thế cho pages cũ)
+local tabsContainer = Instance.new("Frame")
+tabsContainer.Name = "TabsContainer"
+tabsContainer.Size = UDim2.new(#tabList, 0, 1, 0) -- Rộng bằng tổng số tab
+tabsContainer.Position = UDim2.new(0, 0, 0, 110)
+tabsContainer.BackgroundTransparency = 1
+tabsContainer.ClipsDescendants = true
+tabsContainer.Parent = mainFrame
 
-local leftButton = Instance.new("TextButton")
-leftButton.Size = UDim2.new(0, 30, 1, 0)
-leftButton.Text = "<"
-leftButton.Font = Enum.Font.GothamBold
-leftButton.TextSize = 18
-leftButton.TextColor3 = Color3.fromRGB(0, 255, 128)
-leftButton.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
-leftButton.Parent = navButtons
-
-local rightButton = Instance.new("TextButton")
-rightButton.Size = UDim2.new(0, 30, 1, 0)
-rightButton.Position = UDim2.new(1, -30, 0, 0)
-rightButton.Text = ">"
-rightButton.Font = Enum.Font.GothamBold
-rightButton.TextSize = 18
-rightButton.TextColor3 = Color3.fromRGB(0, 255, 128)
-rightButton.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
-rightButton.Parent = navButtons
-
--- Thêm hiệu ứng cho nút điều hướng
-local function setupNavButton(button)
-    local corner = Instance.new("UICorner", button)
-    corner.CornerRadius = UDim.new(0, 6)
-    
-    local stroke = Instance.new("UIStroke", button)
-    stroke.Color = Color3.fromRGB(0, 255, 128)
-    stroke.Thickness = 1
-    
-    button.MouseEnter:Connect(function()
-        TweenService:Create(button, TweenInfo.new(0.2), {
-            BackgroundColor3 = Color3.fromRGB(40, 40, 40)
-        }):Play()
-    end)
-    
-    button.MouseLeave:Connect(function()
-        TweenService:Create(button, TweenInfo.new(0.2), {
-            BackgroundColor3 = Color3.fromRGB(20, 20, 20)
-        }):Play()
-    end)
+-- Định vị lại các tab vào container mới
+for i, frame in ipairs(tabFrames) do
+    frame.Parent = tabsContainer
+    frame.Position = UDim2.new(i-1, 10, 0, 0) -- Xếp ngang
+    frame.Size = UDim2.new(1, -20, 1, 0) -- Chiều rộng bằng container
 end
 
-setupNavButton(leftButton)
-setupNavButton(rightButton)
-
--- Cải tiến hàm switchTab để hỗ trợ di chuyển trái/phải
-local function switchTab(direction)
-    -- Ẩn tab hiện tại
-    tabFrames[currentTabIndex].Visible = false
-    
-    -- Cập nhật chỉ số tab
-    currentTabIndex = currentTabIndex + direction
-    
-    -- Kiểm tra giới hạn
-    if currentTabIndex < 1 then
-        currentTabIndex = #tabList
-    elseif currentTabIndex > #tabList then
-        currentTabIndex = 1
+-- Cài đặt sự kiện kéo cho mainFrame (phần tiêu đề)
+titleLabel.Active = true
+titleLabel.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        tabStartPos = input.Position.X
+        tabIsDragging = true
     end
+end)
+
+titleLabel.InputEnded:Connect(function()
+    tabIsDragging = false
+    -- Tự động snap về tab gần nhất
+    local closestTab = math.round(tabsContainer.Position.X.Offset / -mainFrame.AbsoluteSize.X)
+    currentTabIndex = math.clamp(closestTab + 1, 1, #tabList)
     
-    -- Hiển thị tab mới
-    tabFrames[currentTabIndex].Visible = true
+    TweenService:Create(tabsContainer, TweenInfo.new(0.3), {
+        Position = UDim2.new(-(currentTabIndex-1), 10, 0, 110)
+    }):Play()
     
-    -- Cập nhật màu nút tab
+    -- Cập nhật màu tab button
+    updateTabButtons()
+end)
+
+UserInputService.InputChanged:Connect(function(input)
+    if tabIsDragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+        local delta = input.Position.X - tabStartPos
+        -- Giới hạn phạm vi kéo
+        local maxOffset = (#tabList-1) * mainFrame.AbsoluteSize.X
+        local newX = math.clamp(-(currentTabIndex-1)*mainFrame.AbsoluteSize.X + delta, -maxOffset, 0)
+        
+        tabsContainer.Position = UDim2.new(0, newX, 0, 110)
+    end
+end)
+
+-- Hàm cập nhật màu tab button
+local function updateTabButtons()
     for i, btn in ipairs({mainTabButton, settingsTabButton, modTabButton, shopTabButton}) do
         btn.BackgroundColor3 = (i == currentTabIndex) and Color3.fromRGB(0, 100, 50) or Color3.fromRGB(20, 20, 20)
     end
-    
-    -- Tự động điều chỉnh kích thước mainFrame
-    local listLayout = tabFrames[currentTabIndex]:FindFirstChildOfClass("UIListLayout")
-    if listLayout then
-        local newHeight = math.clamp(110 + listLayout.AbsoluteContentSize.Y + 20, 200, 500)
-        TweenService:Create(mainFrame, TweenInfo.new(0.3), {
-            Size = UDim2.new(0, 300, 0, newHeight)
-        }):Play()
-    end
 end
 
--- Sự kiện click nút điều hướng
-leftButton.MouseButton1Click:Connect(function()
-    switchTab(-1) -- Di chuyển sang trái
-end)
+-- Sửa lại hàm switchTab để dùng Tween
+local function switchTab(index)
+    currentTabIndex = index
+    TweenService:Create(tabsContainer, TweenInfo.new(0.3), {
+        Position = UDim2.new(-(index-1), 10, 0, 110)
+    }):Play()
+    updateTabButtons()
+end
 
-rightButton.MouseButton1Click:Connect(function()
-    switchTab(1) -- Di chuyển sang phải
-end)
+-- Cập nhật sự kiện click cho các tab button
+mainTabButton.MouseButton1Click:Connect(function() switchTab(1) end)
+settingsTabButton.MouseButton1Click:Connect(function() switchTab(2) end)
+modTabButton.MouseButton1Click:Connect(function() switchTab(3) end)
+shopTabButton.MouseButton1Click:Connect(function() switchTab(4) end)
 
--- Thêm điều khiển bằng bàn phím
-UserInputService.InputBegan:Connect(function(input, gameProcessed)
-    if not gameProcessed and mainFrame.Visible then
-        if input.KeyCode == Enum.KeyCode.Left then
-            switchTab(-1)
-        elseif input.KeyCode == Enum.KeyCode.Right then
-            switchTab(1)
+-- Thêm hiệu ứng "rubber band" khi kéo quá mức
+local function rubberBandEffect()
+    if not tabIsDragging then
+        local currentX = tabsContainer.Position.X.Offset
+        local targetX = -(currentTabIndex-1) * mainFrame.AbsoluteSize.X
+        
+        if math.abs(currentX - targetX) > 10 then
+            TweenService:Create(tabsContainer, TweenInfo.new(0.5, Enum.EasingStyle.Elastic), {
+                Position = UDim2.new(0, targetX, 0, 110)
+            }):Play()
         end
     end
-end)
-
--- Thêm indicator hiển thị vị trí tab
-local tabIndicator = Instance.new("TextLabel")
-tabIndicator.Size = UDim2.new(0, 100, 1, 0)
-tabIndicator.Position = UDim2.new(0.5, -50, 0, 0)
-tabIndicator.BackgroundTransparency = 1
-tabIndicator.Text = currentTabIndex.."/"..#tabList
-tabIndicator.Font = Enum.Font.GothamMedium
-tabIndicator.TextSize = 14
-tabIndicator.TextColor3 = Color3.fromRGB(200, 200, 200)
-tabIndicator.Parent = navButtons
-
--- Cập nhật indicator trong hàm switchTab
-local function switchTab(direction)
-    -- ... (phần code trước đó)
-    
-    -- Cập nhật indicator
-    tabIndicator.Text = currentTabIndex.."/"..#tabList
 end
+
+-- Kích hoạt hiệu ứng khi kết thúc kéo
+titleLabel.InputEnded:Connect(rubberBandEffect)
 
 -- ⚙️ SPIN
 local function getCharacter()

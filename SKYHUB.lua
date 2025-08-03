@@ -571,27 +571,6 @@ end
 -- Kích hoạt hiệu ứng khi kết thúc kéo
 titleLabel.InputEnded:Connect(rubberBandEffect)
 
-local dotsFrame = Instance.new("Frame")
-dotsFrame.Size = UDim2.new(0, #tabList*20, 0, 20)
-dotsFrame.Position = UDim2.new(0.5, -(#tabList*10), 1, -30)
-dotsFrame.BackgroundTransparency = 1
-dotsFrame.Parent = mainFrame
-
-local dots = {}
-for i = 1, #tabList do
-    local dot = Instance.new("TextButton")
-    dot.Size = UDim2.new(0, 10, 0, 10)
-    dot.Position = UDim2.new(0, (i-1)*20, 0, 0)
-    dot.Text = ""
-    dot.BackgroundColor3 = i == 1 and Color3.fromRGB(0, 255, 128) or Color3.fromRGB(100, 100, 100)
-    dot.Parent = dotsFrame
-    table.insert(dots, dot)
-    
-    dot.MouseButton1Click:Connect(function()
-        switchTab(i)
-    end)
-end
-
 -- Cập nhật trong hàm switchTab
 for i, dot in ipairs(dots) do
     dot.BackgroundColor3 = i == index and Color3.fromRGB(0, 255, 128) or Color3.fromRGB(100, 100, 100)

@@ -9,7 +9,7 @@ local playerGui = player:WaitForChild("PlayerGui")
 
 -- Cấu hình KeySystem Vĩnh Viễn
 local VALID_KEYS = {
-    "DUNGSKY1337"
+    "SKY1337"
 }
 
 local KEY_FILE = "DungSkyHub_PermanentKey.txt"
@@ -193,7 +193,7 @@ iconStroke.Thickness = 2
 
 -- Main Frame - Tự động điều chỉnh kích thước
 local mainFrame = Instance.new("Frame")
-mainFrame.Size = UDim2.new(0, 400, 0, 300)
+mainFrame.Size = UDim2.new(0, 300, 0, 300)
 mainFrame.Position = UDim2.new(0.5, -150, 0.5, -100)
 mainFrame.AnchorPoint = Vector2.new(0.5, 0.5)
 mainFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
@@ -365,6 +365,8 @@ local function createStandardButton(parent, text, yOffset)
     return button
 end
 
+-- 💥
+
 -- Thêm nút vào MainTab
 local spinBtn = createStandardButton(MainTab, "Bắt đầu quay", 10)
 local autoClickButton = createStandardButton(MainTab, "Tự Động Đánh: OFF", 60)
@@ -385,6 +387,8 @@ local hitboxButton = createStandardButton(ModTab, "Hitbox: OFF", 160)
 -- Thêm nút vài ShopTab
 local buyPhoLonButton = createStandardButton(ShopTab, "Mua Phóng Lợn", 110)
 local buyMaTauButton = createStandardButton(ShopTab, "Mua Phóng Lợn", 110)
+local buyBandageButton = createStandardButton(ShopTab, "Mua Băng Gạc", 10)
+local autoBuyBandageButton = createStandardButton(ShopTab, "Tự Động Mua Băng Gạc: OFF", 60)
 
 -- Kích hoạt tab mặc định
 MainTab.Visible = true
@@ -1034,5 +1038,58 @@ buyPhoLonButton.MouseButton1Click:Connect(function()
             Duration = 5,
             Icon = "rbxassetid://57254792"
         })
+    end
+end)
+
+-- Xử lý sự kiện click
+buyBandageButton.MouseButton1Click:Connect(function()
+    local args = {
+        "băng gạc", -- Tên item (đã được decode từ UTF-8)
+        1 -- Số lượng
+    }
+    
+    local success, err = pcall(function()
+        game:GetService("ReplicatedStorage"):WaitForChild("KnitPackages"):WaitForChild("_Index"):WaitForChild("sleitnick_knit@1.7.0"):WaitForChild("knit"):WaitForChild("Services"):WaitForChild("ShopService"):WaitForChild("RE"):WaitForChild("buyItem"):FireServer(unpack(args))
+    end)
+    
+    if success then
+        game.StarterGui:SetCore("SendNotification", {
+            Title = "THÀNH CÔNG",
+            Text = "Đã mua băng gạc thành công!",
+            Duration = 3,
+            Icon = "rbxassetid://57254792"
+        })
+    else
+        game.StarterGui:SetCore("SendNotification", {
+            Title = "LỖI",
+            Text = "Mua băng gạc thất bại: "..tostring(err),
+            Duration = 5,
+            Icon = "rbxassetid://57254792"
+        })
+    end
+end)
+
+-- Phiên bản tự động mua (nếu cần)
+local isAutoBuyingBandage = false
+local autoBuyConnection = nil
+
+autoBuyBandageButton.MouseButton1Click:Connect(function()
+    isAutoBuyingBandage = not isAutoBuyingBandage
+    autoBuyBandageButton.Text = "Tự Động Mua Băng Gạc: " .. (isAutoBuyingBandage and "ON" or "OFF")
+    
+    if isAutoBuyingBandage then
+        autoBuyConnection = RunService.Heartbeat:Connect(function()
+            local args = {
+                "băng gạc",
+                1
+            }
+            game:GetService("ReplicatedStorage"):WaitForChild("KnitPackages"):WaitForChild("_Index"):WaitForChild("sleitnick_knit@1.7.0"):WaitForChild("knit"):WaitForChild("Services"):WaitForChild("ShopService"):WaitForChild("RE"):WaitForChild("buyItem"):FireServer(unpack(args))
+            wait(1) -- Đợi 1 giây giữa các lần mua
+        end)
+    else
+        if autoBuyConnection then
+            autoBuyConnection:Disconnect()
+            autoBuyConnection = nil
+        end
     end
 end)

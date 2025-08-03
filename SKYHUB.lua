@@ -9,7 +9,7 @@ local playerGui = player:WaitForChild("PlayerGui")
 
 -- Cấu hình KeySystem Vĩnh Viễn
 local VALID_KEYS = {
-    "DUNGSKY"
+    "DUNGSKY1337"
 }
 
 local KEY_FILE = "DungSkyHub_PermanentKey.txt"
@@ -52,7 +52,7 @@ keyTitle.Parent = keyGui
 local keyInput = Instance.new("TextBox")
 keyInput.Size = UDim2.new(1, -40, 0, 40)
 keyInput.Position = UDim2.new(0, 20, 0, 60)
-keyInput.PlaceholderText = "Nhập key vĩnh viễn của bạn..."
+keyInput.PlaceholderText = "Nhập key của bạn..."
 keyInput.Font = Enum.Font.Gotham
 keyInput.TextSize = 16
 keyInput.TextColor3 = Color3.new(1, 1, 1)
@@ -171,7 +171,7 @@ end)
 if hasValidKey() then
     -- Thông báo khi tự động đăng nhập bằng key đã lưu
     game.StarterGui:SetCore("SendNotification", {
-        Title = "DUNGSKY HUB",
+        Title = "SKY HUB",
         Text = "Chào mừng "..player.Name.." đã trở lại!",
         Duration = 5,
         Icon = "rbxassetid://57254792"
@@ -322,6 +322,7 @@ end
 local mainTabButton, MainTab = createTab("Main")
 local settingsTabButton, SettingsTab = createTab("Settings")
 local modTabButton, ModTab = createTab("Mod")
+local shopTabButton, ShopTab = createTab("Shop")
 
 -- Hàm tạo nút tiêu chuẩn với hiệu ứng nhấn màu xanh
 local function createStandardButton(parent, text, yOffset)
@@ -381,6 +382,10 @@ local noClipButton = createStandardButton(ModTab, "NoClip: OFF", 10)
 local infJumpButton = createStandardButton(ModTab, "Nhảy vô hạn: OFF", 110)
 local hitboxButton = createStandardButton(ModTab, "Hitbox: OFF", 160)
 
+-- Thêm nút vài ShopTab
+local buyPhoLonButton = createStandardButton(ShopTab, "Mua Phóng Lợn", 110)
+local buyMaTauButton = createStandardButton(ShopTab, "Mua Phóng Lợn", 110)
+
 -- Kích hoạt tab mặc định
 MainTab.Visible = true
 settingsTabButton.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
@@ -392,6 +397,7 @@ local function switchTab(tabToShow)
     MainTab.Visible = false
     SettingsTab.Visible = false
     ModTab.Visible = false
+    ShopTab.Visible = false
     
     -- Hiển thị tab được chọn
     tabToShow.Visible = true
@@ -400,6 +406,7 @@ local function switchTab(tabToShow)
     mainTabButton.BackgroundColor3 = tabToShow == MainTab and Color3.fromRGB(0, 100, 50) or Color3.fromRGB(20, 20, 20)
     settingsTabButton.BackgroundColor3 = tabToShow == SettingsTab and Color3.fromRGB(0, 100, 50) or Color3.fromRGB(20, 20, 20)
     modTabButton.BackgroundColor3 = tabToShow == ModTab and Color3.fromRGB(0, 100, 50) or Color3.fromRGB(20, 20, 20)
+    shopTabButton.BackgroundColor3 = tabToShow == ShopTab and Color3.fromRGB(0, 100, 50) or Color3.fromRGB(20, 20, 20)
 end
 
 -- Cập nhật sự kiện click cho các tab
@@ -413,6 +420,10 @@ end)
 
 modTabButton.MouseButton1Click:Connect(function()
     switchTab(ModTab)
+end)
+
+shopTabButton.MouseButton1Click:Connect(function()
+    switchTab(ShopTab)
 end)
 
 -- Toggle hiển thị menu với hiệu ứng
@@ -977,4 +988,51 @@ UserInputService.InputChanged:Connect(function(input)
 	if input == dragInputInfo and draggingInfo then
 		updateInfoInput(input)
 	end
+end)
+
+-- ⚙️ SHOP
+buyMaTauButton.MouseButton1Click:Connect(function()
+    local args = {"MaTau"}
+    local success, err = pcall(function()
+        game:GetService("ReplicatedStorage"):WaitForChild("KnitPackages"):WaitForChild("_Index"):WaitForChild("sleitnick_knit@1.7.0"):WaitForChild("knit"):WaitForChild("Services"):WaitForChild("ShopService"):WaitForChild("RE"):WaitForChild("buyItem"):FireServer(unpack(args))
+    end)
+    
+    if success then
+        game.StarterGui:SetCore("SendNotification", {
+            Title = "THÀNH CÔNG",
+            Text = "Đã mua Mã Tấu thành công!",
+            Duration = 3,
+            Icon = "rbxassetid://57254792"
+        })
+    else
+        game.StarterGui:SetCore("SendNotification", {
+            Title = "LỖI",
+            Text = "Mua Mã Tấu thất bại: "..tostring(err),
+            Duration = 5,
+            Icon = "rbxassetid://57254792"
+        })
+    end
+end)
+
+buyPhoLonButton.MouseButton1Click:Connect(function()
+    local args = {"PhongLon"}
+    local success, err = pcall(function()
+        game:GetService("ReplicatedStorage"):WaitForChild("KnitPackages"):WaitForChild("_Index"):WaitForChild("sleitnick_knit@1.7.0"):WaitForChild("knit"):WaitForChild("Services"):WaitForChild("ShopService"):WaitForChild("RE"):WaitForChild("buyItem"):FireServer(unpack(args))
+    end)
+    
+    if success then
+        game.StarterGui:SetCore("SendNotification", {
+            Title = "THÀNH CÔNG",
+            Text = "Đã mua Phóng Lợn thành công!",
+            Duration = 3,
+            Icon = "rbxassetid://57254792"
+        })
+    else
+        game.StarterGui:SetCore("SendNotification", {
+            Title = "LỖI",
+            Text = "Mua Phóng Lợn thất bại: "..tostring(err),
+            Duration = 5,
+            Icon = "rbxassetid://57254792"
+        })
+    end
 end)

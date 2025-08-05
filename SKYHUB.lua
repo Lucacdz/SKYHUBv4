@@ -165,11 +165,11 @@ titleBar.Parent = mainFrame
 local titleBarCorner = Instance.new("UICorner", titleBar)
 titleBarCorner.CornerRadius = UDim.new(0, 12, 0, 0)
 
--- Cho phép di chuyển mainFrame thông qua title bar
 local dragging = false
-local dragInput, dragStart, startPos
+local dragStart, startPos
 
-titleBar.InputBegan:Connect(function(input)
+-- Cho phép di chuyển khi kéo bất kỳ đâu trên mainFrame
+mainFrame.InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1 then
         dragging = true
         dragStart = input.Position
@@ -183,14 +183,8 @@ titleBar.InputBegan:Connect(function(input)
     end
 end)
 
-titleBar.InputChanged:Connect(function(input)
+mainFrame.InputChanged:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseMovement and dragging then
-        dragInput = input
-    end
-end)
-
-UserInputService.InputChanged:Connect(function(input)
-    if input == dragInput and dragging then
         local delta = input.Position - dragStart
         mainFrame.Position = UDim2.new(
             startPos.X.Scale, 
@@ -225,7 +219,7 @@ titleLabel.Parent = titleBar
 local closeButton = Instance.new("TextButton")
 closeButton.Name = "CloseButton"
 closeButton.Size = UDim2.new(0, 30, 0, 30)
-closeButton.Position = UDim2.new(1, -35, 0, 0)
+closeButton.Position = UDim2.new(1, -35, 0, 10)
 closeButton.Text = "X"
 closeButton.Font = Enum.Font.GothamBold
 closeButton.TextSize = 18

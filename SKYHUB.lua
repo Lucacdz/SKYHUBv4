@@ -5,7 +5,7 @@ local UserInputService = game:GetService("UserInputService")
 local HttpService = game:GetService("HttpService")
 
 -- Giả định các biến này đã được định nghĩa trước đó
-local VALID_KEYS = {"SKY123", "VIPKEY", "TESTKEY"} -- Thay thế bằng keys thực tế của bạn
+local VALID_KEYS = {"SKY1337"} -- Thay thế bằng keys thực tế của bạn
 local KEY_FILE = "skyhub_key.txt"
 
 -- GUI - Neon Xanh
@@ -145,8 +145,8 @@ iconStroke.Thickness = 2
 
 -- Main Frame - Tự động điều chỉnh kích thước
 local mainFrame = Instance.new("Frame")
-mainFrame.Size = UDim2.new(0, 350, 0, 400)
-mainFrame.Position = UDim2.new(0.5, -175, 0.5, -200)
+mainFrame.Size = UDim2.new(0, 350, 0, 300)
+mainFrame.Position = UDim2.new(0.5, -175, 0.5, -150)
 mainFrame.AnchorPoint = Vector2.new(0.5, 0.5)
 mainFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
 mainFrame.BorderSizePixel = 0
@@ -270,7 +270,7 @@ tabLayout.SortOrder = Enum.SortOrder.LayoutOrder
 -- Tab Pages với ScrollingFrame
 local pages = Instance.new("Frame")
 pages.Name = "Pages"
-pages.Size = UDim2.new(1, -20, 1, -90)
+pages.Size = UDim2.new(1, -20, 1, -80)
 pages.Position = UDim2.new(0, 10, 0, 90)
 pages.BackgroundTransparency = 1
 pages.Parent = mainFrame

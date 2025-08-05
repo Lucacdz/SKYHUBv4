@@ -5,23 +5,52 @@ local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
 local HttpService = game:GetService("HttpService")
 
+-- Fix cho Delta Executor
+if not isfile or not writefile or not readfile then
+    local fs = Delta and Delta.FileSystem or {}
+    isfile = fs.Exists or function() return false end
+    writefile = fs.Write or function() end
+    readfile = fs.Read or function() return "" end
+end
+
 -- Variables
 local player = Players.LocalPlayer
 local playerGui = player:WaitForChild("PlayerGui")
 
--- Cấu hình KeySystem Vĩnh Viễn
-local VALID_KEYS = {
-    "SKY1337"
-}
-
+-- Cấu hình KeySystem
+local VALID_KEYS = {"SKY1337"}
 local KEY_FILE = "DungSkyHub_PermanentKey.txt"
 
--- GUI Key System (Giữ nguyên như cũ)
+-- Tạo GUI chính
 local screenGui = Instance.new("ScreenGui")
 screenGui.Name = "DungSkyMenu"
-screenGui.Parent = playerGui
+screenGui.Parent = CoreGui -- Sửa từ playerGui sang CoreGui để ổn định hơn
 screenGui.ResetOnSpawn = false
 
+-- Tạo iconButton trước để tránh lỗi tham chiếu
+local iconButton = Instance.new("TextButton")
+iconButton.Name = "MenuIcon"
+iconButton.Size = UDim2.new(0, 50, 0, 50)
+iconButton.Position = UDim2.new(0, 20, 0, 20)
+iconButton.Text = "⚡"
+iconButton.Font = Enum.Font.GothamBold
+iconButton.TextSize = 24
+iconButton.TextColor3 = Color3.fromRGB(0, 255, 128)
+iconButton.BackgroundColor3 = Color3.fromRGB(10, 10, 10)
+iconButton.BorderSizePixel = 0
+iconButton.Draggable = true
+iconButton.Active = true
+iconButton.Visible = false
+iconButton.Parent = screenGui
+
+local iconCorner = Instance.new("UICorner", iconButton)
+iconCorner.CornerRadius = UDim.new(0, 12)
+
+local iconStroke = Instance.new("UIStroke", iconButton)
+iconStroke.Color = Color3.fromRGB(0, 255, 128)
+iconStroke.Thickness = 2
+
+-- Key GUI
 local keyGui = Instance.new("Frame")
 keyGui.Size = UDim2.new(0, 350, 0, 200)
 keyGui.Position = UDim2.new(0.5, -175, 0.5, -100)
@@ -96,106 +125,11 @@ statusLabel.TextColor3 = Color3.fromRGB(255, 50, 50)
 statusLabel.Text = "Vui lòng nhập key để sử dụng Sky Hub"
 statusLabel.Parent = keyGui
 
--- Hàm kiểm tra key
-local function checkKey(key)
-    for _, validKey in pairs(VALID_KEYS) do
-        if key == validKey then
-            return true
-        end
-    end
-    return false
-end
-
--- Hàm lưu key
-local function saveKey(key)
-    writefile(KEY_FILE, HttpService:JSONEncode({
-        key = key,
-        activated = os.time()
-    }))
-end
-
--- Hàm kiểm tra key đã lưu
-local function hasValidKey()
-    if isfile(KEY_FILE) then
-        local success, data = pcall(function()
-            return HttpService:JSONDecode(readfile(KEY_FILE))
-        end)
-        if success and data and checkKey(data.key) then
-            return true
-        end
-    end
-    return false
-end
-
--- Xử lý sự kiện submit key
-submitButton.MouseButton1Click:Connect(function()
-    local key = string.upper(string.gsub(keyInput.Text, "%s+", ""))
-    
-    if checkKey(key) then
-        saveKey(key)
-        statusLabel.Text = "✅ Key hợp lệ - Đang mở menu..."
-        statusLabel.TextColor3 = Color3.fromRGB(0, 255, 0)
-        
-        game.StarterGui:SetCore("SendNotification", {
-            Title = "SKY HUB",
-            Text = "Chào mừng "..player.Name.." đã trở lại!",
-            Duration = 5,
-            Icon = "rbxassetid://57254792"
-        })
-        
-        wait(1)
-        keyGui.Visible = false
-        iconButton.Visible = true
-    else
-        statusLabel.Text = "❌ Key không hợp lệ! Vui lòng thử lại"
-        statusLabel.TextColor3 = Color3.fromRGB(255, 50, 50)
-    end
-end)
-
--- Kiểm tra key khi khởi chạy
-if hasValidKey() then
-    game.StarterGui:SetCore("SendNotification", {
-        Title = "SKY HUB",
-        Text = "Chào mừng "..player.Name.." đã trở lại!",
-        Duration = 5,
-        Icon = "rbxassetid://57254792"
-    })
-    
-    keyGui.Visible = false
-    iconButton.Visible = true
-else
-    keyGui.Visible = true
-    iconButton.Visible = false
-end
-
--- Icon (TextButton) - Hidden initially
-local iconButton = Instance.new("TextButton")
-iconButton.Name = "MenuIcon"
-iconButton.Size = UDim2.new(0, 50, 0, 50)
-iconButton.Position = UDim2.new(0, 20, 0, 20)
-iconButton.Text = "⚡"
-iconButton.Font = Enum.Font.GothamBold
-iconButton.TextSize = 24
-iconButton.TextColor3 = Color3.fromRGB(0, 255, 128)
-iconButton.BackgroundColor3 = Color3.fromRGB(10, 10, 10)
-iconButton.BorderSizePixel = 0
-iconButton.Draggable = true
-iconButton.Active = true
-iconButton.Visible = false
-iconButton.Parent = screenGui
-
-local iconCorner = Instance.new("UICorner", iconButton)
-iconCorner.CornerRadius = UDim.new(0, 12)
-
-local iconStroke = Instance.new("UIStroke", iconButton)
-iconStroke.Color = Color3.fromRGB(0, 255, 128)
-iconStroke.Thickness = 2
-
--- Main Frame - GUI Lớn Có Thể Di Chuyển
+-- Main Frame
 local mainFrame = Instance.new("Frame")
 mainFrame.Name = "MainFrame"
-mainFrame.Size = UDim2.new(0, 600, 0, 700)
-mainFrame.Position = UDim2.new(0.5, -300, 0.5, -350)
+mainFrame.Size = UDim2.new(0, 600, 0, 500) -- Giảm chiều cao ban đầu để phù hợp hơn
+mainFrame.Position = UDim2.new(0.5, -300, 0.5, -250)
 mainFrame.AnchorPoint = Vector2.new(0.5, 0.5)
 mainFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
 mainFrame.BorderSizePixel = 0
@@ -211,7 +145,7 @@ mainStroke.Color = Color3.fromRGB(0, 255, 128)
 mainStroke.Thickness = 3
 mainStroke.Transparency = 0.5
 
--- Thanh tiêu đề để di chuyển
+-- Title Bar
 local titleBar = Instance.new("Frame")
 titleBar.Name = "TitleBar"
 titleBar.Size = UDim2.new(1, 0, 0, 40)
@@ -223,7 +157,6 @@ titleBar.Parent = mainFrame
 local titleBarCorner = Instance.new("UICorner", titleBar)
 titleBarCorner.CornerRadius = UDim.new(0, 12)
 
--- Tiêu đề
 local titleLabel = Instance.new("TextLabel")
 titleLabel.Name = "Title"
 titleLabel.Size = UDim2.new(0, 200, 1, 0)
@@ -238,7 +171,7 @@ titleLabel.TextStrokeColor3 = Color3.fromRGB(0, 100, 50)
 titleLabel.TextXAlignment = Enum.TextXAlignment.Left
 titleLabel.Parent = titleBar
 
--- Nút đóng
+-- Close Button
 local closeButton = Instance.new("TextButton")
 closeButton.Name = "CloseButton"
 closeButton.Size = UDim2.new(0, 30, 0, 30)
@@ -258,24 +191,6 @@ local closeStroke = Instance.new("UIStroke", closeButton)
 closeStroke.Color = Color3.fromRGB(255, 50, 50)
 closeStroke.Thickness = 2
 
--- Hiệu ứng hover cho nút đóng
-closeButton.MouseEnter:Connect(function()
-    TweenService:Create(closeButton, TweenInfo.new(0.2), {
-        BackgroundColor3 = Color3.fromRGB(60, 60, 60)
-    }):Play()
-end)
-
-closeButton.MouseLeave:Connect(function()
-    TweenService:Create(closeButton, TweenInfo.new(0.2), {
-        BackgroundColor3 = Color3.fromRGB(40, 40, 40)
-    }):Play()
-end)
-
--- Sự kiện đóng GUI
-closeButton.MouseButton1Click:Connect(function()
-    mainFrame.Visible = false
-end)
-
 -- Tabs Container
 local tabButtons = Instance.new("Frame")
 tabButtons.Name = "TabButtons"
@@ -289,7 +204,7 @@ tabLayout.FillDirection = Enum.FillDirection.Horizontal
 tabLayout.Padding = UDim.new(0, 10)
 tabLayout.SortOrder = Enum.SortOrder.LayoutOrder
 
--- Tab Pages với ScrollingFrame
+-- Tab Pages
 local pages = Instance.new("Frame")
 pages.Name = "Pages"
 pages.Size = UDim2.new(1, -20, 1, -120)
@@ -297,7 +212,7 @@ pages.Position = UDim2.new(0, 10, 0, 110)
 pages.BackgroundTransparency = 1
 pages.Parent = mainFrame
 
--- Hàm tạo tab với ScrollingFrame tự động điều chỉnh
+-- Hàm tạo tab
 local function createTab(name)
     local button = Instance.new("TextButton")
     button.Size = UDim2.new(0, 100, 1, 0)
@@ -334,7 +249,6 @@ local function createTab(name)
         mainFrame.Size = UDim2.new(0, 600, 0, newHeight)
     end)
 
-    -- Hiệu ứng hover cho tab button
     button.MouseEnter:Connect(function()
         if button.BackgroundColor3 ~= Color3.fromRGB(0, 100, 50) then
             TweenService:Create(button, TweenInfo.new(0.2), {
@@ -355,6 +269,103 @@ local function createTab(name)
 
     return button, scrollFrame
 end
+
+-- Tạo các tab
+local mainTabButton, MainTab = createTab("Main")
+local settingsTabButton, SettingsTab = createTab("Settings")
+local modTabButton, ModTab = createTab("Mod")
+local shopTabButton, ShopTab = createTab("Shop")
+
+-- Hàm chuyển tab
+local function switchTab(tabToShow)
+    MainTab.Visible = false
+    SettingsTab.Visible = false
+    ModTab.Visible = false
+    ShopTab.Visible = false
+    
+    tabToShow.Visible = true
+    
+    mainTabButton.BackgroundColor3 = tabToShow == MainTab and Color3.fromRGB(0, 100, 50) or Color3.fromRGB(20, 20, 20)
+    settingsTabButton.BackgroundColor3 = tabToShow == SettingsTab and Color3.fromRGB(0, 100, 50) or Color3.fromRGB(20, 20, 20)
+    modTabButton.BackgroundColor3 = tabToShow == ModTab and Color3.fromRGB(0, 100, 50) or Color3.fromRGB(20, 20, 20)
+    shopTabButton.BackgroundColor3 = tabToShow == ShopTab and Color3.fromRGB(0, 100, 50) or Color3.fromRGB(20, 20, 20)
+    
+    mainTabButton.TextColor3 = tabToShow == MainTab and Color3.fromRGB(255, 255, 255) or Color3.fromRGB(200, 200, 200)
+    settingsTabButton.TextColor3 = tabToShow == SettingsTab and Color3.fromRGB(255, 255, 255) or Color3.fromRGB(200, 200, 200)
+    modTabButton.TextColor3 = tabToShow == ModTab and Color3.fromRGB(255, 255, 255) or Color3.fromRGB(200, 200, 200)
+    shopTabButton.TextColor3 = tabToShow == ShopTab and Color3.fromRGB(255, 255, 255) or Color3.fromRGB(200, 200, 200)
+end
+
+-- Kết nối sự kiện tab
+mainTabButton.MouseButton1Click:Connect(function() switchTab(MainTab) end)
+settingsTabButton.MouseButton1Click:Connect(function() switchTab(SettingsTab) end)
+modTabButton.MouseButton1Click:Connect(function() switchTab(ModTab) end)
+shopTabButton.MouseButton1Click:Connect(function() switchTab(ShopTab) end)
+
+-- Kích hoạt tab mặc định
+MainTab.Visible = true
+mainTabButton.BackgroundColor3 = Color3.fromRGB(0, 100, 50)
+mainTabButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+
+-- Hàm tạo nút
+local function createStandardButton(parent, text, yOffset)
+    local button = Instance.new("TextButton")
+    button.Size = UDim2.new(1, -20, 0, 40)
+    button.Position = UDim2.new(0, 10, 0, yOffset or 0)
+    button.Text = text
+    button.Font = Enum.Font.GothamBold
+    button.TextSize = 16
+    button.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+    button.TextColor3 = Color3.new(1, 1, 1)
+    button.AutoButtonColor = false
+    button.Parent = parent
+    
+    local corner = Instance.new("UICorner", button)
+    corner.CornerRadius = UDim.new(0, 8)
+    
+    local stroke = Instance.new("UIStroke", button)
+    stroke.Color = Color3.fromRGB(0, 255, 128)
+    stroke.Thickness = 1
+    
+    button.MouseEnter:Connect(function()
+        TweenService:Create(button, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(50, 50, 50)}):Play()
+    end)
+    
+    button.MouseLeave:Connect(function()
+        TweenService:Create(button, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(30, 30, 30)}):Play()
+    end)
+    
+    button.MouseButton1Down:Connect(function()
+        TweenService:Create(button, TweenInfo.new(0.1), {BackgroundColor3 = Color3.fromRGB(0, 170, 255)}):Play()
+    end)
+    
+    button.MouseButton1Up:Connect(function()
+        TweenService:Create(button, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(50, 50, 50)}):Play()
+    end)
+    
+    return button
+end
+
+-- Thêm nút vào các tab
+local spinBtn = createStandardButton(MainTab, "Bắt đầu quay", 10)
+local autoClickButton = createStandardButton(MainTab, "Tự Động Đánh: OFF", 60)
+local aimbotButton = createStandardButton(MainTab, "Aimbot: OFF", 160)
+
+local afkButton = createStandardButton(SettingsTab, "Bật AFK", 10)
+local fixLagButton = createStandardButton(SettingsTab, "Fix Lag: OFF", 60)
+local espButton = createStandardButton(SettingsTab, "ESP: OFF", 110)
+local espSettingsButton = createStandardButton(SettingsTab, "Cài đặt ESP", 160)
+local hideNamesButton = createStandardButton(SettingsTab, "Ẩn tên: OFF", 210)
+local infoButton = createStandardButton(SettingsTab, "Thông Tin Server", 260)
+
+local noClipButton = createStandardButton(ModTab, "NoClip: OFF", 10)
+local infJumpButton = createStandardButton(ModTab, "Nhảy vô hạn: OFF", 110)
+local hitboxButton = createStandardButton(ModTab, "Hitbox: OFF", 160)
+
+local buyBandageButton = createStandardButton(ShopTab, "Mua Băng Gạc", 10)
+local autoBuyBandageButton = createStandardButton(ShopTab, "Tự Động Mua Băng Gạc: OFF", 60)
+local buyPhoLonButton = createStandardButton(ShopTab, "Mua Phóng Lợn", 110)
+local buyMaTauButton = createStandardButton(ShopTab, "Mua Mã Tấu", 160)
 
 -- Logic di chuyển GUI
 local dragging = false
@@ -396,59 +407,24 @@ UserInputService.InputChanged:Connect(function(input)
     end
 end)
 
--- Tạo các tab
-local mainTabButton, MainTab = createTab("Main")
-local settingsTabButton, SettingsTab = createTab("Settings")
-local modTabButton, ModTab = createTab("Mod")
-local shopTabButton, ShopTab = createTab("Shop")
-
--- Hàm chuyển tab
-local function switchTab(tabToShow)
-    -- Ẩn tất cả các tab
-    MainTab.Visible = false
-    SettingsTab.Visible = false
-    ModTab.Visible = false
-    ShopTab.Visible = false
-    
-    -- Hiển thị tab được chọn
-    tabToShow.Visible = true
-    
-    -- Cập nhật màu nút tab
-    mainTabButton.BackgroundColor3 = tabToShow == MainTab and Color3.fromRGB(0, 100, 50) or Color3.fromRGB(20, 20, 20)
-    settingsTabButton.BackgroundColor3 = tabToShow == SettingsTab and Color3.fromRGB(0, 100, 50) or Color3.fromRGB(20, 20, 20)
-    modTabButton.BackgroundColor3 = tabToShow == ModTab and Color3.fromRGB(0, 100, 50) or Color3.fromRGB(20, 20, 20)
-    shopTabButton.BackgroundColor3 = tabToShow == ShopTab and Color3.fromRGB(0, 100, 50) or Color3.fromRGB(20, 20, 20)
-    
-    -- Cập nhật màu text
-    mainTabButton.TextColor3 = tabToShow == MainTab and Color3.fromRGB(255, 255, 255) or Color3.fromRGB(200, 200, 200)
-    settingsTabButton.TextColor3 = tabToShow == SettingsTab and Color3.fromRGB(255, 255, 255) or Color3.fromRGB(200, 200, 200)
-    modTabButton.TextColor3 = tabToShow == ModTab and Color3.fromRGB(255, 255, 255) or Color3.fromRGB(200, 200, 200)
-    shopTabButton.TextColor3 = tabToShow == ShopTab and Color3.fromRGB(255, 255, 255) or Color3.fromRGB(200, 200, 200)
-end
-
--- Kết nối sự kiện click cho các tab
-mainTabButton.MouseButton1Click:Connect(function()
-    switchTab(MainTab)
+-- Hiệu ứng nút đóng
+closeButton.MouseEnter:Connect(function()
+    TweenService:Create(closeButton, TweenInfo.new(0.2), {
+        BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+    }):Play()
 end)
 
-settingsTabButton.MouseButton1Click:Connect(function()
-    switchTab(SettingsTab)
+closeButton.MouseLeave:Connect(function()
+    TweenService:Create(closeButton, TweenInfo.new(0.2), {
+        BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+    }):Play()
 end)
 
-modTabButton.MouseButton1Click:Connect(function()
-    switchTab(ModTab)
+closeButton.MouseButton1Click:Connect(function()
+    mainFrame.Visible = false
 end)
 
-shopTabButton.MouseButton1Click:Connect(function()
-    switchTab(ShopTab)
-end)
-
--- Kích hoạt tab mặc định
-MainTab.Visible = true
-mainTabButton.BackgroundColor3 = Color3.fromRGB(0, 100, 50)
-mainTabButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-
--- Toggle hiển thị menu với hiệu ứng
+-- Toggle menu
 iconButton.MouseButton1Click:Connect(function()
     mainFrame.Visible = not mainFrame.Visible
     if mainFrame.Visible then
@@ -459,67 +435,82 @@ iconButton.MouseButton1Click:Connect(function()
     end
 end)
 
--- Hàm tạo nút tiêu chuẩn
-local function createStandardButton(parent, text, yOffset)
-    local button = Instance.new("TextButton")
-    button.Size = UDim2.new(1, -20, 0, 40)
-    button.Position = UDim2.new(0, 10, 0, yOffset or 0)
-    button.Text = text
-    button.Font = Enum.Font.GothamBold
-    button.TextSize = 16
-    button.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-    button.TextColor3 = Color3.new(1, 1, 1)
-    button.AutoButtonColor = false
-    button.Parent = parent
-    
-    local corner = Instance.new("UICorner", button)
-    corner.CornerRadius = UDim.new(0, 8)
-    
-    local stroke = Instance.new("UIStroke", button)
-    stroke.Color = Color3.fromRGB(0, 255, 128)
-    stroke.Thickness = 1
-    
-    -- Hiệu ứng hover
-    button.MouseEnter:Connect(function()
-        TweenService:Create(button, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(50, 50, 50)}):Play()
-    end)
-    
-    button.MouseLeave:Connect(function()
-        TweenService:Create(button, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(30, 30, 30)}):Play()
-    end)
-    
-    -- Hiệu ứng nhấn màu xanh
-    button.MouseButton1Down:Connect(function()
-        TweenService:Create(button, TweenInfo.new(0.1), {BackgroundColor3 = Color3.fromRGB(0, 170, 255)}):Play()
-    end)
-    
-    button.MouseButton1Up:Connect(function()
-        TweenService:Create(button, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(50, 50, 50)}):Play()
-    end)
-    
-    return button
+-- Key System Functions
+local function checkKey(key)
+    for _, validKey in pairs(VALID_KEYS) do
+        if key == validKey then
+            return true
+        end
+    end
+    return false
 end
 
--- Thêm nút vào các tab
-local spinBtn = createStandardButton(MainTab, "Bắt đầu quay", 10)
-local autoClickButton = createStandardButton(MainTab, "Tự Động Đánh: OFF", 60)
-local aimbotButton = createStandardButton(MainTab, "Aimbot: OFF", 160)
+local function saveKey(key)
+    local success, err = pcall(function()
+        writefile(KEY_FILE, HttpService:JSONEncode({
+            key = key,
+            activated = os.time()
+        }))
+    end)
+    return success
+end
 
-local afkButton = createStandardButton(SettingsTab, "Bật AFK", 10)
-local fixLagButton = createStandardButton(SettingsTab, "Fix Lag: OFF", 60)
-local espButton = createStandardButton(SettingsTab, "ESP: OFF", 110)
-local espSettingsButton = createStandardButton(SettingsTab, "Cài đặt ESP", 160)
-local hideNamesButton = createStandardButton(SettingsTab, "Ẩn tên: OFF", 210)
-local infoButton = createStandardButton(SettingsTab, "Thông Tin Server", 260)
+local function hasValidKey()
+    if isfile(KEY_FILE) then
+        local success, data = pcall(function()
+            return HttpService:JSONDecode(readfile(KEY_FILE))
+        end)
+        if success and data and checkKey(data.key) then
+            return true
+        end
+    end
+    return false
+end
 
-local noClipButton = createStandardButton(ModTab, "NoClip: OFF", 10)
-local infJumpButton = createStandardButton(ModTab, "Nhảy vô hạn: OFF", 110)
-local hitboxButton = createStandardButton(ModTab, "Hitbox: OFF", 160)
+-- Xử lý submit key
+submitButton.MouseButton1Click:Connect(function()
+    local key = string.upper(string.gsub(keyInput.Text, "%s+", ""))
+    
+    if checkKey(key) then
+        if saveKey(key) then
+            statusLabel.Text = "✅ Key hợp lệ - Đang mở menu..."
+            statusLabel.TextColor3 = Color3.fromRGB(0, 255, 0)
+            
+            game.StarterGui:SetCore("SendNotification", {
+                Title = "SKY HUB",
+                Text = "Chào mừng "..player.Name.." đã trở lại!",
+                Duration = 5,
+                Icon = "rbxassetid://57254792"
+            })
+            
+            task.wait(1)
+            keyGui.Visible = false
+            iconButton.Visible = true
+        else
+            statusLabel.Text = "❌ Lỗi khi lưu key!"
+            statusLabel.TextColor3 = Color3.fromRGB(255, 50, 50)
+        end
+    else
+        statusLabel.Text = "❌ Key không hợp lệ! Vui lòng thử lại"
+        statusLabel.TextColor3 = Color3.fromRGB(255, 50, 50)
+    end
+end)
 
-local buyBandageButton = createStandardButton(ShopTab, "Mua Băng Gạc", 10)
-local autoBuyBandageButton = createStandardButton(ShopTab, "Tự Động Mua Băng Gạc: OFF", 60)
-local buyPhoLonButton = createStandardButton(ShopTab, "Mua Phóng Lợn", 110)
-local buyMaTauButton = createStandardButton(ShopTab, "Mua Mã Tấu", 160)
+-- Kiểm tra key khi khởi chạy
+if hasValidKey() then
+    game.StarterGui:SetCore("SendNotification", {
+        Title = "SKY HUB",
+        Text = "Chào mừng "..player.Name.." đã trở lại!",
+        Duration = 5,
+        Icon = "rbxassetid://57254792"
+    })
+    
+    keyGui.Visible = false
+    iconButton.Visible = true
+else
+    keyGui.Visible = true
+    iconButton.Visible = false
+end
 
 -- ⚙️ ESP ĐƠN GIẢN (MÁU + TÊN + VỊ TRÍ)
 local showESP = false

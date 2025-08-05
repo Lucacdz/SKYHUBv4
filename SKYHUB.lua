@@ -521,30 +521,26 @@ local autoBuyBandageButton = createStandardButton(ShopTab, "Tự Động Mua Bă
 local buyPhoLonButton = createStandardButton(ShopTab, "Mua Phóng Lợn", 110)
 local buyMaTauButton = createStandardButton(ShopTab, "Mua Mã Tấu", 160)
 
--- ⚙️ ESP NÂNG CAO TỐI ƯU CHO CLIENT
+-- ⚙️ ESP ĐƠN GIẢN (MÁU + TÊN + VỊ TRÍ)
 local showESP = false
 local espSettings = {
-    showName = true,
-    showHealth = true,
-    showDistance = true,
-    showTracer = true,
-    boxType = "2D", -- "2D" hoặc "3D"
-    teamCheck = true,
-    colorEnemy = Color3.fromRGB(255, 0, 0),
-    colorFriendly = Color3.fromRGB(0, 255, 0),
     textSize = 14,
-    maxDistance = 500
+    maxDistance = 500,
+    teamCheck = true,
+    colorEnemy = Color3.fromRGB(255, 50, 50),
+    colorFriendly = Color3.fromRGB(50, 255, 50)
 }
 
--- Danh sách lưu trữ ESP objects
 local espObjects = {}
 
 -- Hàm xóa ESP của 1 người chơi
 local function clearPlayerESP(player)
-    if player.Character and player.Character:FindFirstChild("ESPContainer") then
-        player.Character:FindFirstChild("ESPContainer"):Destroy()
+    if espObjects[player] then
+        if espObjects[player].billboard then
+            espObjects[player].billboard:Destroy()
+        end
+        espObjects[player] = nil
     end
-    espObjects[player] = nil
 end
 
 -- Hàm xóa tất cả ESP
@@ -555,148 +551,80 @@ local function clearAllESP()
     espObjects = {}
 end
 
--- Hàm cập nhật ESP cho một người chơi (chỉ client-side)
+-- Hàm cập nhật ESP cho một người chơi
 local function updateESP(player)
     if player == Players.LocalPlayer then return end
-    if not player.Character or not player.Character:FindFirstChild("HumanoidRootPart") then return end
+    if not player or not player.Character then return end
     
     -- Xóa ESP cũ nếu có
     clearPlayerESP(player)
     
     local character = player.Character
-    local hrp = character:WaitForChild("HumanoidRootPart")
     local humanoid = character:FindFirstChildOfClass("Humanoid")
+    local head = character:FindFirstChild("Head")
     
-    -- Kiểm tra nếu player đã chết
-    if humanoid and humanoid.Health <= 0 then return end
+    if not humanoid or not head then return end
     
-    -- Xác định màu sắc dựa trên team
+    -- Xác định màu sắc
     local color = espSettings.colorEnemy
     if espSettings.teamCheck and player.Team == Players.LocalPlayer.Team then
         color = espSettings.colorFriendly
     end
     
-    -- Tạo container cho ESP
-    local espContainer = Instance.new("Folder")
-    espContainer.Name = "ESPContainer"
-    espContainer.Parent = character
-    espObjects[player] = espContainer
+    -- Tạo billboard
+    local billboard = Instance.new("BillboardGui")
+    billboard.Name = "SimpleESP"
+    billboard.Adornee = head
+    billboard.Size = UDim2.new(0, 200, 0, 50)
+    billboard.StudsOffset = Vector3.new(0, 2.5, 0)
+    billboard.AlwaysOnTop = true
+    billboard.MaxDistance = espSettings.maxDistance
+    billboard.Parent = character
     
-    -- Tạo thông tin ESP
-    if espSettings.showName or espSettings.showHealth or espSettings.showDistance then
-        local billboard = Instance.new("BillboardGui")
-        billboard.Name = "ESPInfo"
-        billboard.Adornee = character:WaitForChild("Head")
-        billboard.Size = UDim2.new(0, 200, 0, 100)
-        billboard.StudsOffset = Vector3.new(0, 2.5, 0)
-        billboard.AlwaysOnTop = true
-        billboard.MaxDistance = espSettings.maxDistance
-        billboard.Parent = espContainer
-        
-        local infoLabel = Instance.new("TextLabel")
-        infoLabel.Size = UDim2.new(1, 0, 1, 0)
-        infoLabel.BackgroundTransparency = 1
-        infoLabel.TextStrokeTransparency = 0
-        infoLabel.TextStrokeColor3 = Color3.new(0, 0, 0)
-        infoLabel.Font = Enum.Font.GothamBold
-        infoLabel.TextSize = espSettings.textSize
-        infoLabel.TextColor3 = color
-        infoLabel.Parent = billboard
-        
-        -- Kết nối cập nhật thông tin
-        local connection
-        connection = humanoid.HealthChanged:Connect(function()
-            if not character or not character.Parent then
-                connection:Disconnect()
-                return
-            end
-            
-            local distance = (Players.LocalPlayer.Character.HumanoidRootPart.Position - hrp.Position).Magnitude
-            local infoText = ""
-            
-            if espSettings.showName then
-                infoText = player.Name .. "\n"
-            end
-            if espSettings.showHealth then
-                infoText = infoText .. string.format("HP: %d/%d\n", humanoid.Health, humanoid.MaxHealth)
-            end
-            if espSettings.showDistance then
-                infoText = infoText .. string.format("%.1fm", distance)
-            end
-            
-            infoLabel.Text = infoText
-            
-            -- Tự động xóa ESP nếu player chết
-            if humanoid.Health <= 0 then
-                clearPlayerESP(player)
-                connection:Disconnect()
-            end
-        end)
-        
-        -- Cập nhật lần đầu
-        humanoid.HealthChanged:Fire()
-    end
+    local infoLabel = Instance.new("TextLabel")
+    infoLabel.Size = UDim2.new(1, 0, 1, 0)
+    infoLabel.BackgroundTransparency = 1
+    infoLabel.TextStrokeTransparency = 0
+    infoLabel.TextStrokeColor3 = Color3.new(0, 0, 0)
+    infoLabel.Font = Enum.Font.GothamBold
+    infoLabel.TextSize = espSettings.textSize
+    infoLabel.TextColor3 = color
+    infoLabel.Parent = billboard
     
-    -- Tạo box ESP
-    if espSettings.boxType == "2D" then
-        local box = Instance.new("BoxHandleAdornment")
-        box.Name = "ESPBox"
-        box.Adornee = hrp
-        box.Size = Vector3.new(4, 6, 4)
-        box.Transparency = 0.7
-        box.Color3 = color
-        box.AlwaysOnTop = true
-        box.ZIndex = 1
-        box.Parent = espContainer
-    elseif espSettings.boxType == "3D" then
-        local box = Instance.new("BoxHandleAdornment")
-        box.Name = "ESPBox"
-        box.Adornee = hrp
-        box.Size = Vector3.new(4, 6, 4)
-        box.Transparency = 0.7
-        box.Color3 = color
-        box.AlwaysOnTop = false
-        box.ZIndex = 0
-        box.Parent = espContainer
-    end
-    
-    -- Tạo tracer (chỉ khi player còn sống)
-    if espSettings.showTracer and humanoid.Health > 0 then
-        local tracer = Instance.new("Frame")
-        tracer.Name = "ESPTracer"
-        tracer.BackgroundColor3 = color
-        tracer.BorderSizePixel = 0
-        tracer.Size = UDim2.new(0, 2, 0, 200)
-        tracer.AnchorPoint = Vector2.new(0.5, 1)
-        tracer.Position = UDim2.new(0.5, 0, 1, 0)
-        tracer.Parent = espContainer
-        
-        local updateTracer = function()
-            if not character or not character.Parent then return end
-            
-            local rootPos, onScreen = workspace.CurrentCamera:WorldToViewportPoint(hrp.Position)
-            if onScreen then
-                tracer.Visible = true
-                tracer.Position = UDim2.new(0, rootPos.X, 0, rootPos.Y)
-                
-                local distance = (Players.LocalPlayer.Character.HumanoidRootPart.Position - hrp.Position).Magnitude
-                local length = math.clamp(300 / distance, 50, 200)
-                tracer.Size = UDim2.new(0, 2, 0, length)
-            else
-                tracer.Visible = false
-            end
+    -- Kết nối cập nhật máu
+    local healthConnection
+    healthConnection = humanoid.HealthChanged:Connect(function()
+        if not character or not character.Parent then
+            healthConnection:Disconnect()
+            return
         end
         
-        local renderConnection
-        renderConnection = RunService.RenderStepped:Connect(function()
-            if not character or not character.Parent or humanoid.Health <= 0 then
-                renderConnection:Disconnect()
-                tracer:Destroy()
-                return
-            end
-            updateTracer()
-        end)
-    end
+        -- Cập nhật thông tin
+        local hrp = character:FindFirstChild("HumanoidRootPart")
+        local distance = hrp and Players.LocalPlayer.Character:FindFirstChild("HumanoidRootPart") 
+                          and (hrp.Position - Players.LocalPlayer.Character.HumanoidRootPart.Position).Magnitude or 0
+        
+        infoLabel.Text = string.format("%s\nHP: %d/%d\n%.1fm", 
+            player.Name, 
+            math.floor(humanoid.Health), 
+            math.floor(humanoid.MaxHealth),
+            distance
+        )
+        
+        -- Tự động xóa nếu chết
+        if humanoid.Health <= 0 then
+            clearPlayerESP(player)
+        end
+    end)
+    
+    -- Lưu vào espObjects để quản lý
+    espObjects[player] = {
+        billboard = billboard,
+        healthConnection = healthConnection
+    }
+    
+    -- Kích hoạt cập nhật lần đầu
+    humanoid.HealthChanged:Fire()
 end
 
 -- Hàm bật/tắt ESP
@@ -706,9 +634,7 @@ local function toggleESP(state)
         -- Tạo ESP cho tất cả người chơi hiện có
         for _, player in ipairs(Players:GetPlayers()) do
             if player ~= Players.LocalPlayer then
-                coroutine.wrap(function()
-                    updateESP(player)
-                end)()
+                coroutine.wrap(updateESP)(player)
             end
         end
         
@@ -1282,5 +1208,3 @@ autoBuyBandageButton.MouseButton1Click:Connect(function()
         end
     end
 end) 
-
-

@@ -1,18 +1,12 @@
-local Players = game:GetService("Players")
-local RunService = game:GetService("RunService")
+local player = game:GetService("Players").LocalPlayer
+local playerGui = player:WaitForChild("PlayerGui")
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
 local HttpService = game:GetService("HttpService")
 
-local player = Players.LocalPlayer
-local playerGui = player:WaitForChild("PlayerGui")
-
--- Cấu hình KeySystem Vĩnh Viễn
-local VALID_KEYS = {
-    "SKY1337"
-}
-
-local KEY_FILE = "DungSkyHub_PermanentKey.txt"
+-- Giả định các biến này đã được định nghĩa trước đó
+local VALID_KEYS = {"SKY123", "VIPKEY", "TESTKEY"} -- Thay thế bằng keys thực tế của bạn
+local KEY_FILE = "skyhub_key.txt"
 
 -- GUI - Neon Xanh
 local screenGui = Instance.new("ScreenGui")
@@ -142,48 +136,6 @@ iconButton.Active = true
 iconButton.Visible = false -- Hidden initially
 iconButton.Parent = screenGui
 
--- Xử lý sự kiện submit key
-submitButton.MouseButton1Click:Connect(function()
-    local key = string.upper(string.gsub(keyInput.Text, "%s+", ""))
-    
-    if checkKey(key) then
-        saveKey(key)
-        statusLabel.Text = "✅ Key hợp lệ - Đang mở menu..."
-        statusLabel.TextColor3 = Color3.fromRGB(0, 255, 0)
-        
-        game.StarterGui:SetCore("SendNotification", {
-            Title = "SKY HUB",
-            Text = "Chào mừng "..player.Name.." đã trở lại!",
-            Duration = 5,
-            Icon = "rbxassetid://57254792"
-        })
-        
-        wait(1)
-        keyGui.Visible = false
-        iconButton.Visible = true
-    else
-        statusLabel.Text = "❌ Key không hợp lệ! Vui lòng thử lại"
-        statusLabel.TextColor3 = Color3.fromRGB(255, 50, 50)
-    end
-end)
-
--- Kiểm tra key khi khởi chạy
-if hasValidKey() then
-    -- Thông báo khi tự động đăng nhập bằng key đã lưu
-    game.StarterGui:SetCore("SendNotification", {
-        Title = "SKY HUB",
-        Text = "Chào mừng "..player.Name.." đã trở lại!",
-        Duration = 5,
-        Icon = "rbxassetid://57254792"
-    })
-    
-    keyGui.Visible = false
-    iconButton.Visible = true
-else
-    keyGui.Visible = true
-    iconButton.Visible = false
-end
-
 local iconCorner = Instance.new("UICorner", iconButton)
 iconCorner.CornerRadius = UDim.new(0, 12)
 
@@ -193,8 +145,8 @@ iconStroke.Thickness = 2
 
 -- Main Frame - Tự động điều chỉnh kích thước
 local mainFrame = Instance.new("Frame")
-mainFrame.Size = UDim2.new(0, 300, 0, 300)
-mainFrame.Position = UDim2.new(0.5, -150, 0.5, -100)
+mainFrame.Size = UDim2.new(0, 350, 0, 400)
+mainFrame.Position = UDim2.new(0.5, -175, 0.5, -200)
 mainFrame.AnchorPoint = Vector2.new(0.5, 0.5)
 mainFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
 mainFrame.BorderSizePixel = 0
@@ -202,21 +154,22 @@ mainFrame.Visible = false
 mainFrame.ClipsDescendants = true
 mainFrame.Parent = screenGui
 
--- Cho phép di chuyển mainFrame
+-- Thêm title bar để di chuyển
+local titleBar = Instance.new("Frame")
+titleBar.Size = UDim2.new(1, 0, 0, 30)
+titleBar.Position = UDim2.new(0, 0, 0, 0)
+titleBar.BackgroundColor3 = Color3.fromRGB(0, 100, 50)
+titleBar.BorderSizePixel = 0
+titleBar.Parent = mainFrame
+
+local titleBarCorner = Instance.new("UICorner", titleBar)
+titleBarCorner.CornerRadius = UDim.new(0, 12, 0, 0)
+
+-- Cho phép di chuyển mainFrame thông qua title bar
 local dragging = false
 local dragInput, dragStart, startPos
 
-local function updateInput(input)
-    local delta = input.Position - dragStart
-    mainFrame.Position = UDim2.new(
-        startPos.X.Scale, 
-        startPos.X.Offset + delta.X,
-        startPos.Y.Scale, 
-        startPos.Y.Offset + delta.Y
-    )
-end
-
-mainFrame.InputBegan:Connect(function(input)
+titleBar.InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1 then
         dragging = true
         dragStart = input.Position
@@ -230,7 +183,7 @@ mainFrame.InputBegan:Connect(function(input)
     end
 end)
 
-mainFrame.InputChanged:Connect(function(input)
+titleBar.InputChanged:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseMovement and dragging then
         dragInput = input
     end
@@ -238,7 +191,13 @@ end)
 
 UserInputService.InputChanged:Connect(function(input)
     if input == dragInput and dragging then
-        updateInput(input)
+        local delta = input.Position - dragStart
+        mainFrame.Position = UDim2.new(
+            startPos.X.Scale, 
+            startPos.X.Offset + delta.X,
+            startPos.Y.Scale, 
+            startPos.Y.Offset + delta.Y
+        )
     end
 end)
 
@@ -249,23 +208,57 @@ local mainStroke = Instance.new("UIStroke", mainFrame)
 mainStroke.Color = Color3.fromRGB(0, 255, 128)
 mainStroke.Thickness = 3
 
--- Title
+-- Title (di chuyển vào trong title bar)
 local titleLabel = Instance.new("TextLabel")
-titleLabel.Size = UDim2.new(1, -20, 0, 40)
-titleLabel.Position = UDim2.new(0, 10, 0, 10)
+titleLabel.Size = UDim2.new(1, -40, 1, 0)
+titleLabel.Position = UDim2.new(0, 10, 0, 0)
 titleLabel.BackgroundTransparency = 1
 titleLabel.Text = "⚡ SKY HUB ⚡"
 titleLabel.Font = Enum.Font.GothamBlack
-titleLabel.TextSize = 22
-titleLabel.TextColor3 = Color3.fromRGB(0, 255, 128)
+titleLabel.TextSize = 18
+titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
 titleLabel.TextStrokeTransparency = 0
 titleLabel.TextStrokeColor3 = Color3.fromRGB(0, 100, 50)
-titleLabel.Parent = mainFrame
+titleLabel.Parent = titleBar
+
+-- Thêm nút đóng GUI vào title bar
+local closeButton = Instance.new("TextButton")
+closeButton.Name = "CloseButton"
+closeButton.Size = UDim2.new(0, 30, 0, 30)
+closeButton.Position = UDim2.new(1, -35, 0, 0)
+closeButton.Text = "X"
+closeButton.Font = Enum.Font.GothamBold
+closeButton.TextSize = 18
+closeButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+closeButton.BackgroundColor3 = Color3.fromRGB(255, 50, 50)
+closeButton.BorderSizePixel = 0
+closeButton.Parent = titleBar
+
+local closeCorner = Instance.new("UICorner", closeButton)
+closeCorner.CornerRadius = UDim.new(0, 0, 0, 12)
+
+-- Hiệu ứng hover cho nút đóng
+closeButton.MouseEnter:Connect(function()
+    TweenService:Create(closeButton, TweenInfo.new(0.2), {
+        BackgroundColor3 = Color3.fromRGB(255, 80, 80)
+    }):Play()
+end)
+
+closeButton.MouseLeave:Connect(function()
+    TweenService:Create(closeButton, TweenInfo.new(0.2), {
+        BackgroundColor3 = Color3.fromRGB(255, 50, 50)
+    }):Play()
+end)
+
+-- Sự kiện đóng GUI
+closeButton.MouseButton1Click:Connect(function()
+    mainFrame.Visible = false
+end)
 
 -- Tabs Container
 local tabButtons = Instance.new("Frame")
 tabButtons.Size = UDim2.new(1, -20, 0, 40)
-tabButtons.Position = UDim2.new(0, 10, 0, 60)
+tabButtons.Position = UDim2.new(0, 10, 0, 40)
 tabButtons.BackgroundTransparency = 1
 tabButtons.Parent = mainFrame
 
@@ -277,8 +270,8 @@ tabLayout.SortOrder = Enum.SortOrder.LayoutOrder
 -- Tab Pages với ScrollingFrame
 local pages = Instance.new("Frame")
 pages.Name = "Pages"
-pages.Size = UDim2.new(1, -20, 1, -110)
-pages.Position = UDim2.new(0, 10, 0, 110)
+pages.Size = UDim2.new(1, -20, 1, -90)
+pages.Position = UDim2.new(0, 10, 0, 90)
 pages.BackgroundTransparency = 1
 pages.Parent = mainFrame
 
@@ -311,8 +304,8 @@ local function createTab(name)
     
     listLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
         scrollFrame.CanvasSize = UDim2.new(0, 0, 0, listLayout.AbsoluteContentSize.Y + 20)
-        local newHeight = math.clamp(110 + listLayout.AbsoluteContentSize.Y + 20, 200, 500)
-        mainFrame.Size = UDim2.new(0, 300, 0, newHeight)
+        local newHeight = math.clamp(90 + listLayout.AbsoluteContentSize.Y + 20, 200, 500)
+        mainFrame.Size = UDim2.new(0, 350, 0, newHeight)
     end)
 
     return button, scrollFrame
@@ -364,8 +357,6 @@ local function createStandardButton(parent, text, yOffset)
     
     return button
 end
-
--- 💥
 
 -- Thêm nút vào MainTab
 local spinBtn = createStandardButton(MainTab, "Bắt đầu quay", 10)
@@ -434,50 +425,54 @@ end)
 iconButton.MouseButton1Click:Connect(function()
     mainFrame.Visible = not mainFrame.Visible
     if mainFrame.Visible then
-        mainFrame.Size = UDim2.new(0, 300, 0, 0)
+        mainFrame.Size = UDim2.new(0, 350, 0, 0)
         TweenService:Create(mainFrame, TweenInfo.new(0.3), {
-            Size = UDim2.new(0, 300, 0, 200)
+            Size = UDim2.new(0, 350, 0, 400)
         }):Play()
     end
 end)
 
--- Thêm nút đóng GUI
-local closeButton = Instance.new("TextButton")
-closeButton.Name = "CloseButton"
-closeButton.Size = UDim2.new(0, 30, 0, 30)
-closeButton.Position = UDim2.new(1, -40, 0, 10)
-closeButton.Text = "X"
-closeButton.Font = Enum.Font.GothamBold
-closeButton.TextSize = 18
-closeButton.TextColor3 = Color3.fromRGB(255, 50, 50)
-closeButton.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-closeButton.BorderSizePixel = 0
-closeButton.Parent = mainFrame
-
-local closeCorner = Instance.new("UICorner", closeButton)
-closeCorner.CornerRadius = UDim.new(0, 8)
-
-local closeStroke = Instance.new("UIStroke", closeButton)
-closeStroke.Color = Color3.fromRGB(255, 50, 50)
-closeStroke.Thickness = 2
-
--- Hiệu ứng hover cho nút đóng
-closeButton.MouseEnter:Connect(function()
-    TweenService:Create(closeButton, TweenInfo.new(0.2), {
-        BackgroundColor3 = Color3.fromRGB(50, 50, 50)
-    }):Play()
+-- Xử lý sự kiện submit key
+submitButton.MouseButton1Click:Connect(function()
+    local key = string.upper(string.gsub(keyInput.Text, "%s+", ""))
+    
+    if checkKey(key) then
+        saveKey(key)
+        statusLabel.Text = "✅ Key hợp lệ - Đang mở menu..."
+        statusLabel.TextColor3 = Color3.fromRGB(0, 255, 0)
+        
+        game.StarterGui:SetCore("SendNotification", {
+            Title = "SKY HUB",
+            Text = "Chào mừng "..player.Name.." đã trở lại!",
+            Duration = 5,
+            Icon = "rbxassetid://57254792"
+        })
+        
+        wait(1)
+        keyGui.Visible = false
+        iconButton.Visible = true
+    else
+        statusLabel.Text = "❌ Key không hợp lệ! Vui lòng thử lại"
+        statusLabel.TextColor3 = Color3.fromRGB(255, 50, 50)
+    end
 end)
 
-closeButton.MouseLeave:Connect(function()
-    TweenService:Create(closeButton, TweenInfo.new(0.2), {
-        BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-    }):Play()
-end)
-
--- Sự kiện đóng GUI
-closeButton.MouseButton1Click:Connect(function()
-    mainFrame.Visible = false
-end)
+-- Kiểm tra key khi khởi chạy
+if hasValidKey() then
+    -- Thông báo khi tự động đăng nhập bằng key đã lưu
+    game.StarterGui:SetCore("SendNotification", {
+        Title = "SKY HUB",
+        Text = "Chào mừng "..player.Name.." đã trở lại!",
+        Duration = 5,
+        Icon = "rbxassetid://57254792"
+    })
+    
+    keyGui.Visible = false
+    iconButton.Visible = true
+else
+    keyGui.Visible = true
+    iconButton.Visible = false
+end
 
 -- ⚙️ SPIN
 local function getCharacter()
@@ -568,148 +563,75 @@ fixLagButton.MouseButton1Click:Connect(function()
     end
 end)
 
--- ⚙️ ESP ĐƠN GIẢN (MÁU + TÊN + VỊ TRÍ)
+-- ⚙️ ESP
 local showESP = false
-local espSettings = {
-    textSize = 14,
-    maxDistance = 500,
-    teamCheck = true,
-    colorEnemy = Color3.fromRGB(255, 50, 50),
-    colorFriendly = Color3.fromRGB(50, 255, 50)
-}
 
-local espObjects = {}
-
--- Hàm xóa ESP của 1 người chơi
-local function clearPlayerESP(player)
-    if espObjects[player] then
-        if espObjects[player].billboard then
-            espObjects[player].billboard:Destroy()
-        end
-        espObjects[player] = nil
-    end
-end
-
--- Hàm xóa tất cả ESP
-local function clearAllESP()
-    for _, player in ipairs(Players:GetPlayers()) do
-        clearPlayerESP(player)
-    end
-    espObjects = {}
-end
-
--- Hàm cập nhật ESP cho một người chơi
-local function updateESP(player)
+local function createESP(player)
     if player == Players.LocalPlayer then return end
-    if not player or not player.Character then return end
-    
-    -- Xóa ESP cũ nếu có
-    clearPlayerESP(player)
-    
-    local character = player.Character
-    local humanoid = character:FindFirstChildOfClass("Humanoid")
-    local head = character:FindFirstChild("Head")
-    
-    if not humanoid or not head then return end
-    
-    -- Xác định màu sắc
-    local color = espSettings.colorEnemy
-    if espSettings.teamCheck and player.Team == Players.LocalPlayer.Team then
-        color = espSettings.colorFriendly
-    end
-    
-    -- Tạo billboard
+    if not player.Character or not player.Character:FindFirstChild("HumanoidRootPart") then return end
+
     local billboard = Instance.new("BillboardGui")
-    billboard.Name = "SimpleESP"
-    billboard.Adornee = head
+    billboard.Name = "ESP"
+    billboard.Adornee = player.Character:WaitForChild("Head")
     billboard.Size = UDim2.new(0, 200, 0, 50)
-    billboard.StudsOffset = Vector3.new(0, 2.5, 0)
+    billboard.StudsOffset = Vector3.new(0, 2, 0)
     billboard.AlwaysOnTop = true
-    billboard.MaxDistance = espSettings.maxDistance
-    billboard.Parent = character
-    
-    local infoLabel = Instance.new("TextLabel")
-    infoLabel.Size = UDim2.new(1, 0, 1, 0)
-    infoLabel.BackgroundTransparency = 1
-    infoLabel.TextStrokeTransparency = 0
-    infoLabel.TextStrokeColor3 = Color3.new(0, 0, 0)
-    infoLabel.Font = Enum.Font.GothamBold
-    infoLabel.TextSize = espSettings.textSize
-    infoLabel.TextColor3 = color
-    infoLabel.Parent = billboard
-    
-    -- Kết nối cập nhật máu
-    local healthConnection
-    healthConnection = humanoid.HealthChanged:Connect(function()
-        if not character or not character.Parent then
-            healthConnection:Disconnect()
-            return
-        end
-        
-        -- Cập nhật thông tin
-        local hrp = character:FindFirstChild("HumanoidRootPart")
-        local distance = hrp and Players.LocalPlayer.Character:FindFirstChild("HumanoidRootPart") 
-                          and (hrp.Position - Players.LocalPlayer.Character.HumanoidRootPart.Position).Magnitude or 0
-        
-        infoLabel.Text = string.format("%s\nHP: %d/%d\n%.1fm", 
-            player.Name, 
-            math.floor(humanoid.Health), 
-            math.floor(humanoid.MaxHealth),
-            distance
-        )
-        
-        -- Tự động xóa nếu chết
-        if humanoid.Health <= 0 then
-            clearPlayerESP(player)
+    billboard.Parent = player.Character
+
+    local nameLabel = Instance.new("TextLabel", billboard)
+    nameLabel.Size = UDim2.new(1, 0, 0.5, 0)
+    nameLabel.Text = player.Name
+    nameLabel.BackgroundTransparency = 1
+    nameLabel.TextColor3 = Color3.new(1, 1, 1)
+    nameLabel.TextStrokeTransparency = 0
+    nameLabel.TextScaled = true
+
+    local healthLabel = Instance.new("TextLabel", billboard)
+    healthLabel.Position = UDim2.new(0, 0, 0.5, 0)
+    healthLabel.Size = UDim2.new(1, 0, 0.5, 0)
+    healthLabel.BackgroundTransparency = 1
+    healthLabel.TextColor3 = Color3.fromRGB(0, 255, 0)
+    healthLabel.TextStrokeTransparency = 0
+    healthLabel.TextScaled = true
+
+    local connection
+    connection = RunService.RenderStepped:Connect(function()
+        if player.Character and player.Character:FindFirstChild("Humanoid") then
+            local hp = math.floor(player.Character.Humanoid.Health)
+            healthLabel.Text = "HP: " .. hp
         end
     end)
-    
-    -- Lưu vào espObjects để quản lý
-    espObjects[player] = {
-        billboard = billboard,
-        healthConnection = healthConnection
-    }
-    
-    -- Kích hoạt cập nhật lần đầu
-    humanoid.HealthChanged:Fire()
+
+    player.CharacterRemoving:Connect(function()
+        if billboard then billboard:Destroy() end
+        if connection then connection:Disconnect() end
+    end)
 end
 
--- Hàm bật/tắt ESP
 local function toggleESP(state)
-    showESP = state
-    if state then
-        -- Tạo ESP cho tất cả người chơi hiện có
-        for _, player in ipairs(Players:GetPlayers()) do
-            if player ~= Players.LocalPlayer then
-                coroutine.wrap(updateESP)(player)
+    for _, plr in pairs(Players:GetPlayers()) do
+        if plr ~= player and plr.Character then
+            if state then
+                createESP(plr)
+            else
+                local esp = plr.Character:FindFirstChild("ESP")
+                if esp then esp:Destroy() end
             end
         end
-        
-        -- Kết nối sự kiện khi có người chơi mới
-        Players.PlayerAdded:Connect(function(player)
-            player.CharacterAdded:Connect(function(character)
-                if showESP then
-                    wait(1) -- Đợi character load hoàn tất
-                    updateESP(player)
-                end
-            end)
-        end)
-    else
-        clearAllESP()
     end
 end
 
--- Kết nối nút ESP
 espButton.MouseButton1Click:Connect(function()
     showESP = not showESP
     espButton.Text = "ESP: " .. (showESP and "ON" or "OFF")
     toggleESP(showESP)
 end)
 
--- Tự động bật ESP nếu đang bật khi script restart
-if showESP then
-    toggleESP(true)
-end
+Players.PlayerAdded:Connect(function(plr)
+    plr.CharacterAdded:Connect(function()
+        if showESP then wait(1) createESP(plr) end
+    end)
+end)
 
 -- ⚙️ AIMBOT
 local camera = workspace.CurrentCamera

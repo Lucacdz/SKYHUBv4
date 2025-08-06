@@ -193,7 +193,7 @@ iconStroke.Thickness = 2
 
 -- Main Frame - Tự động điều chỉnh kích thước
 local mainFrame = Instance.new("Frame")
-mainFrame.Size = UDim2.new(0, 400, 0, 350)
+mainFrame.Size = UDim2.new(0, 500, 0, 550)
 mainFrame.Position = UDim2.new(0.5, -150, 0.5, -100)
 mainFrame.AnchorPoint = Vector2.new(0.5, 0.5)
 mainFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
@@ -944,12 +944,12 @@ task.spawn(function()
 		local version = game.JobId or "Không rõ"
 
 		infoText.Text = string.format([[
-💫 SKYHUB BY DUNGSKY
-✨ Phiên Bản v4 
-👥 Người chơi: %d
-🕒 Server đã chạy: %d phút %02d giây
-🛡️ Loại server: %s
-🧩 Server JobId: %s
+✇ SKYHUB BY DUNGSKY ✇
+☬ Phiên Bản v4 
+♙ Người chơi: %d
+☩ Server đã chạy: %d phút %02d giây
+♯ Loại server: %s
+✞ Server JobId: %s
 ]], playerCount, minutes, seconds, vipServer and "VIP" or "Thường", version)
 
 		wait(1)

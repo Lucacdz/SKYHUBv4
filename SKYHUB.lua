@@ -379,7 +379,7 @@ local fixLagButton = createStandardButton(SettingsTab, "Fix Lag: OFF", 60)
 local espButton = createStandardButton(SettingsTab, "ESP: OFF", 110)
 local hideNamesButton = createStandardButton(SettingsTab, "Ẩn tên: OFF", 210)
 local infoButton = createStandardButton(SettingsTab, "Thông Tin Server", 210)
-local fpsToggleButton = createStandardButton(SettingsTab, "FPS Counter: OFF", 160)
+local fpsToggleButton = createStandardButton(SettingsTab, "FPS Counter: "..(fpsCounterEnabled and "ON" or "OFF"), 160)
 
 -- Thêm nút vào ModTab
 local noClipButton = createStandardButton(ModTab, "NoClip: OFF", 10)
@@ -1198,13 +1198,9 @@ local function createFPSCounter()
     end)
 end
 
--- Tạo nút toggle trong SettingsTab (đảm bảo SettingsTab đã tồn tại)
-local fpsToggleButton = createStandardButton(SettingsTab, "FPS Counter: "..(fpsCounterEnabled and "ON" or "OFF"), 160)
-
-fpsToggleButton.MouseButton1Click:Connect(function()
+(function()
     fpsCounterEnabled = not fpsCounterEnabled
     
-    -- Cập nhật text nút
     fpsToggleButton.Text = "FPS Counter: "..(fpsCounterEnabled and "ON" or "OFF")
     
     -- Tạo hoặc ẩn FPS counter
@@ -1224,6 +1220,7 @@ end)
 createFPSCounter()
 
 -- Thêm Fly Control vào Main Tab (phiên bản đơn giản giống các nút khác)
+local flyButton = createStandardButton(MainTab, "Fly: OFF", 210) -- Điều chỉnh vị trí Y cho phù hợp
 local speed = 50
 local flying = false
 local bg, bv

@@ -1525,3 +1525,47 @@ end)
 
 -- Liên tục cập nhật máu
 game:GetService("RunService").Heartbeat:Connect(updateBossHealth)
+
+-- Nút Aim Boss
+local aimBossBtn = Instance.new("TextButton")
+aimBossBtn.Size = UDim2.new(1, -20, 0, 30)
+aimBossBtn.Position = UDim2.new(0, 10, 0, 100) -- chỉnh vị trí Y cho hợp lý
+aimBossBtn.BackgroundColor3 = Color3.fromRGB(20, 20, 25)
+aimBossBtn.TextColor3 = Color3.fromRGB(0, 255, 128)
+aimBossBtn.Font = Enum.Font.Gotham
+aimBossBtn.TextSize = 14
+aimBossBtn.Text = "Aim Boss: OFF"
+aimBossBtn.Parent = bossFrame
+
+-- Viền neon cho nút
+local aimStroke = Instance.new("UIStroke")
+aimStroke.Color = Color3.fromRGB(0, 255, 128)
+aimStroke.Thickness = 2
+aimStroke.Parent = aimBossBtn
+
+-- Biến lưu trạng thái aim
+local aimingBoss = false
+local aimConnection
+
+local function toggleAimBoss()
+    aimingBoss = not aimingBoss
+    if aimingBoss then
+        aimBossBtn.Text = "Aim Boss: ON"
+        local cam = workspace.CurrentCamera
+
+        aimConnection = game:GetService("RunService").RenderStepped:Connect(function()
+            local boss = workspace.GiangHo2:FindFirstChild("NPC2")
+            if boss and boss:FindFirstChild("HumanoidRootPart") then
+                cam.CFrame = CFrame.new(cam.CFrame.Position, boss.HumanoidRootPart.Position)
+            end
+        end)
+    else
+        aimBossBtn.Text = "Aim Boss: OFF"
+        if aimConnection then
+            aimConnection:Disconnect()
+            aimConnection = nil
+        end
+    end
+end
+
+aimBossBtn.MouseButton1Click:Connect(toggleAimBoss)

@@ -1233,12 +1233,48 @@ flyButton.MouseButton1Click:Connect(function()
     createFlyGui()
 end)
 
--- ⚙️ BOSS
+-- ⚙️ BOSS CONTROL PANEL
+local player = game:GetService("Players").LocalPlayer
+local RunService = game:GetService("RunService")
+local TweenService = game:GetService("TweenService")
+
 --// Màu neon
 local NEON_GREEN = Color3.fromRGB(0, 255, 128)
 local DARK_GREEN = Color3.fromRGB(0, 50, 25)
 
---// Hàm tìm NPC gần nhất (loại trừ bản thân người chơi)
+--// Hàm tạo nút chuẩn
+local function createStandardButton(parent, text, posY)
+    local btn = Instance.new("TextButton")
+    btn.Size = UDim2.new(0, 200, 0, 30)
+    btn.Position = UDim2.new(0, 10, 0, posY)
+    btn.BackgroundColor3 = DARK_GREEN
+    btn.TextColor3 = Color3.new(1, 1, 1)
+    btn.Text = text
+    btn.Font = Enum.Font.Gotham
+    btn.TextSize = 14
+    btn.Parent = parent
+
+    local stroke = Instance.new("UIStroke")
+    stroke.Color = NEON_GREEN
+    stroke.Thickness = 2
+    stroke.Parent = btn
+
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(0, 6)
+    corner.Parent = btn
+
+    return btn
+end
+
+--// Hàm kiểm tra NPC hợp lệ
+local function isValidNPC(npc)
+    return npc:FindFirstChild("Humanoid") 
+       and npc:FindFirstChild("HumanoidRootPart")
+       and npc ~= player.Character
+       and not npc:FindFirstChild("PlayerScripts") -- Loại trừ player khác
+end
+
+--// Hàm tìm NPC gần nhất
 local function findNearestNPC()
     local closestNPC = nil
     local closestDistance = math.huge
@@ -1249,15 +1285,11 @@ local function findNearestNPC()
     if not humanoidRootPart then return nil end
     
     for _, npc in ipairs(workspace:GetChildren()) do
-        -- Kiểm tra xem có phải NPC (có Humanoid nhưng không phải người chơi)
-        if npc:FindFirstChild("Humanoid") and npc:FindFirstChild("HumanoidRootPart") then
-            -- Loại trừ chính người chơi
-            if npc ~= character then
-                local distance = (humanoidRootPart.Position - npc.HumanoidRootPart.Position).Magnitude
-                if distance < closestDistance then
-                    closestDistance = distance
-                    closestNPC = npc
-                end
+        if isValidNPC(npc) then
+            local distance = (humanoidRootPart.Position - npc.HumanoidRootPart.Position).Magnitude
+            if distance < closestDistance then
+                closestDistance = distance
+                closestNPC = npc
             end
         end
     end
@@ -1265,7 +1297,7 @@ local function findNearestNPC()
     return closestNPC
 end
 
---// Aim NPC gần nhất config
+--// AIM NPC GẦN NHẤT
 local aimingNPC = false
 local aimConnection
 local currentTarget = nil
@@ -1275,19 +1307,22 @@ local function startAimNPC()
     aimConnection = RunService.RenderStepped:Connect(function()
         if not aimingNPC then return end
         
-        -- Cập nhật mục tiêu liên tục
         currentTarget = findNearestNPC()
         
-        if currentTarget and currentTarget:FindFirstChild("HumanoidRootPart") and workspace.CurrentCamera then
+        if currentTarget and currentTarget:FindFirstChild("HumanoidRootPart") then
+            -- Hiệu ứng khi có target
+            aimBtn.BackgroundColor3 = Color3.fromRGB(0, 150, 75)
+            
             local targetPos = currentTarget.HumanoidRootPart.Position
-            local cameraPos = workspace.CurrentCamera.CFrame.Position
-            -- Đảm bảo không nhìn xuống đất bằng cách kiểm tra độ cao
-            if targetPos.Y > cameraPos.Y - 5 then  -- Ngưỡng chênh lệch độ cao
-                workspace.CurrentCamera.CFrame = CFrame.new(cameraPos, targetPos)
-            else
-                -- Nếu NPC ở quá thấp, giữ camera ở góc nhìn ngang
-                workspace.CurrentCamera.CFrame = CFrame.new(cameraPos, Vector3.new(targetPos.X, cameraPos.Y, targetPos.Z))
+            local camera = workspace.CurrentCamera
+            if camera then
+                local cameraPos = camera.CFrame.Position
+                local lookAtPos = Vector3.new(targetPos.X, math.max(targetPos.Y, cameraPos.Y - 2), targetPos.Z)
+                camera.CFrame = CFrame.new(cameraPos, lookAtPos)
             end
+        else
+            -- Hiệu ứng khi không có target
+            aimBtn.BackgroundColor3 = Color3.fromRGB(150, 0, 0)
         end
     end)
 end
@@ -1299,51 +1334,10 @@ local function stopAimNPC()
         aimConnection:Disconnect() 
         aimConnection = nil
     end
+    aimBtn.BackgroundColor3 = DARK_GREEN
 end
 
---// Hiển thị máu NPC
-local npcHealthLabel = Instance.new("TextLabel")
-npcHealthLabel.Size = UDim2.new(1, -20, 0, 25)
-npcHealthLabel.Position = UDim2.new(0, 10, 0, 40)
-npcHealthLabel.BackgroundTransparency = 1
-npcHealthLabel.TextColor3 = NEON_GREEN
-npcHealthLabel.Font = Enum.Font.Gotham
-npcHealthLabel.TextSize = 14
-npcHealthLabel.Text = "Máu NPC: N/A"
-npcHealthLabel.Parent = bossFrame
-
--- Hàm cập nhật máu NPC
-local function updateNPCHealth()
-    local target = currentTarget or findNearestNPC()
-    if target and target:FindFirstChild("Humanoid") then
-        npcHealthLabel.Text = "Máu NPC: " .. math.floor(target.Humanoid.Health)
-    else
-        npcHealthLabel.Text = "Máu NPC: N/A"
-    end
-end
-
--- Kết nối sự kiện cập nhật máu
-RunService.Heartbeat:Connect(function()
-    if bossGui.Enabled then
-        updateNPCHealth()
-    end
-end)
-
--- Nút Aim NPC
-local aimBtn = createStandardButton(bossFrame, "Aim NPC: OFF", 80)
-aimBtn.MouseButton1Click:Connect(function()
-    if aimingNPC then
-        stopAimNPC()
-        aimBtn.Text = "Aim NPC: OFF"
-        TweenService:Create(aimBtn, TweenInfo.new(0.3), {BackgroundColor3 = DARK_GREEN}):Play()
-    else
-        startAimNPC()
-        aimBtn.Text = "Aim NPC: ON"
-        TweenService:Create(aimBtn, TweenInfo.new(0.3), {BackgroundColor3 = NEON_GREEN}):Play()
-    end
-end)
-
---// Bay vòng tròn config
+--// BAY VÒNG TRÒN
 local circleFlight = {
     Config = {
         Center = Vector3.new(-2579.833, 141, -1375.139),
@@ -1355,8 +1349,7 @@ local circleFlight = {
     Connection = nil
 }
 
---// Hàm bắt đầu bay vòng tròn
-local function startCircleFlight(flightBtn)
+local function startCircleFlight()
     if circleFlight.IsActive or not player.Character then return end
     local humanoid = player.Character:FindFirstChild("Humanoid")
     local rootPart = player.Character:FindFirstChild("HumanoidRootPart")
@@ -1367,7 +1360,7 @@ local function startCircleFlight(flightBtn)
 
     circleFlight.Connection = RunService.Heartbeat:Connect(function(delta)
         if not player.Character then
-            stopCircleFlight(flightBtn)
+            stopCircleFlight()
             return
         end
         angle = angle + delta * circleFlight.Config.Speed
@@ -1384,8 +1377,7 @@ local function startCircleFlight(flightBtn)
     TweenService:Create(flightBtn, TweenInfo.new(0.3), {BackgroundColor3 = NEON_GREEN}):Play()
 end
 
---// Hàm dừng bay vòng tròn
-function stopCircleFlight(flightBtn)
+function stopCircleFlight()
     if not circleFlight.IsActive then return end
     if circleFlight.Connection then
         circleFlight.Connection:Disconnect()
@@ -1402,7 +1394,7 @@ function stopCircleFlight(flightBtn)
     TweenService:Create(flightBtn, TweenInfo.new(0.3), {BackgroundColor3 = DARK_GREEN}):Play()
 end
 
---// GUI Boss
+--// GUI BOSS
 local bossGui = Instance.new("ScreenGui")
 bossGui.Name = "BossGui"
 bossGui.Enabled = false
@@ -1437,17 +1429,52 @@ closeBtn.TextSize = 14
 closeBtn.Parent = bossFrame
 closeBtn.MouseButton1Click:Connect(function()
     bossGui.Enabled = false
-    stopCircleFlight(flightBtn)
+    stopCircleFlight()
     stopAimNPC()
 end)
 
+-- Hiển thị máu NPC
+local npcHealthLabel = Instance.new("TextLabel")
+npcHealthLabel.Size = UDim2.new(1, -20, 0, 25)
+npcHealthLabel.Position = UDim2.new(0, 10, 0, 40)
+npcHealthLabel.BackgroundTransparency = 1
+npcHealthLabel.TextColor3 = NEON_GREEN
+npcHealthLabel.Font = Enum.Font.Gotham
+npcHealthLabel.TextSize = 14
+npcHealthLabel.Text = "Máu NPC: N/A"
+npcHealthLabel.Parent = bossFrame
+
+-- Cập nhật máu NPC
+RunService.Heartbeat:Connect(function()
+    if bossGui.Enabled then
+        local target = currentTarget or findNearestNPC()
+        if target and target:FindFirstChild("Humanoid") then
+            npcHealthLabel.Text = "Máu NPC: " .. math.floor(target.Humanoid.Health)
+        else
+            npcHealthLabel.Text = "Máu NPC: N/A"
+        end
+    end
+end)
+
+-- Nút Aim NPC
+local aimBtn = createStandardButton(bossFrame, "Aim NPC: OFF", 80)
+aimBtn.MouseButton1Click:Connect(function()
+    if aimingNPC then
+        stopAimNPC()
+        aimBtn.Text = "Aim NPC: OFF"
+    else
+        startAimNPC()
+        aimBtn.Text = "Aim NPC: ON"
+    end
+end)
+
 -- Nút Bay Vòng Tròn
-flightBtn = createStandardButton(bossFrame, "Bay Vòng Tròn: OFF", 120)
+local flightBtn = createStandardButton(bossFrame, "Bay Vòng Tròn: OFF", 120)
 flightBtn.MouseButton1Click:Connect(function()
     if circleFlight.IsActive then
-        stopCircleFlight(flightBtn)
+        stopCircleFlight()
     else
-        startCircleFlight(flightBtn)
+        startCircleFlight()
     end
 end)
 
@@ -1507,9 +1534,4 @@ speedBox.FocusLost:Connect(function()
         speedLabel.Text = "Tốc độ: "..val
         speedBox.Text = ""
     end
-end)
-
---// Nút mở GUI Boss trong MainTab
-bossButton.MouseButton1Click:Connect(function()
-    bossGui.Enabled = not bossGui.Enabled
 end)

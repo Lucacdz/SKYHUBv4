@@ -1234,10 +1234,6 @@ flyButton.MouseButton1Click:Connect(function()
 end)
 
 -- ⚙️ BOSS CONTROL PANEL
-local player = game:GetService("Players").LocalPlayer
-local RunService = game:GetService("RunService")
-local TweenService = game:GetService("TweenService")
-
 --// Màu neon
 local NEON_GREEN = Color3.fromRGB(0, 255, 128)
 local DARK_GREEN = Color3.fromRGB(0, 50, 25)
@@ -1534,4 +1530,8 @@ speedBox.FocusLost:Connect(function()
         speedLabel.Text = "Tốc độ: "..val
         speedBox.Text = ""
     end
+end)
+
+bossButton.MouseButton1Click:Connect(function()
+    bossGui.Enabled = not bossGui.Enabled
 end)

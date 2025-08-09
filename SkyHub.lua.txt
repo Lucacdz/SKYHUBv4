@@ -1267,7 +1267,7 @@ local function createBossGui()
     BossGui.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
 
     local frame = Instance.new("Frame")
-    frame.Size = UDim2.new(0, 250, 0, 300)
+    frame.Size = UDim2.new(0, 250, 0, 500)
     frame.Position = UDim2.new(0.4, 0, 0.4, 0)
     frame.BackgroundColor3 = Color3.fromRGB(20, 20, 25)
     frame.Parent = BossGui

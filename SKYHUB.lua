@@ -372,7 +372,7 @@ local spinBtn = createStandardButton(MainTab, "Bắt đầu quay", 10)
 local autoClickButton = createStandardButton(MainTab, "Tự Động Đánh: OFF", 60)
 local aimbotButton = createStandardButton(MainTab, "Aimbot: OFF", 160)
 local flyButton = createStandardButton(MainTab, "Fly: OFF", 210) -- 
-local flightBtn = createStandardButton(MainTab, "Bay Vòng Tròn: OFF", 260)
+local bossButton = createStandardButton(MainTab, "Boss", 260)
 
 -- Thêm nút vào SettingsTab
 local afkButton = createStandardButton(SettingsTab, "Bật AFK", 10)
@@ -1100,102 +1100,15 @@ end)
 local speed = 50
 local flying = false
 local bg, bv
+local flyGui -- GUI điều khiển fly
 
--- GUI chính
-local flyGui = Instance.new("ScreenGui")
-flyGui.Name = "FlyControlGUI"
-flyGui.Parent = player:WaitForChild("PlayerGui")
-
--- Frame chính
-local flyFrame = Instance.new("Frame")
-flyFrame.Size = UDim2.new(0, 260, 0, 120)
-flyFrame.Position = UDim2.new(0.4, 0, 0.4, 0)
-flyFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
-flyFrame.BorderSizePixel = 0
-flyFrame.Active = true
-flyFrame.Draggable = true
-flyFrame.Parent = flyGui
-
--- Nút đóng (X)
-local closeButton = Instance.new("TextButton")
-closeButton.Size = UDim2.new(0, 25, 0, 25)
-closeButton.Position = UDim2.new(1, -25, 0, 0)
-closeButton.BackgroundColor3 = Color3.fromRGB(60, 0, 0)
-closeButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-closeButton.TextSize = 14
-closeButton.Text = "X"
-closeButton.Parent = flyFrame
-
-closeButton.MouseButton1Click:Connect(function()
-    flyGui.Enabled = false
-end)
-
--- Tiêu đề
-local title = Instance.new("TextLabel")
-title.Size = UDim2.new(1, -30, 0, 25)
-title.Position = UDim2.new(0, 5, 0, 0)
-title.BackgroundTransparency = 1
-title.Text = "Fly Control"
-title.Font = Enum.Font.GothamBold
-title.TextColor3 = Color3.fromRGB(0, 255, 128)
-title.TextSize = 16
-title.TextXAlignment = Enum.TextXAlignment.Left
-title.Parent = flyFrame
-
--- Nút bật/tắt Fly
-local flyButton = Instance.new("TextButton")
-flyButton.Size = UDim2.new(1, -20, 0, 25)
-flyButton.Position = UDim2.new(0, 10, 0, 30)
-flyButton.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
-flyButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-flyButton.TextSize = 14
-flyButton.Text = "Fly: OFF"
-flyButton.Parent = flyFrame
-
--- Label tốc độ
-local speedLabel = Instance.new("TextLabel")
-speedLabel.Size = UDim2.new(1, -20, 0, 20)
-speedLabel.Position = UDim2.new(0, 10, 0, 60)
-speedLabel.BackgroundTransparency = 1
-speedLabel.Text = "Tốc độ: 50"
-speedLabel.TextColor3 = Color3.fromRGB(0, 255, 128)
-speedLabel.Font = Enum.Font.GothamMedium
-speedLabel.TextSize = 14
-speedLabel.Parent = flyFrame
-
--- Nút + speed
-local speedUpButton = Instance.new("TextButton")
-speedUpButton.Size = UDim2.new(0.5, -15, 0, 25)
-speedUpButton.Position = UDim2.new(0, 10, 0, 85)
-speedUpButton.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
-speedUpButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-speedUpButton.TextSize = 14
-speedUpButton.Text = "+ Speed"
-speedUpButton.Parent = flyFrame
-
--- Nút - speed
-local speedDownButton = Instance.new("TextButton")
-speedDownButton.Size = UDim2.new(0.5, -15, 0, 25)
-speedDownButton.Position = UDim2.new(0.5, 5, 0, 85)
-speedDownButton.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
-speedDownButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-speedDownButton.TextSize = 14
-speedDownButton.Text = "- Speed"
-speedDownButton.Parent = flyFrame
-
--- Hàm cập nhật tốc độ
-local function updateSpeed()
-    speedLabel.Text = "Tốc độ: "..speed
-end
-
--- Toggle Fly
-local function toggleFly()
-    local char = player.Character
+-- Hàm bật/tắt fly
+local function toggleFlyState()
+    local char = game.Players.LocalPlayer.Character
     if not char or not char:FindFirstChild("HumanoidRootPart") then return end
     
     flying = not flying
     if flying then
-        flyButton.Text = "Fly: ON"
         bg = Instance.new("BodyGyro")
         bv = Instance.new("BodyVelocity")
         
@@ -1208,221 +1121,349 @@ local function toggleFly()
         bv.MaxForce = Vector3.new(9e9, 9e9, 9e9)
         bv.Parent = char.HumanoidRootPart
         
-        -- Fly loop
-        task.spawn(function()
+        spawn(function()
             while flying and char and char:FindFirstChild("HumanoidRootPart") do
                 bg.CFrame = workspace.CurrentCamera.CFrame
-                bv.Velocity = workspace.CurrentCamera.CFrame.lookVector * speed
+                bv.Velocity = workspace.CurrentCamera.CFrame.LookVector * speed
                 task.wait()
             end
         end)
     else
-        flyButton.Text = "Fly: OFF"
         if bg then bg:Destroy() end
         if bv then bv:Destroy() end
     end
 end
 
--- Sự kiện nút
-flyButton.MouseButton1Click:Connect(toggleFly)
+-- Hàm tạo GUI điều khiển Fly
+local function createFlyGui()
+    if flyGui then flyGui:Destroy() end
+    
+    flyGui = Instance.new("ScreenGui")
+    flyGui.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
+    
+    local frame = Instance.new("Frame")
+    frame.Size = UDim2.new(0, 200, 0, 150)
+    frame.Position = UDim2.new(0.4, 0, 0.4, 0)
+    frame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+    frame.Active = true
+    frame.Draggable = true
+    frame.Parent = flyGui
+    
+    local title = Instance.new("TextLabel")
+    title.Size = UDim2.new(1, -30, 0, 25)
+    title.Position = UDim2.new(0, 5, 0, 5)
+    title.BackgroundTransparency = 1
+    title.Text = "Fly Control"
+    title.TextColor3 = Color3.fromRGB(0, 255, 128)
+    title.Font = Enum.Font.GothamBold
+    title.TextSize = 14
+    title.TextXAlignment = Enum.TextXAlignment.Left
+    title.Parent = frame
+    
+    local closeBtn = Instance.new("TextButton")
+    closeBtn.Size = UDim2.new(0, 20, 0, 20)
+    closeBtn.Position = UDim2.new(1, -25, 0, 5)
+    closeBtn.Text = "X"
+    closeBtn.BackgroundColor3 = Color3.fromRGB(200, 0, 0)
+    closeBtn.TextColor3 = Color3.new(1,1,1)
+    closeBtn.Font = Enum.Font.GothamBold
+    closeBtn.TextSize = 14
+    closeBtn.Parent = frame
+    closeBtn.MouseButton1Click:Connect(function()
+        flying = false
+        if bg then bg:Destroy() end
+        if bv then bv:Destroy() end
+        flyGui:Destroy()
+    end)
+    
+    local speedLabel = Instance.new("TextLabel")
+    speedLabel.Size = UDim2.new(1, -20, 0, 20)
+    speedLabel.Position = UDim2.new(0, 10, 0, 40)
+    speedLabel.BackgroundTransparency = 1
+    speedLabel.Text = "Tốc độ: "..speed
+    speedLabel.TextColor3 = Color3.fromRGB(0, 255, 128)
+    speedLabel.Font = Enum.Font.Gotham
+    speedLabel.TextSize = 14
+    speedLabel.Parent = frame
+    
+    local speedUpButton = Instance.new("TextButton")
+    speedUpButton.Size = UDim2.new(0, 80, 0, 30)
+    speedUpButton.Position = UDim2.new(0, 10, 0, 70)
+    speedUpButton.Text = "+ Speed"
+    speedUpButton.BackgroundColor3 = Color3.fromRGB(0, 100, 50)
+    speedUpButton.TextColor3 = Color3.new(1,1,1)
+    speedUpButton.Font = Enum.Font.Gotham
+    speedUpButton.TextSize = 14
+    speedUpButton.Parent = frame
+    speedUpButton.MouseButton1Click:Connect(function()
+        speed = math.min(speed + 10, 200)
+        speedLabel.Text = "Tốc độ: "..speed
+    end)
+    
+    local speedDownButton = Instance.new("TextButton")
+    speedDownButton.Size = UDim2.new(0, 80, 0, 30)
+    speedDownButton.Position = UDim2.new(0, 110, 0, 70)
+    speedDownButton.Text = "- Speed"
+    speedDownButton.BackgroundColor3 = Color3.fromRGB(100, 0, 0)
+    speedDownButton.TextColor3 = Color3.new(1,1,1)
+    speedDownButton.Font = Enum.Font.Gotham
+    speedDownButton.TextSize = 14
+    speedDownButton.Parent = frame
+    speedDownButton.MouseButton1Click:Connect(function()
+        speed = math.max(10, speed - 10)
+        speedLabel.Text = "Tốc độ: "..speed
+    end)
+    
+    local toggleBtn = Instance.new("TextButton")
+    toggleBtn.Size = UDim2.new(0, 180, 0, 30)
+    toggleBtn.Position = UDim2.new(0, 10, 0, 110)
+    toggleBtn.Text = "Fly: OFF"
+    toggleBtn.BackgroundColor3 = Color3.fromRGB(0, 50, 25)
+    toggleBtn.TextColor3 = Color3.new(1,1,1)
+    toggleBtn.Font = Enum.Font.Gotham
+    toggleBtn.TextSize = 14
+    toggleBtn.Parent = frame
+    toggleBtn.MouseButton1Click:Connect(function()
+        toggleFlyState()
+        toggleBtn.Text = flying and "Fly: ON" or "Fly: OFF"
+    end)
+end
 
-speedUpButton.MouseButton1Click:Connect(function()
-    speed = math.min(speed + 10, 200)
-    updateSpeed()
+flyButton.MouseButton1Click:Connect(function()
+    createFlyGui()
 end)
 
-speedDownButton.MouseButton1Click:Connect(function()
-    speed = math.max(10, speed - 10)
-    updateSpeed()
-end)
-
--- Khởi tạo
-updateSpeed()
-
--- ⚙️ Boss
+-- ⚙️ BOSS
 local circleFlight = {
     Config = {
-        Center = Vector3.new(-2579.833, 141, -1375.139), -- Tâm vòng tròn
-        Radius = 30, -- Bán kính
-        Height = 141, -- Độ cao
-        Speed = 1.3 -- Tốc độ quay
+        Center = Vector3.new(-2579.833, 141, -1375.139), -- Tọa độ trung tâm
+        Radius = 30,
+        Height = 141,
+        Speed = 1.3
     },
     IsActive = false,
     Connection = nil
 }
 
--- Màu neon xanh lá
+-- 🎨 Màu neon
 local NEON_GREEN = Color3.fromRGB(0, 255, 128)
 local DARK_GREEN = Color3.fromRGB(0, 50, 25)
 
--- Hàm bắt đầu bay vòng tròn
-local function startCircleFlight(flightBtn)
-    if circleFlight.IsActive or not player.Character then return end
+-- 📌 Nút Boss trong MainTab
+bossButton.BackgroundColor3 = DARK_GREEN
+bossButton.TextColor3 = Color3.new(1, 1, 1)
+local bossStroke = Instance.new("UIStroke")
+bossStroke.Color = NEON_GREEN
+bossStroke.Thickness = 2
+bossStroke.Parent = bossButton
 
-    local humanoid = player.Character:FindFirstChild("Humanoid")
-    local rootPart = player.Character:FindFirstChild("HumanoidRootPart")
-    if not humanoid or not rootPart then return end
+-- 📦 Hàm tạo GUI Boss
+local BossGui = nil
+local function createBossGui()
+    if BossGui then return end -- Nếu đã mở thì không tạo lại
 
-    circleFlight.IsActive = true
-    local angle = 0
+    BossGui = Instance.new("ScreenGui")
+    BossGui.Name = "BossGui"
+    BossGui.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
 
-    circleFlight.Connection = RunService.Heartbeat:Connect(function(delta)
-        if not player.Character then
-            stopCircleFlight(flightBtn)
-            return
-        end
-
-        angle = angle + delta * circleFlight.Config.Speed
-
-        local orbitPos = circleFlight.Config.Center + Vector3.new(
-            math.cos(angle) * circleFlight.Config.Radius,
-            circleFlight.Config.Height,
-            math.sin(angle) * circleFlight.Config.Radius
-        )
-
-        rootPart.CFrame = CFrame.new(orbitPos, circleFlight.Config.Center)
-        humanoid:ChangeState(Enum.HumanoidStateType.Freefall)
-    end)
-
-    flightBtn.Text = "Bay Vòng Tròn: ON"
-    TweenService:Create(flightBtn, TweenInfo.new(0.3), {BackgroundColor3 = NEON_GREEN}):Play()
-end
-
--- Hàm dừng bay vòng tròn
-function stopCircleFlight(flightBtn)
-    if not circleFlight.IsActive then return end
-
-    if circleFlight.Connection then
-        circleFlight.Connection:Disconnect()
-        circleFlight.Connection = nil
-    end
-
-    circleFlight.IsActive = false
-
-    if player.Character then
-        local humanoid = player.Character:FindFirstChild("Humanoid")
-        if humanoid then
-            humanoid:ChangeState(Enum.HumanoidStateType.Landed)
-        end
-    end
-
-    flightBtn.Text = "Bay Vòng Tròn: OFF"
-    TweenService:Create(flightBtn, TweenInfo.new(0.3), {BackgroundColor3 = DARK_GREEN}):Play()
-end
-
--- Nút điều khiển
-flightBtn.BackgroundColor3 = DARK_GREEN
-flightBtn.TextColor3 = Color3.new(1, 1, 1)
-
-local btnStroke = Instance.new("UIStroke")
-btnStroke.Color = NEON_GREEN
-btnStroke.Thickness = 2
-btnStroke.Parent = flightBtn
-
--- Label + ô nhập bán kính
-local radiusLabel = Instance.new("TextLabel")
-radiusLabel.Text = "Bán kính: "..circleFlight.Config.Radius
-radiusLabel.Size = UDim2.new(1, -20, 0, 20)
-radiusLabel.Position = UDim2.new(0, 10, 0, 310)
-radiusLabel.TextColor3 = NEON_GREEN
-radiusLabel.Font = Enum.Font.Gotham
-radiusLabel.TextXAlignment = Enum.TextXAlignment.Left
-radiusLabel.BackgroundTransparency = 1
-radiusLabel.Parent = MainTab
-
-local radiusSlider = Instance.new("TextBox")
-radiusSlider.PlaceholderText = "Nhập bán kính..."
-radiusSlider.Text = ""
-radiusSlider.Size = UDim2.new(1, -20, 0, 25)
-radiusSlider.Position = UDim2.new(0, 10, 0, 330)
-radiusSlider.BackgroundColor3 = Color3.fromRGB(20, 20, 25)
-radiusSlider.TextColor3 = NEON_GREEN
-radiusSlider.Font = Enum.Font.Gotham
-radiusSlider.Parent = MainTab
-
--- Label + ô nhập tốc độ
-local speedLabel = Instance.new("TextLabel")
-speedLabel.Text = "Tốc độ: "..circleFlight.Config.Speed
-speedLabel.Size = UDim2.new(1, -20, 0, 20)
-speedLabel.Position = UDim2.new(0, 10, 0, 365)
-speedLabel.TextColor3 = NEON_GREEN
-speedLabel.Font = Enum.Font.Gotham
-speedLabel.TextXAlignment = Enum.TextXAlignment.Left
-speedLabel.BackgroundTransparency = 1
-speedLabel.Parent = MainTab
-
-local speedSlider = Instance.new("TextBox")
-speedSlider.PlaceholderText = "Nhập tốc độ..."
-speedSlider.Text = ""
-speedSlider.Size = UDim2.new(1, -20, 0, 25)
-speedSlider.Position = UDim2.new(0, 10, 0, 385)
-speedSlider.BackgroundColor3 = Color3.fromRGB(20, 20, 25)
-speedSlider.TextColor3 = NEON_GREEN
-speedSlider.Font = Enum.Font.Gotham
-speedSlider.Parent = MainTab
-
--- Thêm viền neon
-local function addNeonStroke(frame)
-    local stroke = Instance.new("UIStroke")
-    stroke.Color = NEON_GREEN
-    stroke.Thickness = 1
-    stroke.Parent = frame
+    local frame = Instance.new("Frame")
+    frame.Size = UDim2.new(0, 250, 0, 200)
+    frame.Position = UDim2.new(0.4, 0, 0.4, 0)
+    frame.BackgroundColor3 = Color3.fromRGB(20, 20, 25)
+    frame.Parent = BossGui
 
     local corner = Instance.new("UICorner")
-    corner.CornerRadius = UDim.new(0, 6)
+    corner.CornerRadius = UDim.new(0, 8)
     corner.Parent = frame
+
+    local stroke = Instance.new("UIStroke")
+    stroke.Color = NEON_GREEN
+    stroke.Thickness = 2
+    stroke.Parent = frame
+
+    -- Cho phép kéo di chuyển
+    local drag = Instance.new("TextButton")
+    drag.Size = UDim2.new(1, 0, 0, 25)
+    drag.BackgroundTransparency = 1
+    drag.Text = ""
+    drag.Parent = frame
+    drag.Active = true
+    drag.Draggable = true
+
+    -- Nút X để đóng
+    local closeBtn = Instance.new("TextButton")
+    closeBtn.Text = "X"
+    closeBtn.Size = UDim2.new(0, 25, 0, 25)
+    closeBtn.Position = UDim2.new(1, -25, 0, 0)
+    closeBtn.BackgroundColor3 = DARK_GREEN
+    closeBtn.TextColor3 = Color3.new(1, 1, 1)
+    closeBtn.Parent = frame
+    local closeCorner = Instance.new("UICorner")
+    closeCorner.CornerRadius = UDim.new(0, 6)
+    closeCorner.Parent = closeBtn
+    closeBtn.MouseButton1Click:Connect(function()
+        stopCircleFlight()
+        BossGui:Destroy()
+        BossGui = nil
+    end)
+
+    -- Nút bật/tắt bay vòng tròn
+    local flightBtn = Instance.new("TextButton")
+    flightBtn.Text = "Bay Vòng Tròn: OFF"
+    flightBtn.Size = UDim2.new(1, -20, 0, 30)
+    flightBtn.Position = UDim2.new(0, 10, 0, 40)
+    flightBtn.BackgroundColor3 = DARK_GREEN
+    flightBtn.TextColor3 = Color3.new(1, 1, 1)
+    flightBtn.Parent = frame
+    local btnCorner = Instance.new("UICorner")
+    btnCorner.CornerRadius = UDim.new(0, 6)
+    btnCorner.Parent = flightBtn
+    local btnStroke = Instance.new("UIStroke")
+    btnStroke.Color = NEON_GREEN
+    btnStroke.Thickness = 2
+    btnStroke.Parent = flightBtn
+
+    -- Label bán kính
+    local radiusLabel = Instance.new("TextLabel")
+    radiusLabel.Text = "Bán kính: "..circleFlight.Config.Radius
+    radiusLabel.Size = UDim2.new(1, -20, 0, 20)
+    radiusLabel.Position = UDim2.new(0, 10, 0, 80)
+    radiusLabel.BackgroundTransparency = 1
+    radiusLabel.TextColor3 = NEON_GREEN
+    radiusLabel.Font = Enum.Font.Gotham
+    radiusLabel.TextXAlignment = Enum.TextXAlignment.Left
+    radiusLabel.Parent = frame
+
+    -- Nhập bán kính
+    local radiusBox = Instance.new("TextBox")
+    radiusBox.PlaceholderText = "Nhập bán kính..."
+    radiusBox.Size = UDim2.new(1, -20, 0, 25)
+    radiusBox.Position = UDim2.new(0, 10, 0, 100)
+    radiusBox.BackgroundColor3 = Color3.fromRGB(20, 20, 25)
+    radiusBox.TextColor3 = NEON_GREEN
+    radiusBox.Font = Enum.Font.Gotham
+    radiusBox.Parent = frame
+    local radiusCorner = Instance.new("UICorner")
+    radiusCorner.CornerRadius = UDim.new(0, 6)
+    radiusCorner.Parent = radiusBox
+    local radiusStroke = Instance.new("UIStroke")
+    radiusStroke.Color = NEON_GREEN
+    radiusStroke.Thickness = 1
+    radiusStroke.Parent = radiusBox
+
+    -- Label tốc độ
+    local speedLabel = Instance.new("TextLabel")
+    speedLabel.Text = "Tốc độ: "..circleFlight.Config.Speed
+    speedLabel.Size = UDim2.new(1, -20, 0, 20)
+    speedLabel.Position = UDim2.new(0, 10, 0, 130)
+    speedLabel.BackgroundTransparency = 1
+    speedLabel.TextColor3 = NEON_GREEN
+    speedLabel.Font = Enum.Font.Gotham
+    speedLabel.TextXAlignment = Enum.TextXAlignment.Left
+    speedLabel.Parent = frame
+
+    -- Nhập tốc độ
+    local speedBox = Instance.new("TextBox")
+    speedBox.PlaceholderText = "Nhập tốc độ..."
+    speedBox.Size = UDim2.new(1, -20, 0, 25)
+    speedBox.Position = UDim2.new(0, 10, 0, 150)
+    speedBox.BackgroundColor3 = Color3.fromRGB(20, 20, 25)
+    speedBox.TextColor3 = NEON_GREEN
+    speedBox.Font = Enum.Font.Gotham
+    speedBox.Parent = frame
+    local speedCorner = Instance.new("UICorner")
+    speedCorner.CornerRadius = UDim.new(0, 6)
+    speedCorner.Parent = speedBox
+    local speedStroke = Instance.new("UIStroke")
+    speedStroke.Color = NEON_GREEN
+    speedStroke.Thickness = 1
+    speedStroke.Parent = speedBox
+
+    -- 🔄 Logic nút và ô nhập
+    local function startCircleFlight()
+        if circleFlight.IsActive or not player.Character then return end
+        local humanoid = player.Character:FindFirstChild("Humanoid")
+        local rootPart = player.Character:FindFirstChild("HumanoidRootPart")
+        if not humanoid or not rootPart then return end
+        circleFlight.IsActive = true
+        local angle = 0
+        circleFlight.Connection = RunService.Heartbeat:Connect(function(delta)
+            if not player.Character then
+                stopCircleFlight()
+                return
+            end
+            angle = angle + delta * circleFlight.Config.Speed
+            local orbitPos = circleFlight.Config.Center + Vector3.new(
+                math.cos(angle) * circleFlight.Config.Radius,
+                circleFlight.Config.Height,
+                math.sin(angle) * circleFlight.Config.Radius
+            )
+            rootPart.CFrame = CFrame.new(orbitPos, circleFlight.Config.Center)
+            humanoid:ChangeState(Enum.HumanoidStateType.Freefall)
+        end)
+        flightBtn.Text = "Bay Vòng Tròn: ON"
+        flightBtn.BackgroundColor3 = NEON_GREEN
+    end
+
+    function stopCircleFlight()
+        if not circleFlight.IsActive then return end
+        if circleFlight.Connection then
+            circleFlight.Connection:Disconnect()
+            circleFlight.Connection = nil
+        end
+        circleFlight.IsActive = false
+        flightBtn.Text = "Bay Vòng Tròn: OFF"
+        flightBtn.BackgroundColor3 = DARK_GREEN
+    end
+
+    flightBtn.MouseButton1Click:Connect(function()
+        if circleFlight.IsActive then
+            stopCircleFlight()
+        else
+            startCircleFlight()
+        end
+    end)
+
+    radiusBox.FocusLost:Connect(function()
+        local newRadius = tonumber(radiusBox.Text)
+        if newRadius and newRadius > 0 then
+            circleFlight.Config.Radius = newRadius
+            radiusLabel.Text = "Bán kính: "..newRadius
+            radiusBox.Text = ""
+            if circleFlight.IsActive then
+                stopCircleFlight()
+                wait(0.1)
+                startCircleFlight()
+            end
+        end
+    end)
+
+    speedBox.FocusLost:Connect(function()
+        local newSpeed = tonumber(speedBox.Text)
+        if newSpeed and newSpeed > 0 then
+            circleFlight.Config.Speed = newSpeed
+            speedLabel.Text = "Tốc độ: "..newSpeed
+            speedBox.Text = ""
+            if circleFlight.IsActive then
+                stopCircleFlight()
+                wait(0.1)
+                startCircleFlight()
+            end
+        end
+    end)
+
+    -- Dừng khi nhân vật chết
+    player.CharacterRemoving:Connect(function()
+        stopCircleFlight()
+    end)
 end
-addNeonStroke(radiusSlider)
-addNeonStroke(speedSlider)
 
--- Sự kiện nút
-flightBtn.MouseButton1Click:Connect(function()
-    if circleFlight.IsActive then
-        stopCircleFlight(flightBtn)
+-- 🖱 Sự kiện bấm nút Boss
+bossButton.MouseButton1Click:Connect(function()
+    if BossGui then
+        BossGui:Destroy()
+        BossGui = nil
     else
-        startCircleFlight(flightBtn)
+        createBossGui()
     end
-end)
-
-radiusSlider.FocusLost:Connect(function()
-    local newRadius = tonumber(radiusSlider.Text)
-    if newRadius and newRadius > 0 then
-        circleFlight.Config.Radius = newRadius
-        radiusLabel.Text = "Bán kính: "..newRadius
-        radiusSlider.Text = ""
-
-        if circleFlight.IsActive then
-            stopCircleFlight(flightBtn)
-            wait(0.1)
-            startCircleFlight(flightBtn)
-        end
-    end
-end)
-
-speedSlider.FocusLost:Connect(function()
-    local newSpeed = tonumber(speedSlider.Text)
-    if newSpeed and newSpeed > 0 then
-        circleFlight.Config.Speed = newSpeed
-        speedLabel.Text = "Tốc độ: "..newSpeed
-        speedSlider.Text = ""
-
-        if circleFlight.IsActive then
-            stopCircleFlight(flightBtn)
-            wait(0.1)
-            startCircleFlight(flightBtn)
-        end
-    end
-end)
-
--- Hiệu ứng hover
-flightBtn.MouseEnter:Connect(function()
-    TweenService:Create(flightBtn, TweenInfo.new(0.2), {BackgroundTransparency = 0.3}):Play()
-end)
-flightBtn.MouseLeave:Connect(function()
-    TweenService:Create(flightBtn, TweenInfo.new(0.2), {BackgroundTransparency = 0}):Play()
-end)
-
--- Dừng khi nhân vật chết
-player.CharacterRemoving:Connect(function()
-    stopCircleFlight(flightBtn)
 end)

@@ -372,6 +372,7 @@ local spinBtn = createStandardButton(MainTab, "Bắt đầu quay", 10)
 local autoClickButton = createStandardButton(MainTab, "Tự Động Đánh: OFF", 60)
 local aimbotButton = createStandardButton(MainTab, "Aimbot: OFF", 160)
 local flyButton = createStandardButton(MainTab, "Fly: OFF", 210) -- 
+local flightButton = createStandardButton(MainTab, "Bay Vòng Tròn: OFF", 260)
 
 -- Thêm nút vào SettingsTab
 local afkButton = createStandardButton(SettingsTab, "Bật AFK", 10)
@@ -1174,3 +1175,197 @@ end)
 
 -- Khởi tạo
 updateSpeed()
+
+-- Thêm vào phần biến toàn cục
+local circleFlight = {
+    Config = {
+        Center = Vector3.new(-2579.833, 141, -1375.139), -- Cập nhật tọa độ của bạn
+        Radius = 30,
+        Height = 141,
+        Speed = 1.3
+    },
+    IsActive = false,
+    Connection = nil
+}
+
+-- Màu sắc neon xanh lá
+local NEON_GREEN = Color3.fromRGB(0, 255, 128)
+local DARK_GREEN = Color3.fromRGB(0, 50, 25)
+
+-- Hàm bay vòng tròn
+local function startCircleFlight()
+    if circleFlight.IsActive or not player.Character then return end
+    
+    local humanoid = player.Character:FindFirstChild("Humanoid")
+    local rootPart = player.Character:FindFirstChild("HumanoidRootPart")
+    if not humanoid or not rootPart then return end
+    
+    circleFlight.IsActive = true
+    local angle = 0
+    
+    circleFlight.Connection = RunService.Heartbeat:Connect(function(delta)
+        if not player.Character then
+            stopCircleFlight()
+            return
+        end
+        
+        angle = angle + delta * circleFlight.Config.Speed
+        
+        local orbitPos = circleFlight.Config.Center + Vector3.new(
+            math.cos(angle) * circleFlight.Config.Radius,
+            circleFlight.Config.Height,
+            math.sin(angle) * circleFlight.Config.Radius
+        )
+        
+        rootPart.CFrame = CFrame.new(orbitPos, circleFlight.Config.Center)
+        humanoid:ChangeState(Enum.HumanoidStateType.Freefall)
+    end)
+    
+    -- Cập nhật nút
+    if flightBtn then
+        flightBtn.Text = "Bay Vòng Tròn: ON"
+        TweenService:Create(flightBtn, TweenInfo.new(0.3), {BackgroundColor3 = NEON_GREEN}):Play()
+    end
+end
+
+local function stopCircleFlight()
+    if not circleFlight.IsActive then return end
+    
+    if circleFlight.Connection then
+        circleFlight.Connection:Disconnect()
+        circleFlight.Connection = nil
+    end
+    
+    circleFlight.IsActive = false
+    
+    if player.Character then
+        local humanoid = player.Character:FindFirstChild("Humanoid")
+        if humanoid then
+            humanoid:ChangeState(Enum.HumanoidStateType.Landed)
+        end
+    end
+    
+    -- Cập nhật nút
+    if flightBtn then
+        flightBtn.Text = "Bay Vòng Tròn: OFF"
+        TweenService:Create(flightBtn, TweenInfo.new(0.3), {BackgroundColor3 = DARK_GREEN}):Play()
+    end
+end
+
+-- Tùy chỉnh giao diện neon cho nút
+flightBtn.BackgroundColor3 = DARK_GREEN
+flightBtn.TextColor3 = Color3.new(1, 1, 1)
+
+local btnStroke = Instance.new("UIStroke")
+btnStroke.Color = NEON_GREEN
+btnStroke.Thickness = 2
+btnStroke.Parent = flightBtn
+
+-- Thêm thanh điều chỉnh vào MainTab
+local radiusLabel = Instance.new("TextLabel")
+radiusLabel.Text = "Bán kính: "..circleFlight.Config.Radius
+radiusLabel.Size = UDim2.new(1, -20, 0, 20)
+radiusLabel.Position = UDim2.new(0, 10, 0, 310) -- Điều chỉnh vị trí theo GUI
+radiusLabel.TextColor3 = NEON_GREEN
+radiusLabel.Font = Enum.Font.Gotham
+radiusLabel.TextXAlignment = Enum.TextXAlignment.Left
+radiusLabel.BackgroundTransparency = 1
+radiusLabel.Parent = MainTab
+
+local radiusSlider = Instance.new("TextBox")
+radiusSlider.PlaceholderText = "Nhập bán kính..."
+radiusSlider.Text = ""
+radiusSlider.Size = UDim2.new(1, -20, 0, 25)
+radiusSlider.Position = UDim2.new(0, 10, 0, 330)
+radiusSlider.BackgroundColor3 = Color3.fromRGB(20, 20, 25)
+radiusSlider.TextColor3 = NEON_GREEN
+radiusSlider.Font = Enum.Font.Gotham
+radiusSlider.Parent = MainTab
+
+local speedLabel = Instance.new("TextLabel")
+speedLabel.Text = "Tốc độ: "..circleFlight.Config.Speed
+speedLabel.Size = UDim2.new(1, -20, 0, 20)
+speedLabel.Position = UDim2.new(0, 10, 0, 365)
+speedLabel.TextColor3 = NEON_GREEN
+speedLabel.Font = Enum.Font.Gotham
+speedLabel.TextXAlignment = Enum.TextXAlignment.Left
+speedLabel.BackgroundTransparency = 1
+speedLabel.Parent = MainTab
+
+local speedSlider = Instance.new("TextBox")
+speedSlider.PlaceholderText = "Nhập tốc độ..."
+speedSlider.Text = ""
+speedSlider.Size = UDim2.new(1, -20, 0, 25)
+speedSlider.Position = UDim2.new(0, 10, 0, 385)
+speedSlider.BackgroundColor3 = Color3.fromRGB(20, 20, 25)
+speedSlider.TextColor3 = NEON_GREEN
+speedSlider.Font = Enum.Font.Gotham
+speedSlider.Parent = MainTab
+
+-- Thêm viền neon cho các ô nhập liệu
+local function addNeonStroke(frame)
+    local stroke = Instance.new("UIStroke")
+    stroke.Color = NEON_GREEN
+    stroke.Thickness = 1
+    stroke.Parent = frame
+    
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(0, 6)
+    corner.Parent = frame
+end
+
+addNeonStroke(radiusSlider)
+addNeonStroke(speedSlider)
+
+-- Sự kiện điều khiển
+flightBtn.MouseButton1Click:Connect(function()
+    if circleFlight.IsActive then
+        stopCircleFlight()
+    else
+        startCircleFlight()
+    end
+end)
+
+radiusSlider.FocusLost:Connect(function()
+    local newRadius = tonumber(radiusSlider.Text)
+    if newRadius and newRadius > 0 then
+        circleFlight.Config.Radius = newRadius
+        radiusLabel.Text = "Bán kính: "..newRadius
+        radiusSlider.Text = ""
+        
+        if circleFlight.IsActive then
+            stopCircleFlight()
+            wait(0.1)
+            startCircleFlight()
+        end
+    end
+end)
+
+speedSlider.FocusLost:Connect(function()
+    local newSpeed = tonumber(speedSlider.Text)
+    if newSpeed and newSpeed > 0 then
+        circleFlight.Config.Speed = newSpeed
+        speedLabel.Text = "Tốc độ: "..newSpeed
+        speedSlider.Text = ""
+        
+        if circleFlight.IsActive then
+            stopCircleFlight()
+            wait(0.1)
+            startCircleFlight()
+        end
+    end
+end)
+
+-- Hiệu ứng hover cho nút
+flightBtn.MouseEnter:Connect(function()
+    TweenService:Create(flightBtn, TweenInfo.new(0.2), {BackgroundTransparency = 0.3}):Play()
+end)
+
+flightBtn.MouseLeave:Connect(function()
+    TweenService:Create(flightBtn, TweenInfo.new(0.2), {BackgroundTransparency = 0}):Play()
+end)
+
+-- Tự động dừng khi nhân vật chết
+player.CharacterRemoving:Connect(function()
+    stopCircleFlight()
+end)

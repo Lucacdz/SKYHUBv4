@@ -372,7 +372,7 @@ local spinBtn = createStandardButton(MainTab, "Bắt đầu quay", 10)
 local autoClickButton = createStandardButton(MainTab, "Tự Động Đánh: OFF", 60)
 local aimbotButton = createStandardButton(MainTab, "Aimbot: OFF", 160)
 local flyButton = createStandardButton(MainTab, "Fly: OFF", 210) -- 
-local flightButton = createStandardButton(MainTab, "Bay Vòng Tròn: OFF", 260)
+local flightBtn = createStandardButton(MainTab, "Bay Vòng Tròn: OFF", 260)
 
 -- Thêm nút vào SettingsTab
 local afkButton = createStandardButton(SettingsTab, "Bật AFK", 10)
@@ -945,12 +945,12 @@ task.spawn(function()
 		local version = game.JobId or "Không rõ"
 
 		infoText.Text = string.format([[
-✇ SKYHUB BY DUNGSKY ✇
-☬ Phiên Bản v4 
-♙ Người chơi: %d
-☩ Server đã chạy: %d phút %02d giây
+⚡ SKYHUB BY DUNGSKY ⚡
+♯ Phiên Bản v4 
+♯ Người chơi: %d
+♯ Server đã chạy: %d phút %02d giây
 ♯ Loại server: %s
-✞ Server JobId: %s
+♯ Server JobId: %s
 ]], playerCount, minutes, seconds, vipServer and "VIP" or "Thường", version)
 
 		wait(1)
@@ -1096,38 +1096,101 @@ autoBuyBandageButton.MouseButton1Click:Connect(function()
     end
 end) 
 
--- Thêm Fly Control vào Main Tab (phiên bản đơn giản giống các nút khác)
+-- ⚙️ Fly
 local speed = 50
 local flying = false
 local bg, bv
 
--- Nút tăng tốc độ
-local speedUpButton = createStandardButton(MainTab, "+ Speed", 260)
-speedUpButton.Size = UDim2.new(0, 120, 0, 30)
+-- GUI chính
+local flyGui = Instance.new("ScreenGui")
+flyGui.Name = "FlyControlGUI"
+flyGui.Parent = player:WaitForChild("PlayerGui")
 
--- Nút giảm tốc độ
-local speedDownButton = createStandardButton(MainTab, "- Speed", 260)
-speedDownButton.Position = UDim2.new(0, 130, 0, 260)
-speedDownButton.Size = UDim2.new(0, 120, 0, 30)
+-- Frame chính
+local flyFrame = Instance.new("Frame")
+flyFrame.Size = UDim2.new(0, 260, 0, 120)
+flyFrame.Position = UDim2.new(0.4, 0, 0.4, 0)
+flyFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+flyFrame.BorderSizePixel = 0
+flyFrame.Active = true
+flyFrame.Draggable = true
+flyFrame.Parent = flyGui
 
--- Label hiển thị tốc độ
+-- Nút đóng (X)
+local closeButton = Instance.new("TextButton")
+closeButton.Size = UDim2.new(0, 25, 0, 25)
+closeButton.Position = UDim2.new(1, -25, 0, 0)
+closeButton.BackgroundColor3 = Color3.fromRGB(60, 0, 0)
+closeButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+closeButton.TextSize = 14
+closeButton.Text = "X"
+closeButton.Parent = flyFrame
+
+closeButton.MouseButton1Click:Connect(function()
+    flyGui.Enabled = false
+end)
+
+-- Tiêu đề
+local title = Instance.new("TextLabel")
+title.Size = UDim2.new(1, -30, 0, 25)
+title.Position = UDim2.new(0, 5, 0, 0)
+title.BackgroundTransparency = 1
+title.Text = "Fly Control"
+title.Font = Enum.Font.GothamBold
+title.TextColor3 = Color3.fromRGB(0, 255, 128)
+title.TextSize = 16
+title.TextXAlignment = Enum.TextXAlignment.Left
+title.Parent = flyFrame
+
+-- Nút bật/tắt Fly
+local flyButton = Instance.new("TextButton")
+flyButton.Size = UDim2.new(1, -20, 0, 25)
+flyButton.Position = UDim2.new(0, 10, 0, 30)
+flyButton.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+flyButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+flyButton.TextSize = 14
+flyButton.Text = "Fly: OFF"
+flyButton.Parent = flyFrame
+
+-- Label tốc độ
 local speedLabel = Instance.new("TextLabel")
 speedLabel.Size = UDim2.new(1, -20, 0, 20)
-speedLabel.Position = UDim2.new(0, 10, 0, 300)
+speedLabel.Position = UDim2.new(0, 10, 0, 60)
 speedLabel.BackgroundTransparency = 1
 speedLabel.Text = "Tốc độ: 50"
 speedLabel.TextColor3 = Color3.fromRGB(0, 255, 128)
 speedLabel.Font = Enum.Font.GothamMedium
 speedLabel.TextSize = 14
-speedLabel.Parent = MainTab
+speedLabel.Parent = flyFrame
 
--- Logic Fly
+-- Nút + speed
+local speedUpButton = Instance.new("TextButton")
+speedUpButton.Size = UDim2.new(0.5, -15, 0, 25)
+speedUpButton.Position = UDim2.new(0, 10, 0, 85)
+speedUpButton.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+speedUpButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+speedUpButton.TextSize = 14
+speedUpButton.Text = "+ Speed"
+speedUpButton.Parent = flyFrame
+
+-- Nút - speed
+local speedDownButton = Instance.new("TextButton")
+speedDownButton.Size = UDim2.new(0.5, -15, 0, 25)
+speedDownButton.Position = UDim2.new(0.5, 5, 0, 85)
+speedDownButton.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+speedDownButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+speedDownButton.TextSize = 14
+speedDownButton.Text = "- Speed"
+speedDownButton.Parent = flyFrame
+
+-- Hàm cập nhật tốc độ
 local function updateSpeed()
     speedLabel.Text = "Tốc độ: "..speed
 end
 
+-- Toggle Fly
 local function toggleFly()
-    local char = game.Players.LocalPlayer.Character
+    local char = player.Character
     if not char or not char:FindFirstChild("HumanoidRootPart") then return end
     
     flying = not flying
@@ -1146,11 +1209,11 @@ local function toggleFly()
         bv.Parent = char.HumanoidRootPart
         
         -- Fly loop
-        spawn(function()
+        task.spawn(function()
             while flying and char and char:FindFirstChild("HumanoidRootPart") do
                 bg.CFrame = workspace.CurrentCamera.CFrame
                 bv.Velocity = workspace.CurrentCamera.CFrame.lookVector * speed
-                wait()
+                task.wait()
             end
         end)
     else
@@ -1160,7 +1223,7 @@ local function toggleFly()
     end
 end
 
--- Kết nối sự kiện
+-- Sự kiện nút
 flyButton.MouseButton1Click:Connect(toggleFly)
 
 speedUpButton.MouseButton1Click:Connect(function()
@@ -1176,83 +1239,78 @@ end)
 -- Khởi tạo
 updateSpeed()
 
--- Thêm vào phần biến toàn cục
+-- ⚙️ Boss
 local circleFlight = {
     Config = {
-        Center = Vector3.new(-2579.833, 141, -1375.139), -- Cập nhật tọa độ của bạn
-        Radius = 30,
-        Height = 141,
-        Speed = 1.3
+        Center = Vector3.new(-2579.833, 141, -1375.139), -- Tâm vòng tròn
+        Radius = 30, -- Bán kính
+        Height = 141, -- Độ cao
+        Speed = 1.3 -- Tốc độ quay
     },
     IsActive = false,
     Connection = nil
 }
 
--- Màu sắc neon xanh lá
+-- Màu neon xanh lá
 local NEON_GREEN = Color3.fromRGB(0, 255, 128)
 local DARK_GREEN = Color3.fromRGB(0, 50, 25)
 
--- Hàm bay vòng tròn
-local function startCircleFlight()
+-- Hàm bắt đầu bay vòng tròn
+local function startCircleFlight(flightBtn)
     if circleFlight.IsActive or not player.Character then return end
-    
+
     local humanoid = player.Character:FindFirstChild("Humanoid")
     local rootPart = player.Character:FindFirstChild("HumanoidRootPart")
     if not humanoid or not rootPart then return end
-    
+
     circleFlight.IsActive = true
     local angle = 0
-    
+
     circleFlight.Connection = RunService.Heartbeat:Connect(function(delta)
         if not player.Character then
-            stopCircleFlight()
+            stopCircleFlight(flightBtn)
             return
         end
-        
+
         angle = angle + delta * circleFlight.Config.Speed
-        
+
         local orbitPos = circleFlight.Config.Center + Vector3.new(
             math.cos(angle) * circleFlight.Config.Radius,
             circleFlight.Config.Height,
             math.sin(angle) * circleFlight.Config.Radius
         )
-        
+
         rootPart.CFrame = CFrame.new(orbitPos, circleFlight.Config.Center)
         humanoid:ChangeState(Enum.HumanoidStateType.Freefall)
     end)
-    
-    -- Cập nhật nút
-    if flightBtn then
-        flightBtn.Text = "Bay Vòng Tròn: ON"
-        TweenService:Create(flightBtn, TweenInfo.new(0.3), {BackgroundColor3 = NEON_GREEN}):Play()
-    end
+
+    flightBtn.Text = "Bay Vòng Tròn: ON"
+    TweenService:Create(flightBtn, TweenInfo.new(0.3), {BackgroundColor3 = NEON_GREEN}):Play()
 end
 
-local function stopCircleFlight()
+-- Hàm dừng bay vòng tròn
+function stopCircleFlight(flightBtn)
     if not circleFlight.IsActive then return end
-    
+
     if circleFlight.Connection then
         circleFlight.Connection:Disconnect()
         circleFlight.Connection = nil
     end
-    
+
     circleFlight.IsActive = false
-    
+
     if player.Character then
         local humanoid = player.Character:FindFirstChild("Humanoid")
         if humanoid then
             humanoid:ChangeState(Enum.HumanoidStateType.Landed)
         end
     end
-    
-    -- Cập nhật nút
-    if flightBtn then
-        flightBtn.Text = "Bay Vòng Tròn: OFF"
-        TweenService:Create(flightBtn, TweenInfo.new(0.3), {BackgroundColor3 = DARK_GREEN}):Play()
-    end
+
+    flightBtn.Text = "Bay Vòng Tròn: OFF"
+    TweenService:Create(flightBtn, TweenInfo.new(0.3), {BackgroundColor3 = DARK_GREEN}):Play()
 end
 
--- Tùy chỉnh giao diện neon cho nút
+-- Nút điều khiển
 flightBtn.BackgroundColor3 = DARK_GREEN
 flightBtn.TextColor3 = Color3.new(1, 1, 1)
 
@@ -1261,11 +1319,11 @@ btnStroke.Color = NEON_GREEN
 btnStroke.Thickness = 2
 btnStroke.Parent = flightBtn
 
--- Thêm thanh điều chỉnh vào MainTab
+-- Label + ô nhập bán kính
 local radiusLabel = Instance.new("TextLabel")
 radiusLabel.Text = "Bán kính: "..circleFlight.Config.Radius
 radiusLabel.Size = UDim2.new(1, -20, 0, 20)
-radiusLabel.Position = UDim2.new(0, 10, 0, 310) -- Điều chỉnh vị trí theo GUI
+radiusLabel.Position = UDim2.new(0, 10, 0, 310)
 radiusLabel.TextColor3 = NEON_GREEN
 radiusLabel.Font = Enum.Font.Gotham
 radiusLabel.TextXAlignment = Enum.TextXAlignment.Left
@@ -1282,6 +1340,7 @@ radiusSlider.TextColor3 = NEON_GREEN
 radiusSlider.Font = Enum.Font.Gotham
 radiusSlider.Parent = MainTab
 
+-- Label + ô nhập tốc độ
 local speedLabel = Instance.new("TextLabel")
 speedLabel.Text = "Tốc độ: "..circleFlight.Config.Speed
 speedLabel.Size = UDim2.new(1, -20, 0, 20)
@@ -1302,27 +1361,26 @@ speedSlider.TextColor3 = NEON_GREEN
 speedSlider.Font = Enum.Font.Gotham
 speedSlider.Parent = MainTab
 
--- Thêm viền neon cho các ô nhập liệu
+-- Thêm viền neon
 local function addNeonStroke(frame)
     local stroke = Instance.new("UIStroke")
     stroke.Color = NEON_GREEN
     stroke.Thickness = 1
     stroke.Parent = frame
-    
+
     local corner = Instance.new("UICorner")
     corner.CornerRadius = UDim.new(0, 6)
     corner.Parent = frame
 end
-
 addNeonStroke(radiusSlider)
 addNeonStroke(speedSlider)
 
--- Sự kiện điều khiển
+-- Sự kiện nút
 flightBtn.MouseButton1Click:Connect(function()
     if circleFlight.IsActive then
-        stopCircleFlight()
+        stopCircleFlight(flightBtn)
     else
-        startCircleFlight()
+        startCircleFlight(flightBtn)
     end
 end)
 
@@ -1332,11 +1390,11 @@ radiusSlider.FocusLost:Connect(function()
         circleFlight.Config.Radius = newRadius
         radiusLabel.Text = "Bán kính: "..newRadius
         radiusSlider.Text = ""
-        
+
         if circleFlight.IsActive then
-            stopCircleFlight()
+            stopCircleFlight(flightBtn)
             wait(0.1)
-            startCircleFlight()
+            startCircleFlight(flightBtn)
         end
     end
 end)
@@ -1347,25 +1405,24 @@ speedSlider.FocusLost:Connect(function()
         circleFlight.Config.Speed = newSpeed
         speedLabel.Text = "Tốc độ: "..newSpeed
         speedSlider.Text = ""
-        
+
         if circleFlight.IsActive then
-            stopCircleFlight()
+            stopCircleFlight(flightBtn)
             wait(0.1)
-            startCircleFlight()
+            startCircleFlight(flightBtn)
         end
     end
 end)
 
--- Hiệu ứng hover cho nút
+-- Hiệu ứng hover
 flightBtn.MouseEnter:Connect(function()
     TweenService:Create(flightBtn, TweenInfo.new(0.2), {BackgroundTransparency = 0.3}):Play()
 end)
-
 flightBtn.MouseLeave:Connect(function()
     TweenService:Create(flightBtn, TweenInfo.new(0.2), {BackgroundTransparency = 0}):Play()
 end)
 
--- Tự động dừng khi nhân vật chết
+-- Dừng khi nhân vật chết
 player.CharacterRemoving:Connect(function()
-    stopCircleFlight()
+    stopCircleFlight(flightBtn)
 end)

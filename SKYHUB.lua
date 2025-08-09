@@ -1467,3 +1467,61 @@ bossButton.MouseButton1Click:Connect(function()
         createBossGui()
     end
 end)
+
+local showBossHealth = true -- trạng thái bật/tắt
+
+-- Nút "Máu Boss"
+local bossHealthBtn = Instance.new("TextButton")
+bossHealthBtn.Size = UDim2.new(0, 120, 0, 30)
+bossHealthBtn.Position = UDim2.new(0, 10, 0, 60)
+bossHealthBtn.BackgroundColor3 = Color3.fromRGB(0, 50, 25)
+bossHealthBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+bossHealthBtn.Text = "Máu Boss: ON"
+bossHealthBtn.Parent = bossFrame
+
+-- Label hiển thị máu boss
+local bossHealthLabel = Instance.new("TextLabel")
+bossHealthLabel.Size = UDim2.new(1, -20, 0, 20)
+bossHealthLabel.Position = UDim2.new(0, 10, 0, 100)
+bossHealthLabel.BackgroundTransparency = 1
+bossHealthLabel.TextColor3 = Color3.fromRGB(0, 255, 128)
+bossHealthLabel.Font = Enum.Font.Gotham
+bossHealthLabel.TextSize = 14
+bossHealthLabel.TextXAlignment = Enum.TextXAlignment.Left
+bossHealthLabel.Text = "Máu Boss: ???"
+bossHealthLabel.Parent = bossFrame
+
+-- Đường dẫn boss
+local bossParentName = "GiangHo2"
+local bossName = "NPC2"
+
+-- Hàm cập nhật máu boss
+local function updateBossHealth()
+    if not showBossHealth then
+        bossHealthLabel.Visible = false
+        return
+    end
+
+    bossHealthLabel.Visible = true
+    local parentModel = workspace:FindFirstChild(bossParentName)
+    if parentModel then
+        local boss = parentModel:FindFirstChild(bossName)
+        if boss then
+            local hum = boss:FindFirstChild("Humanoid")
+            if hum then
+                bossHealthLabel.Text = string.format("Máu Boss: %d / %d", hum.Health, hum.MaxHealth)
+                return
+            end
+        end
+    end
+    bossHealthLabel.Text = "Boss không tồn tại"
+end
+
+-- Sự kiện nút bật/tắt
+bossHealthBtn.MouseButton1Click:Connect(function()
+    showBossHealth = not showBossHealth
+    bossHealthBtn.Text = showBossHealth and "Máu Boss: ON" or "Máu Boss: OFF"
+end)
+
+-- Liên tục cập nhật máu
+game:GetService("RunService").Heartbeat:Connect(updateBossHealth)

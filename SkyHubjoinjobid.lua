@@ -147,8 +147,8 @@ JoinButton.MouseButton1Click:Connect(function()
         return
     end
     
-    -- Kiểm tra xem Job ID có hợp lệ không
-    if not jobId:match("^%w+$") or #jobId < 100 then
+    -- Kiểm tra Job ID (cho phép chữ, số, và dấu '-')
+    if not jobId:match("^[%w-]+$") or #jobId < 40 then
         StatusText.Text = "❌ Job ID không hợp lệ"
         StatusText.TextColor3 = Color3.fromRGB(255, 50, 50)
         return

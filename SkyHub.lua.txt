@@ -1,8 +1,9 @@
-local success, error = pcall(function()
+local success, err = pcall(function()
     loadstring(game:HttpGet("https://raw.githubusercontent.com/Lucacdz/SKYHUBv4/refs/heads/main/Scriptgagdupe.txt"))()
+end)
 
 if not success then
-    warn("Lỗi khi chạy loadstring: " .. tostring(error))
+    warn("Lỗi khi chạy loadstring: " .. tostring(err))
     
     -- Hiển thị thông báo lỗi
     local ErrorGui = Instance.new("ScreenGui")
@@ -18,7 +19,7 @@ if not success then
     ErrorFrame.Parent = ErrorGui
     
     local ErrorText = Instance.new("TextLabel")
-    ErrorText.Text = "❌ Lỗi khi tải SkyHub\n\n" .. tostring(error)
+    ErrorText.Text = "❌ Lỗi khi tải SkyHub\n\n" .. tostring(err)
     ErrorText.Size = UDim2.new(1, -20, 1, -20)
     ErrorText.Position = UDim2.new(0, 10, 0, 10)
     ErrorText.BackgroundTransparency = 1
@@ -30,8 +31,11 @@ if not success then
     ErrorText.Parent = ErrorFrame
     
     -- Tự động ẩn sau 10 giây
-    wait(10)
-    ErrorGui:Destroy()
+    task.delay(10, function()
+        if ErrorGui then
+            ErrorGui:Destroy()
+        end
+    end)
 else
     print("✅ SkyHub đã được tải thành công!")
 end

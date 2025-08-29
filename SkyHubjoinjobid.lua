@@ -1,13 +1,12 @@
--- Script Join Game bằng Job ID
+-- Script Join Game bằng Job ID (Fixed UUID)
 local Players = game:GetService("Players")
 local TeleportService = game:GetService("TeleportService")
 local UserInputService = game:GetService("UserInputService")
-local HttpService = game:GetService("HttpService")
 
 -- Tạo GUI
 local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Name = "JoinJobIDGui"
-ScreenGui.Parent = game:GetService("CoreGui")
+ScreenGui.Parent = (syn and game:GetService("CoreGui")) or Players.LocalPlayer:WaitForChild("PlayerGui")
 ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 
 -- Main Frame
@@ -77,7 +76,7 @@ JobIdBox.BackgroundColor3 = Color3.fromRGB(40, 40, 50)
 JobIdBox.BorderSizePixel = 0
 JobIdBox.TextColor3 = Color3.fromRGB(255, 255, 255)
 JobIdBox.Font = Enum.Font.Gotham
-JobIdBox.PlaceholderText = "VD: abcdefghij12345678"
+JobIdBox.PlaceholderText = "VD: c7672c6f-0049-4c54-a8a0-6c533b40644f"
 JobIdBox.Text = ""
 JobIdBox.TextSize = 14
 JobIdBox.ZIndex = 1000
@@ -133,11 +132,14 @@ end)
 UserInputService.InputChanged:Connect(function(input)
     if dragging and input == dragInput then
         local delta = input.Position - dragStart
-        MainFrame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+        MainFrame.Position = UDim2.new(
+            startPos.X.Scale, startPos.X.Offset + delta.X,
+            startPos.Y.Scale, startPos.Y.Offset + delta.Y
+        )
     end
 end)
 
--- Hàm join game bằng Job ID
+-- Hàm join game bằng Job ID (fixed)
 JoinButton.MouseButton1Click:Connect(function()
     local jobId = JobIdBox.Text:gsub("%s+", "") -- Xóa khoảng trắng
     
@@ -147,8 +149,8 @@ JoinButton.MouseButton1Click:Connect(function()
         return
     end
     
-    -- Kiểm tra Job ID (cho phép chữ, số, và dấu '-')
-    if not jobId:match("^[%w-]+$") or #jobId < 40 then
+    -- ✅ Check JobId chuẩn UUID (36 ký tự + dấu '-')
+    if not jobId:match("^[%w-]+$") or #jobId ~= 36 then
         StatusText.Text = "❌ Job ID không hợp lệ"
         StatusText.TextColor3 = Color3.fromRGB(255, 50, 50)
         return
@@ -158,13 +160,13 @@ JoinButton.MouseButton1Click:Connect(function()
     StatusText.Text = "🔄 Đang thử join server..."
     
     -- Thử join server
-    local success, error = pcall(function()
+    local success, err = pcall(function()
         TeleportService:TeleportToPlaceInstance(game.PlaceId, jobId, Players.LocalPlayer)
     end)
     
     if not success then
         JoinButton.Text = "🚀 JOIN SERVER"
-        StatusText.Text = "❌ Lỗi: " .. tostring(error)
+        StatusText.Text = "❌ Lỗi: " .. tostring(err)
         StatusText.TextColor3 = Color3.fromRGB(255, 50, 50)
     else
         StatusText.Text = "✅ Đang chuyển đến server..."

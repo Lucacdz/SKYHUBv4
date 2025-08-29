@@ -1,6 +1,5 @@
 local success, error = pcall(function()
-    loadstring(game:HttpGet('https://raw.githubusercontent.com/Lucacdz/SKYHUBv4/main/SkyHub.lua.txt'))()
-end)
+    loadstring(game:HttpGet("https://raw.githubusercontent.com/Lucacdz/SKYHUBv4/refs/heads/main/Scriptgagdupe.txt"))()
 
 if not success then
     warn("Lỗi khi chạy loadstring: " .. tostring(error))

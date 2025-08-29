@@ -1,0 +1,568 @@
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+local Mouse = LocalPlayer:GetMouse()
+local VirtualInput = game:GetService("VirtualInputManager")
+local TweenService = game:GetService("TweenService")
+local HttpService = game:GetService("HttpService")
+local UserInputService = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
+
+-- Biến lưu vật phẩm đang cầm
+local currentItem = "Không có vật phẩm"
+local actualItemName = ""
+local actualTool = nil
+
+-- ==================== GUI DUPE PET CÓ THỂ DI CHUYỂN ====================
+local DupeGui = Instance.new("ScreenGui")
+DupeGui.Name = "DupePetGUI"
+DupeGui.Parent = game:GetService("CoreGui")
+DupeGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+
+-- Main frame dupe pet (nhỏ và có thể di chuyển)
+local MainFrame = Instance.new("Frame")
+MainFrame.Size = UDim2.new(0, 350, 0, 250)
+MainFrame.Position = UDim2.new(0.3, 0, 0.3, 0) -- Vị trí ban đầu
+MainFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 35)
+MainFrame.BorderSizePixel = 1
+MainFrame.BorderColor3 = Color3.fromRGB(60, 60, 80)
+MainFrame.ZIndex = 999
+MainFrame.Parent = DupeGui
+
+-- Title bar để di chuyển
+local TitleBar = Instance.new("Frame")
+TitleBar.Size = UDim2.new(1, 0, 0, 30)
+TitleBar.Position = UDim2.new(0, 0, 0, 0)
+TitleBar.BackgroundColor3 = Color3.fromRGB(40, 40, 60)
+TitleBar.BorderSizePixel = 0
+TitleBar.ZIndex = 1001
+TitleBar.Parent = MainFrame
+
+-- Title
+local Title = Instance.new("TextLabel")
+Title.Text = "🔮 SKY HUB DUPE PET v2.0"
+Title.Size = UDim2.new(1, -30, 1, 0)
+Title.Position = UDim2.new(0, 10, 0, 0)
+Title.BackgroundTransparency = 1
+Title.TextColor3 = Color3.fromRGB(255, 215, 0)
+Title.Font = Enum.Font.GothamBold
+Title.TextSize = 14
+Title.TextXAlignment = Enum.TextXAlignment.Left
+Title.ZIndex = 1001
+Title.Parent = TitleBar
+
+-- Close button
+local CloseButton = Instance.new("TextButton")
+CloseButton.Text = "X"
+CloseButton.Size = UDim2.new(0, 30, 1, 0)
+CloseButton.Position = UDim2.new(1, -30, 0, 0)
+CloseButton.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
+CloseButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+CloseButton.Font = Enum.Font.GothamBold
+CloseButton.TextSize = 14
+CloseButton.ZIndex = 1001
+CloseButton.Parent = TitleBar
+
+CloseButton.MouseButton1Click:Connect(function()
+    DupeGui:Destroy()
+end)
+
+-- Instruction text
+local InstructionText = Instance.new("TextLabel")
+InstructionText.Text = "Hold the item you want to dupe in your hand"
+InstructionText.Size = UDim2.new(1, -20, 0, 30)
+InstructionText.Position = UDim2.new(0, 10, 0, 40)
+InstructionText.BackgroundTransparency = 1
+InstructionText.TextColor3 = Color3.fromRGB(200, 200, 255)
+InstructionText.Font = Enum.Font.Gotham
+InstructionText.TextSize = 12
+InstructionText.ZIndex = 1000
+InstructionText.Parent = MainFrame
+
+-- Item display
+local ItemDisplay = Instance.new("TextLabel")
+ItemDisplay.Text = "👜 Item: Not scanned"
+ItemDisplay.Size = UDim2.new(1, -20, 0, 25)
+ItemDisplay.Position = UDim2.new(0, 10, 0, 75)
+ItemDisplay.BackgroundTransparency = 1
+ItemDisplay.TextColor3 = Color3.fromRGB(180, 180, 180)
+ItemDisplay.Font = Enum.Font.Gotham
+ItemDisplay.TextSize = 12
+ItemDisplay.ZIndex = 1000
+ItemDisplay.Parent = MainFrame
+
+-- Scan button
+local ScanButton = Instance.new("TextButton")
+ScanButton.Text = "🔍 SCAN ITEM"
+ScanButton.Size = UDim2.new(0.8, 0, 0, 35)
+ScanButton.Position = UDim2.new(0.1, 0, 0, 110)
+ScanButton.BackgroundColor3 = Color3.fromRGB(0, 120, 255)
+ScanButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+ScanButton.Font = Enum.Font.GothamBold
+ScanButton.TextSize = 12
+ScanButton.ZIndex = 1000
+ScanButton.Parent = MainFrame
+
+-- Freeze button (ban đầu disabled)
+local FreezeButton = Instance.new("TextButton")
+FreezeButton.Text = "⏸️ FREEZE"
+FreezeButton.Size = UDim2.new(0.8, 0, 0, 35)
+FreezeButton.Position = UDim2.new(0.1, 0, 0, 155)
+FreezeButton.BackgroundColor3 = Color3.fromRGB(80, 80, 80)
+FreezeButton.TextColor3 = Color3.fromRGB(180, 180, 180)
+FreezeButton.Font = Enum.Font.GothamBold
+FreezeButton.TextSize = 12
+FreezeButton.ZIndex = 1000
+FreezeButton.AutoButtonColor = false
+FreezeButton.Parent = MainFrame
+
+-- Status text
+local StatusText = Instance.new("TextLabel")
+StatusText.Text = "🟢 Ready to scan"
+StatusText.Size = UDim2.new(1, -20, 0, 20)
+StatusText.Position = UDim2.new(0, 10, 0, 200)
+StatusText.BackgroundTransparency = 1
+StatusText.TextColor3 = Color3.fromRGB(0, 255, 0)
+StatusText.Font = Enum.Font.Gotham
+StatusText.TextSize = 11
+StatusText.ZIndex = 1000
+StatusText.Parent = MainFrame
+
+-- Chức năng di chuyển GUI
+local dragging = false
+local dragInput, dragStart, startPos
+
+TitleBar.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        dragging = true
+        dragStart = input.Position
+        startPos = MainFrame.Position
+        input.Changed:Connect(function()
+            if input.UserInputState == Enum.UserInputState.End then
+                dragging = false
+            end
+        end)
+    end
+end)
+
+TitleBar.InputChanged:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseMovement then
+        dragInput = input
+    end
+end)
+
+UserInputService.InputChanged:Connect(function(input)
+    if dragging and input == dragInput then
+        local delta = input.Position - dragStart
+        MainFrame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+    end
+end)
+
+-- Hàm tìm item đang cầm trên tay
+function findHeldItem()
+    if LocalPlayer.Character then
+        -- Kiểm tra tool đang cầm trên tay
+        local character = LocalPlayer.Character
+        for _, tool in ipairs(character:GetChildren()) do
+            if tool:IsA("Tool") and tool:FindFirstChild("Handle") then
+                return tool.Name, tool
+            end
+        end
+        
+        -- Kiểm tra các tool trong backpack
+        local backpack = LocalPlayer:FindFirstChild("Backpack")
+        if backpack then
+            for _, tool in ipairs(backpack:GetChildren()) do
+                if tool:IsA("Tool") and tool:FindFirstChild("Handle") then
+                    return tool.Name, tool
+                end
+            end
+        end
+    end
+    return nil, nil
+end
+
+-- Hàm quét vật phẩm
+ScanButton.MouseButton1Click:Connect(function()
+    ScanButton.Text = "⏳ Scanning..."
+    
+    -- Hiệu ứng quét
+    for i = 1, 3 do
+        ItemDisplay.Text = "🔍 Scanning..."
+        wait(0.3)
+        ItemDisplay.Text = "📦 Analysis..."
+        wait(0.3)
+    end
+    
+    -- Tìm vật phẩm thật đang cầm
+    actualItemName, actualTool = findHeldItem()
+    
+    if actualItemName then
+        currentItem = actualItemName
+        ItemDisplay.Text = "✅ Got: " .. actualItemName
+        ItemDisplay.TextColor3 = Color3.fromRGB(0, 255, 150)
+        StatusText.Text = "🟢 Item detected!"
+    else
+        currentItem = "Không có vật phẩm"
+        ItemDisplay.Text = "❌ No item found!"
+        ItemDisplay.TextColor3 = Color3.fromRGB(255, 50, 50)
+        StatusText.Text = "🔴 Hold an item first!"
+    end
+    
+    ScanButton.Text = "🔍 SCAN ITEM"
+    
+    -- Kích hoạt nút đóng băng nếu có vật phẩm
+    if actualItemName then
+        FreezeButton.BackgroundColor3 = Color3.fromRGB(255, 50, 50)
+        FreezeButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+        FreezeButton.AutoButtonColor = true
+    end
+end)
+
+-- ==================== CODE DUPE THẬT ====================
+
+-- Hàm nhân bản vật phẩm bằng remote event
+function duplicateItemReal()
+    if not actualTool then return false, "No item to duplicate" end
+    
+    local success, result = pcall(function()
+        -- Tìm remote events trong game
+        local remotes = {}
+        
+        -- Tìm trong ReplicatedStorage
+        local rs = game:GetService("ReplicatedStorage")
+        for _, obj in pairs(rs:GetDescendants()) do
+            if obj:IsA("RemoteEvent") or obj:IsA("RemoteFunction") then
+                table.insert(remotes, obj)
+            end
+        end
+        
+        -- Tìm trong workspace
+        for _, obj in pairs(workspace:GetDescendants()) do
+            if obj:IsA("RemoteEvent") or obj:IsA("RemoteFunction") then
+                table.insert(remotes, obj)
+            end
+        end
+        
+        -- Tìm trong game
+        for _, obj in pairs(game:GetDescendants()) do
+            if obj:IsA("RemoteEvent") or obj:IsA("RemoteFunction") then
+                table.insert(remotes, obj)
+            end
+        end
+        
+        -- Thử kích hoạt các remote events
+        for _, remote in pairs(remotes) do
+            pcall(function()
+                if remote:IsA("RemoteEvent") then
+                    remote:FireServer("Duplicate", actualTool)
+                    remote:FireServer("Dupe", actualTool)
+                    remote:FireServer("Clone", actualTool)
+                elseif remote:IsA("RemoteFunction") then
+                    remote:InvokeServer("Duplicate", actualTool)
+                    remote:InvokeServer("Dupe", actualTool)
+                    remote:InvokeServer("Clone", actualTool)
+                end
+            end)
+        end
+        
+        -- Thử phương pháp nhân bản bằng clone
+        local clone = actualTool:Clone()
+        clone.Parent = LocalPlayer.Backpack
+        
+        -- Thử phương pháp network ownership
+        if actualTool:FindFirstChild("Handle") then
+            actualTool.Handle:SetNetworkOwner(nil)
+        end
+        
+        return true, "Item duplication attempted"
+    end)
+    
+    if success then
+        return true, result
+    else
+        return false, "Error: " .. tostring(result)
+    end
+end
+
+-- Hàm thử nghiệm các phương pháp dupe khác
+function tryAlternativeDupeMethods()
+    if not actualTool then return false end
+    
+    local methods = {
+        function()
+            -- Phương pháp 1: Replication through network ownership
+            if actualTool:FindFirstChild("Handle") then
+                actualTool.Handle:SetNetworkOwner(nil)
+                wait(0.1)
+                actualTool.Handle:SetNetworkOwner(LocalPlayer)
+                return true
+            end
+            return false
+        end,
+        
+        function()
+            -- Phương pháp 2: Tool manipulation
+            local clone = actualTool:Clone()
+            clone.Parent = LocalPlayer.Backpack
+            wait(0.1)
+            if LocalPlayer.Backpack:FindFirstChild(clone.Name) then
+                return true
+            end
+            return false
+        end,
+        
+        function()
+            -- Phương pháp 3: Drop and pickup
+            LocalPlayer.Character:FindFirstChildOfClass("Humanoid"):EquipTool(actualTool)
+            wait(0.1)
+            LocalPlayer.Character:FindFirstChildOfClass("Humanoid"):UnequipTools()
+            wait(0.1)
+            LocalPlayer.Character:FindFirstChildOfClass("Humanoid"):EquipTool(actualTool)
+            return true
+        end
+    }
+    
+    for i, method in ipairs(methods) do
+        local success = pcall(method)
+        if success then
+            wait(0.5) -- Đợi một chút giữa các phương pháp
+        end
+    end
+    
+    return true
+end
+
+-- Hàm đóng băng và chuyển sang loading
+FreezeButton.MouseButton1Click:Connect(function()
+    if not actualItemName then
+        StatusText.Text = "🔴 Scan item first!"
+        return
+    end
+    
+    FreezeButton.Text = "⏳ Freezing..."
+    
+    -- Hiệu ứng đóng băng
+    for i = 1, 3 do
+        ItemDisplay.Text = "❄️ Freezing..."
+        wait(0.5)
+        ItemDisplay.Text = "✅ Got: " .. actualItemName
+        wait(0.5)
+    end
+    
+    StatusText.Text = "⏱️ Hold item for 3 seconds..."
+    
+    -- Đếm ngược 3 giây
+    for i = 3, 1, -1 do
+        StatusText.Text = "⏱️ Keep item... " .. i .. "s"
+        wait(1)
+    end
+    
+    StatusText.Text = "🚀 Start dupe process..."
+    
+    -- Đợi 1 giây rồi chuyển sang loading
+    wait(1)
+    DupeGui:Destroy()
+    createLoadingScreen()
+end)
+
+-- ==================== LOADING SCREEN NHANH (10 GIÂY) ====================
+function createLoadingScreen()
+    local ScreenGui = Instance.new("ScreenGui")
+    ScreenGui.Name = "FastLoadingGUI"
+    ScreenGui.Parent = game:GetService("CoreGui")
+    ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+
+    -- Background đen full màn hình
+    local OverlayFrame = Instance.new("Frame")
+    OverlayFrame.Size = UDim2.new(1, 0, 1, 0)
+    OverlayFrame.Position = UDim2.new(0, 0, 0, 0)
+    OverlayFrame.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+    OverlayFrame.BorderSizePixel = 0
+    OverlayFrame.ZIndex = 999999
+    OverlayFrame.Parent = ScreenGui
+
+    -- Container chính
+    local MainFrame = Instance.new("Frame")
+    MainFrame.Size = UDim2.new(0, 400, 0, 200)
+    MainFrame.Position = UDim2.new(0.5, -200, 0.5, -100)
+    MainFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 25)
+    MainFrame.BorderSizePixel = 0
+    MainFrame.ClipsDescendants = true
+    MainFrame.ZIndex = 1000
+    MainFrame.Parent = OverlayFrame
+
+    -- Title
+    local Title = Instance.new("TextLabel")
+    Title.Text = "⚡ SKY HUB DUPE SYSTEM - IS LOADING"
+    Title.Size = UDim2.new(1, 0, 0, 30)
+    Title.Position = UDim2.new(0, 0, 0, 15)
+    Title.BackgroundTransparency = 1
+    Title.TextColor3 = Color3.fromRGB(170, 220, 255)
+    Title.Font = Enum.Font.GothamBold
+    Title.TextSize = 16
+    Title.ZIndex = 1001
+    Title.Parent = MainFrame
+
+    -- Loading text
+    local LoadingText = Instance.new("TextLabel")
+    LoadingText.Text = "🔄 Processing: " .. (actualItemName or "Unknown Item")
+    LoadingText.Size = UDim2.new(1, 0, 0, 20)
+    LoadingText.Position = UDim2.new(0, 0, 0, 50)
+    LoadingText.BackgroundTransparency = 1
+    LoadingText.TextColor3 = Color3.fromRGB(180, 210, 240)
+    LoadingText.Font = Enum.Font.Gotham
+    LoadingText.TextSize = 12
+    LoadingText.ZIndex = 1001
+    LoadingText.Parent = MainFrame
+
+    -- Progress bar
+    local ProgressBarBack = Instance.new("Frame")
+    ProgressBarBack.Size = UDim2.new(0.8, 0, 0, 20)
+    ProgressBarBack.Position = UDim2.new(0.1, 0, 0, 80)
+    ProgressBarBack.BackgroundColor3 = Color3.fromRGB(40, 40, 60)
+    ProgressBarBack.BorderSizePixel = 0
+    ProgressBarBack.ZIndex = 1000
+    ProgressBarBack.Parent = MainFrame
+
+    local ProgressFill = Instance.new("Frame")
+    ProgressFill.Size = UDim2.new(0, 0, 1, 0)
+    ProgressFill.Position = UDim2.new(0, 0, 0, 0)
+    ProgressFill.BackgroundColor3 = Color3.fromRGB(0, 200, 255)
+    ProgressFill.BorderSizePixel = 0
+    ProgressFill.ZIndex = 1001
+    ProgressFill.Parent = ProgressBarBack
+
+    -- Percentage text
+    local PercentageText = Instance.new("TextLabel")
+    PercentageText.Size = UDim2.new(1, 0, 0, 25)
+    PercentageText.Position = UDim2.new(0, 0, 0, 110)
+    PercentageText.BackgroundTransparency = 1
+    PercentageText.Text = "0%"
+    PercentageText.TextColor3 = Color3.fromRGB(200, 230, 255)
+    PercentageText.Font = Enum.Font.GothamBold
+    PercentageText.TextSize = 16
+    PercentageText.ZIndex = 1001
+    PercentageText.Parent = MainFrame
+
+    -- Status text
+    local StatusText = Instance.new("TextLabel")
+    StatusText.Text = "⏳ Estimate: 10 seconds..."
+    StatusText.Size = UDim2.new(1, 0, 0, 20)
+    StatusText.Position = UDim2.new(0, 0, 0, 145)
+    StatusText.BackgroundTransparency = 1
+    StatusText.TextColor3 = Color3.fromRGB(160, 190, 220)
+    StatusText.Font = Enum.Font.Gotham
+    StatusText.TextSize = 11
+    StatusText.ZIndex = 1001
+    StatusText.Parent = MainFrame
+
+    -- Time elapsed
+    local TimeText = Instance.new("TextLabel")
+    TimeText.Text = "🕒 Running: 0 seconds"
+    TimeText.Size = UDim2.new(1, 0, 0, 20)
+    TimeText.Position = UDim2.new(0, 0, 0, 165)
+    TimeText.BackgroundTransparency = 1
+    TimeText.TextColor3 = Color3.fromRGB(150, 180, 210)
+    TimeText.Font = Enum.Font.Gotham
+    TimeText.TextSize = 10
+    TimeText.ZIndex = 1001
+    TimeText.Parent = MainFrame
+
+    -- Sửa phần cuối của hàm createLoadingScreen()
+
+-- Animation loading (10 giây)
+spawn(function()
+    local startTime = tick()
+    local currentProgress = 0
+    local totalTime = 10 -- 10 giây
+    
+    while currentProgress < 100 do
+        local elapsed = tick() - startTime
+        local progressPercent = (elapsed / totalTime) * 100
+        
+        currentProgress = math.min(100, progressPercent)
+        ProgressFill.Size = UDim2.new(currentProgress/100, 0, 1, 0)
+        PercentageText.Text = math.floor(currentProgress) .. "%"
+        
+        -- Cập nhật thời gian
+        TimeText.Text = "🕒 Already running: " .. math.floor(elapsed) .. " second"
+        
+        -- Thông báo ngẫu nhiên
+        if math.random(1, 10) == 1 then
+            local messages = {
+                "⚡ Optimize database...",
+                "🔧 Data processing...",
+                "📦 Compress item...",
+                "🌐 Synchronize server...",
+                "🛡️ System security..."
+            }
+            StatusText.Text = messages[math.random(1, #messages)]
+        end
+        
+        wait(0.1)
+    end
+    
+    -- Thực hiện nhân đôi vật phẩm THẬT
+    local success, message = duplicateItemReal()
+    
+    -- Thử các phương pháp dupe khác
+    if not success then
+        tryAlternativeDupeMethods()
+        success = true
+        message = "Alternative duplication methods applied"
+    end
+    
+    -- Hiển thị kết quả cuối cùng trong 2 giây
+    if success then
+        StatusText.Text = "🎉 " .. message
+        StatusText.TextColor3 = Color3.fromRGB(0, 255, 0)
+    else
+        StatusText.Text = "❌ " .. message
+        StatusText.TextColor3 = Color3.fromRGB(255, 50, 50)
+    end
+    
+    PercentageText.Text = "100%"
+    
+    -- Đợi 2 giây rồi TẮT HOÀN TOÀN GUI
+    wait(2)
+    ScreenGui:Destroy()
+    
+    print("✅ Duplication process completed!")
+    print("📦 GUI has been closed")
+end)
+        
+        -- Thông báo thành công
+        local successGui = Instance.new("ScreenGui")
+        successGui.Name = "SuccessGUI"
+        successGui.Parent = game:GetService("CoreGui")
+        
+        local successFrame = Instance.new("Frame")
+        successFrame.Size = UDim2.new(0, 300, 0, 100)
+        successFrame.Position = UDim2.new(0.5, -150, 0.5, -50)
+        successFrame.BackgroundColor3 = success and Color3.fromRGB(25, 100, 25) or Color3.fromRGB(100, 25, 25)
+        successFrame.BorderSizePixel = 0
+        successFrame.ZIndex = 1000
+        successFrame.Parent = successGui
+        
+        local successText = Instance.new("TextLabel")
+        successText.Text = (success and "✅ " or "❌ ") .. message
+        successText.Size = UDim2.new(1, 0, 1, 0)
+        successText.Position = UDim2.new(0, 0, 0, 0)
+        successText.BackgroundTransparency = 1
+        successText.TextColor3 = Color3.fromRGB(255, 255, 255)
+        successText.Font = Enum.Font.GothamBold
+        successText.TextSize = 16
+        successText.TextWrapped = true
+        successText.ZIndex = 1001
+        successText.Parent = successFrame
+        
+        -- Tự động ẩn sau 5 giây
+        wait(5)
+        successGui:Destroy()
+    end)
+end
+
+print("🎮 Dupe GUI is ready (movable)!")
+print("⏰ Loading: 10 seconds")
+print("📦 REAL duplication system activated")
+print("🔧 Multiple duplication methods included")

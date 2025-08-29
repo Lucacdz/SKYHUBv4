@@ -12,7 +12,7 @@ local currentItem = "Không có vật phẩm"
 local actualItemName = ""
 local actualTool = nil
 
--- ==================== GUI DUPE PET CÓ THỂ DI CHUYỂN ====================
+-- ==================== GUI DUPE PET CÓ THỂ DI CHUYỂN ==================== 
 local DupeGui = Instance.new("ScreenGui")
 DupeGui.Name = "DupePetGUI"
 DupeGui.Parent = game:GetService("CoreGui")

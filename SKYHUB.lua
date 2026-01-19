@@ -1,102 +1,32 @@
+-- DungSkyHub Premium Edition
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
 local HttpService = game:GetService("HttpService")
 local Workspace = game:GetService("Workspace")
+local Lighting = game:GetService("Lighting")
 
 local player = Players.LocalPlayer
 local playerGui = player:WaitForChild("PlayerGui")
 
 -- Cấu hình KeySystem Vĩnh Viễn
-local VALID_KEYS = {
-    "SKY1337"
+local VALID_KEYS = {"SKY1337", "PREMIUM2024"}
+local KEY_FILE = "DungSkyHub_Premium_Key.txt"
+
+-- Màu sắc theme cao cấp
+local COLORS = {
+    PRIMARY = Color3.fromRGB(0, 184, 255),      -- Xanh neon sáng
+    SECONDARY = Color3.fromRGB(255, 65, 140),   -- Hồng neon
+    DARK_BG = Color3.fromRGB(10, 10, 15),
+    LIGHT_BG = Color3.fromRGB(25, 25, 35),
+    ACCENT = Color3.fromRGB(138, 43, 226),      -- Tím neon
+    SUCCESS = Color3.fromRGB(0, 255, 128),
+    ERROR = Color3.fromRGB(255, 50, 100),
+    TEXT = Color3.fromRGB(245, 245, 255)
 }
 
-local KEY_FILE = "DungSkyHub_PermanentKey.txt"
-
--- GUI - Neon Xanh
-local screenGui = Instance.new("ScreenGui")
-screenGui.Name = "DungSkyMenu"
-screenGui.Parent = playerGui
-screenGui.ResetOnSpawn = false
-
--- Tạo màn hình KeySystem
-local keyGui = Instance.new("Frame")
-keyGui.Size = UDim2.new(0, 350, 0, 200)
-keyGui.Position = UDim2.new(0.5, -175, 0.5, -100)
-keyGui.AnchorPoint = Vector2.new(0.5, 0.5)
-keyGui.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
-keyGui.BorderSizePixel = 0
-keyGui.Visible = true
-keyGui.Parent = screenGui
-
-local keyCorner = Instance.new("UICorner", keyGui)
-keyCorner.CornerRadius = UDim.new(0, 12)
-
-local keyStroke = Instance.new("UIStroke", keyGui)
-keyStroke.Color = Color3.fromRGB(0, 255, 128)
-keyStroke.Thickness = 3
-
-local keyTitle = Instance.new("TextLabel")
-keyTitle.Size = UDim2.new(1, -20, 0, 40)
-keyTitle.Position = UDim2.new(0, 10, 0, 10)
-keyTitle.BackgroundTransparency = 1
-keyTitle.Text = "🔑 SKY HUB - KEY SYSTEM 🔑"
-keyTitle.Font = Enum.Font.GothamBlack
-keyTitle.TextSize = 18
-keyTitle.TextColor3 = Color3.fromRGB(0, 255, 128)
-keyTitle.TextStrokeTransparency = 0
-keyTitle.TextStrokeColor3 = Color3.fromRGB(0, 100, 50)
-keyTitle.Parent = keyGui
-
-local keyInput = Instance.new("TextBox")
-keyInput.Size = UDim2.new(1, -40, 0, 40)
-keyInput.Position = UDim2.new(0, 20, 0, 60)
-keyInput.PlaceholderText = "Nhập key của bạn..."
-keyInput.Font = Enum.Font.Gotham
-keyInput.TextSize = 16
-keyInput.TextColor3 = Color3.new(1, 1, 1)
-keyInput.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-keyInput.BorderSizePixel = 0
-keyInput.Parent = keyGui
-
-local keyInputCorner = Instance.new("UICorner", keyInput)
-keyInputCorner.CornerRadius = UDim.new(0, 8)
-
-local keyInputStroke = Instance.new("UIStroke", keyInput)
-keyInputStroke.Color = Color3.fromRGB(0, 255, 128)
-keyInputStroke.Thickness = 1
-
-local submitButton = Instance.new("TextButton")
-submitButton.Size = UDim2.new(1, -40, 0, 40)
-submitButton.Position = UDim2.new(0, 20, 0, 110)
-submitButton.Text = "XÁC NHẬN KEY"
-submitButton.Font = Enum.Font.GothamBold
-submitButton.TextSize = 16
-submitButton.TextColor3 = Color3.new(1, 1, 1)
-submitButton.BackgroundColor3 = Color3.fromRGB(0, 100, 50)
-submitButton.BorderSizePixel = 0
-submitButton.Parent = keyGui
-
-local submitCorner = Instance.new("UICorner", submitButton)
-submitCorner.CornerRadius = UDim.new(0, 8)
-
-local submitStroke = Instance.new("UIStroke", submitButton)
-submitStroke.Color = Color3.fromRGB(0, 255, 128)
-submitStroke.Thickness = 2
-
-local statusLabel = Instance.new("TextLabel")
-statusLabel.Size = UDim2.new(1, -20, 0, 20)
-statusLabel.Position = UDim2.new(0, 10, 0, 160)
-statusLabel.BackgroundTransparency = 1
-statusLabel.Font = Enum.Font.Gotham
-statusLabel.TextSize = 14
-statusLabel.TextColor3 = Color3.fromRGB(255, 50, 50)
-statusLabel.Text = "Vui lòng nhập key để sử dụng Sky Hub"
-statusLabel.Parent = keyGui
-
--- Hàm kiểm tra key
+-- ============== KEY SYSTEM ==============
 local function checkKey(key)
     for _, validKey in pairs(VALID_KEYS) do
         if key == validKey then
@@ -106,15 +36,15 @@ local function checkKey(key)
     return false
 end
 
--- Hàm lưu key
 local function saveKey(key)
     writefile(KEY_FILE, HttpService:JSONEncode({
         key = key,
-        activated = os.time()
+        activated = os.time(),
+        player = player.Name,
+        userId = player.UserId
     }))
 end
 
--- Hàm kiểm tra key đã lưu
 local function hasValidKey()
     if isfile(KEY_FILE) then
         local success, data = pcall(function()
@@ -127,101 +57,607 @@ local function hasValidKey()
     return false
 end
 
--- Icon (TextButton) - Hidden initially
-local iconButton = Instance.new("TextButton")
-iconButton.Name = "MenuIcon"
-iconButton.Size = UDim2.new(0, 50, 0, 50)
-iconButton.Position = UDim2.new(0, 20, 0, 20)
-iconButton.Text = "⚡"
-iconButton.Font = Enum.Font.GothamBold
-iconButton.TextSize = 24
-iconButton.TextColor3 = Color3.fromRGB(0, 255, 128)
-iconButton.BackgroundColor3 = Color3.fromRGB(10, 10, 10)
-iconButton.BorderSizePixel = 0
-iconButton.Draggable = true
-iconButton.Active = true
-iconButton.Visible = false -- Hidden initially
-iconButton.Parent = screenGui
+-- ============== UI UTILITIES ==============
+local function createRoundedFrame(parent, size, position)
+    local frame = Instance.new("Frame")
+    frame.Size = size
+    frame.Position = position
+    frame.BackgroundColor3 = COLORS.DARK_BG
+    frame.BackgroundTransparency = 0.1
+    frame.BorderSizePixel = 0
+    frame.Parent = parent
+    
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(0, 16)
+    corner.Parent = frame
+    
+    local stroke = Instance.new("UIStroke")
+    stroke.Color = COLORS.PRIMARY
+    stroke.Thickness = 2
+    stroke.Transparency = 0.3
+    stroke.Parent = frame
+    
+    -- Thêm hiệu ứng glow
+    local glow = Instance.new("ImageLabel")
+    glow.Name = "Glow"
+    glow.Size = UDim2.new(1, 20, 1, 20)
+    glow.Position = UDim2.new(0, -10, 0, -10)
+    glow.BackgroundTransparency = 1
+    glow.Image = "rbxassetid://8992230932"
+    glow.ImageColor3 = COLORS.PRIMARY
+    glow.ScaleType = Enum.ScaleType.Slice
+    glow.SliceCenter = Rect.new(50, 50, 50, 50)
+    glow.ImageTransparency = 0.8
+    glow.ZIndex = -1
+    glow.Parent = frame
+    
+    return frame
+end
 
--- Xử lý sự kiện submit key
-submitButton.MouseButton1Click:Connect(function()
+local function createModernButton(parent, text, position)
+    local button = Instance.new("TextButton")
+    button.Size = UDim2.new(0, 200, 0, 45)
+    button.Position = position
+    button.Text = text
+    button.Font = Enum.Font.GothamSemibold
+    button.TextSize = 14
+    button.TextColor3 = COLORS.TEXT
+    button.BackgroundColor3 = COLORS.LIGHT_BG
+    button.AutoButtonColor = false
+    button.Parent = parent
+    
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(0, 12)
+    corner.Parent = button
+    
+    local stroke = Instance.new("UIStroke")
+    stroke.Color = COLORS.PRIMARY
+    stroke.Thickness = 1
+    stroke.Parent = button
+    
+    local gradient = Instance.new("UIGradient")
+    gradient.Color = ColorSequence.new({
+        ColorSequenceKeypoint.new(0, COLORS.PRIMARY),
+        ColorSequenceKeypoint.new(1, COLORS.SECONDARY)
+    })
+    gradient.Rotation = 90
+    gradient.Enabled = false
+    gradient.Parent = button
+    
+    local hoverGradient = Instance.new("UIGradient")
+    hoverGradient.Color = ColorSequence.new({
+        ColorSequenceKeypoint.new(0, COLORS.PRIMARY),
+        ColorSequenceKeypoint.new(0.5, COLORS.SECONDARY),
+        ColorSequenceKeypoint.new(1, COLORS.ACCENT)
+    })
+    hoverGradient.Rotation = 90
+    hoverGradient.Enabled = false
+    hoverGradient.Parent = button
+    
+    -- Hiệu ứng hover
+    button.MouseEnter:Connect(function()
+        TweenService:Create(button, TweenInfo.new(0.2), {
+            BackgroundTransparency = 0.2,
+            Size = UDim2.new(0, 205, 0, 48)
+        }):Play()
+        gradient.Enabled = true
+        stroke.Thickness = 2
+    end)
+    
+    button.MouseLeave:Connect(function()
+        TweenService:Create(button, TweenInfo.new(0.2), {
+            BackgroundTransparency = 0,
+            Size = UDim2.new(0, 200, 0, 45)
+        }):Play()
+        gradient.Enabled = false
+        stroke.Thickness = 1
+    end)
+    
+    -- Hiệu ứng click
+    button.MouseButton1Down:Connect(function()
+        TweenService:Create(button, TweenInfo.new(0.1), {
+            BackgroundTransparency = 0.3,
+            Size = UDim2.new(0, 195, 0, 43)
+        }):Play()
+    end)
+    
+    button.MouseButton1Up:Connect(function()
+        TweenService:Create(button, TweenInfo.new(0.2), {
+            BackgroundTransparency = 0.2,
+            Size = UDim2.new(0, 205, 0, 48)
+        }):Play()
+    end)
+    
+    return button
+end
+
+-- ============== MAIN SCREEN GUI ==============
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "DungSkyHubPremium"
+screenGui.Parent = playerGui
+screenGui.ResetOnSpawn = false
+
+-- Key System GUI
+local keyFrame = createRoundedFrame(screenGui, UDim2.new(0, 400, 0, 300), UDim2.new(0.5, -200, 0.5, -150))
+
+local title = Instance.new("TextLabel")
+title.Size = UDim2.new(1, -40, 0, 60)
+title.Position = UDim2.new(0, 20, 0, 20)
+title.BackgroundTransparency = 1
+title.Text = "🔐 DUNG SKY HUB PREMIUM 🔐"
+title.Font = Enum.Font.GothamBlack
+title.TextSize = 22
+title.TextColor3 = COLORS.PRIMARY
+title.TextStrokeTransparency = 0
+title.TextStrokeColor3 = COLORS.DARK_BG
+title.Parent = keyFrame
+
+local subtitle = Instance.new("TextLabel")
+subtitle.Size = UDim2.new(1, -40, 0, 20)
+subtitle.Position = UDim2.new(0, 20, 0, 80)
+subtitle.BackgroundTransparency = 1
+subtitle.Text = "Premium Gaming Experience"
+subtitle.Font = Enum.Font.GothamMedium
+subtitle.TextSize = 14
+subtitle.TextColor3 = COLORS.SECONDARY
+subtitle.Parent = keyFrame
+
+local keyInput = Instance.new("TextBox")
+keyInput.Size = UDim2.new(1, -40, 0, 50)
+keyInput.Position = UDim2.new(0, 20, 0, 120)
+keyInput.PlaceholderText = "Enter your premium key..."
+keyInput.Font = Enum.Font.Gotham
+keyInput.TextSize = 16
+keyInput.TextColor3 = COLORS.TEXT
+keyInput.BackgroundColor3 = COLORS.LIGHT_BG
+keyInput.BorderSizePixel = 0
+keyInput.Parent = keyFrame
+
+local inputCorner = Instance.new("UICorner")
+inputCorner.CornerRadius = UDim.new(0, 10)
+inputCorner.Parent = keyInput
+
+local submitBtn = createModernButton(keyFrame, "ACTIVATE KEY", UDim2.new(0.5, -100, 0, 190))
+
+local statusLabel = Instance.new("TextLabel")
+statusLabel.Size = UDim2.new(1, -40, 0, 30)
+statusLabel.Position = UDim2.new(0, 20, 0, 250)
+statusLabel.BackgroundTransparency = 1
+statusLabel.Font = Enum.Font.GothamMedium
+statusLabel.TextSize = 12
+statusLabel.TextColor3 = COLORS.TEXT
+statusLabel.Text = "Enter your premium key to unlock all features"
+statusLabel.Parent = keyFrame
+
+-- ============== MAIN MENU GUI ==============
+local menuFrame = createRoundedFrame(screenGui, UDim2.new(0, 350, 0, 500), UDim2.new(0, 20, 0.5, -250))
+menuFrame.Visible = false
+
+-- Menu Header
+local menuHeader = Instance.new("Frame")
+menuHeader.Size = UDim2.new(1, 0, 0, 70)
+menuHeader.BackgroundColor3 = COLORS.DARK_BG
+menuHeader.BorderSizePixel = 0
+menuHeader.Parent = menuFrame
+
+local headerCorner = Instance.new("UICorner")
+headerCorner.CornerRadius = UDim.new(0, 16)
+headerCorner.Parent = menuHeader
+
+local hubTitle = Instance.new("TextLabel")
+hubTitle.Size = UDim2.new(1, -80, 0, 40)
+hubTitle.Position = UDim2.new(0, 20, 0, 15)
+hubTitle.BackgroundTransparency = 1
+hubTitle.Text = "⚡ DUNG SKY HUB ⚡"
+hubTitle.Font = Enum.Font.GothamBlack
+hubTitle.TextSize = 18
+hubTitle.TextColor3 = COLORS.PRIMARY
+hubTitle.Parent = menuHeader
+
+local versionLabel = Instance.new("TextLabel")
+versionLabel.Size = UDim2.new(1, -80, 0, 20)
+versionLabel.Position = UDim2.new(0, 20, 0, 45)
+versionLabel.BackgroundTransparency = 1
+versionLabel.Text = "PREMIUM v2.0"
+versionLabel.Font = Enum.Font.GothamMedium
+versionLabel.TextSize = 12
+versionLabel.TextColor3 = COLORS.SECONDARY
+versionLabel.Parent = menuHeader
+
+-- Menu Icon
+local menuIcon = Instance.new("TextButton")
+menuIcon.Size = UDim2.new(0, 60, 0, 60)
+menuIcon.Position = UDim2.new(0, 20, 0.5, -30)
+menuIcon.Text = "🎮"
+menuIcon.Font = Enum.Font.GothamBlack
+menuIcon.TextSize = 24
+menuIcon.TextColor3 = COLORS.PRIMARY
+menuIcon.BackgroundColor3 = COLORS.DARK_BG
+menuIcon.AutoButtonColor = false
+menuIcon.Visible = false
+menuIcon.Parent = screenGui
+
+local iconCorner = Instance.new("UICorner")
+iconCorner.CornerRadius = UDim.new(0, 20)
+iconCorner.Parent = menuIcon
+
+local iconStroke = Instance.new("UIStroke")
+iconStroke.Color = COLORS.PRIMARY
+iconStroke.Thickness = 3
+iconStroke.Parent = menuIcon
+
+-- Tabs
+local tabsFrame = Instance.new("Frame")
+tabsFrame.Size = UDim2.new(1, -40, 0, 40)
+tabsFrame.Position = UDim2.new(0, 20, 0, 80)
+tabsFrame.BackgroundTransparency = 1
+tabsFrame.Parent = menuFrame
+
+local tabs = {}
+local pages = {}
+
+local tabContents = {
+    ["COMBAT"] = {"Aimbot", "Hitbox", "Auto Attack", "Kill Aura"},
+    ["MOVEMENT"] = {"Fly", "NoClip", "Infinite Jump", "Speed", "Noclip Speed"},
+    ["VISUAL"] = {"ESP", "Chams", "Fullbright", "X-Ray"},
+    ["UTILITY"] = {"Auto Farm", "Auto Sell", "Auto Buy", "Anti AFK"},
+    ["SETTINGS"] = {"Keybind", "Theme", "Save Config", "Load Config"}
+}
+
+for i, tabName in ipairs({"COMBAT", "MOVEMENT", "VISUAL", "UTILITY", "SETTINGS"}) do
+    local tabBtn = Instance.new("TextButton")
+    tabBtn.Size = UDim2.new(0, 60, 1, 0)
+    tabBtn.Position = UDim2.new(0, (i-1)*65, 0, 0)
+    tabBtn.Text = tabName
+    tabBtn.Font = Enum.Font.GothamMedium
+    tabBtn.TextSize = 11
+    tabBtn.TextColor3 = COLORS.TEXT
+    tabBtn.BackgroundColor3 = COLORS.LIGHT_BG
+    tabBtn.AutoButtonColor = false
+    tabBtn.Parent = tabsFrame
+    
+    local tabCorner = Instance.new("UICorner")
+    tabCorner.CornerRadius = UDim.new(0, 8)
+    tabCorner.Parent = tabBtn
+    
+    local pageFrame = Instance.new("ScrollingFrame")
+    pageFrame.Size = UDim2.new(1, -40, 1, -140)
+    pageFrame.Position = UDim2.new(0, 20, 0, 130)
+    pageFrame.BackgroundTransparency = 1
+    pageFrame.ScrollBarThickness = 4
+    pageFrame.Visible = i == 1
+    pageFrame.Parent = menuFrame
+    
+    local layout = Instance.new("UIListLayout")
+    layout.Padding = UDim.new(0, 10)
+    layout.Parent = pageFrame
+    
+    pages[tabName] = pageFrame
+    tabs[tabName] = tabBtn
+    
+    -- Thêm các nút vào page
+    local yPos = 0
+    for _, btnName in ipairs(tabContents[tabName]) do
+        local btn = createModernButton(pageFrame, btnName, UDim2.new(0, 0, 0, yPos))
+        yPos = yPos + 55
+    end
+end
+
+-- ============== FLY SYSTEM (NÂNG CAO) ==============
+local flyEnabled = false
+local flySpeed = 50
+local flyConnection
+local flyKeys = {
+    [Enum.KeyCode.W] = false,
+    [Enum.KeyCode.A] = false,
+    [Enum.KeyCode.S] = false,
+    [Enum.KeyCode.D] = false,
+    [Enum.KeyCode.Space] = false,
+    [Enum.KeyCode.LeftShift] = false
+}
+
+local function toggleFly()
+    if not player.Character then return end
+    
+    local humanoid = player.Character:FindFirstChild("Humanoid")
+    local rootPart = player.Character:FindFirstChild("HumanoidRootPart")
+    
+    if not humanoid or not rootPart then return end
+    
+    flyEnabled = not flyEnabled
+    
+    if flyEnabled then
+        humanoid.PlatformStand = true
+        
+        -- Tạo các BodyMover
+        local bg = Instance.new("BodyGyro")
+        bg.Name = "FlyGyro"
+        bg.P = 10000
+        bg.D = 500
+        bg.MaxTorque = Vector3.new(math.huge, math.huge, math.huge)
+        bg.CFrame = rootPart.CFrame
+        bg.Parent = rootPart
+        
+        local bv = Instance.new("BodyVelocity")
+        bv.Name = "FlyVelocity"
+        bv.Velocity = Vector3.new(0, 0, 0)
+        bv.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
+        bv.Parent = rootPart
+        
+        flyConnection = RunService.RenderStepped:Connect(function(dt)
+            if not flyEnabled or not player.Character then
+                flyConnection:Disconnect()
+                return
+            end
+            
+            local velocity = Vector3.new(0, 0, 0)
+            
+            if flyKeys[Enum.KeyCode.W] then
+                velocity = velocity + Workspace.CurrentCamera.CFrame.LookVector
+            end
+            if flyKeys[Enum.KeyCode.S] then
+                velocity = velocity - Workspace.CurrentCamera.CFrame.LookVector
+            end
+            if flyKeys[Enum.KeyCode.A] then
+                velocity = velocity - Workspace.CurrentCamera.CFrame.RightVector
+            end
+            if flyKeys[Enum.KeyCode.D] then
+                velocity = velocity + Workspace.CurrentCamera.CFrame.RightVector
+            end
+            if flyKeys[Enum.KeyCode.Space] then
+                velocity = velocity + Vector3.new(0, 1, 0)
+            end
+            if flyKeys[Enum.KeyCode.LeftShift] then
+                velocity = velocity - Vector3.new(0, 1, 0)
+            end
+            
+            if velocity.Magnitude > 0 then
+                velocity = velocity.Unit * flySpeed
+            end
+            
+            bv.Velocity = velocity
+            bg.CFrame = Workspace.CurrentCamera.CFrame
+        end)
+        
+        -- Kết nối input
+        local inputBegan = UserInputService.InputBegan:Connect(function(input)
+            if flyKeys[input.KeyCode] ~= nil then
+                flyKeys[input.KeyCode] = true
+            end
+        end)
+        
+        local inputEnded = UserInputService.InputEnded:Connect(function(input)
+            if flyKeys[input.KeyCode] ~= nil then
+                flyKeys[input.KeyCode] = false
+            end
+        end)
+        
+        -- Thông báo
+        game.StarterGui:SetCore("SendNotification", {
+            Title = "FLY ENABLED",
+            Text = "Press W/A/S/D/Space/Shift to fly",
+            Duration = 3,
+            Icon = "rbxassetid://6724771532"
+        })
+        
+    else
+        if flyConnection then
+            flyConnection:Disconnect()
+        end
+        
+        if player.Character then
+            local humanoid = player.Character:FindFirstChild("Humanoid")
+            local rootPart = player.Character:FindFirstChild("HumanoidRootPart")
+            
+            if humanoid then
+                humanoid.PlatformStand = false
+            end
+            
+            if rootPart then
+                local bg = rootPart:FindFirstChild("FlyGyro")
+                local bv = rootPart:FindFirstChild("FlyVelocity")
+                
+                if bg then bg:Destroy() end
+                if bv then bv:Destroy() end
+            end
+        end
+    end
+    
+    return flyEnabled
+end
+
+-- ============== NO CLIP SYSTEM (NÂNG CAO) ==============
+local noclipEnabled = false
+local noclipConnection
+
+local function toggleNoclip()
+    noclipEnabled = not noclipEnabled
+    
+    if noclipEnabled then
+        noclipConnection = RunService.Stepped:Connect(function()
+            if player.Character then
+                for _, part in ipairs(player.Character:GetDescendants()) do
+                    if part:IsA("BasePart") and part.CanCollide then
+                        part.CanCollide = false
+                    end
+                end
+            end
+        end)
+        
+        game.StarterGui:SetCore("SendNotification", {
+            Title = "NO CLIP ENABLED",
+            Text = "You can now walk through walls",
+            Duration = 3,
+            Icon = "rbxassetid://6724771532"
+        })
+    else
+        if noclipConnection then
+            noclipConnection:Disconnect()
+        end
+        
+        if player.Character then
+            for _, part in ipairs(player.Character:GetDescendants()) do
+                if part:IsA("BasePart") then
+                    part.CanCollide = true
+                end
+            end
+        end
+    end
+    
+    return noclipEnabled
+end
+
+-- ============== INFINITE JUMP (NÂNG CAO) ==============
+local infiniteJumpEnabled = false
+local jumpConnection
+
+local function toggleInfiniteJump()
+    infiniteJumpEnabled = not infiniteJumpEnabled
+    
+    if infiniteJumpEnabled then
+        local character = player.Character
+        if not character then return end
+        
+        local humanoid = character:FindFirstChildOfClass("Humanoid")
+        if not humanoid then return end
+        
+        jumpConnection = UserInputService.JumpRequest:Connect(function()
+            if humanoid:GetState() ~= Enum.HumanoidStateType.Jumping and 
+               humanoid:GetState() ~= Enum.HumanoidStateType.Freefall then
+                humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
+            end
+        end)
+        
+        game.StarterGui:SetCore("SendNotification", {
+            Title = "INFINITE JUMP ENABLED",
+            Text = "Hold Space to jump infinitely",
+            Duration = 3,
+            Icon = "rbxassetid://6724771532"
+        })
+    else
+        if jumpConnection then
+            jumpConnection:Disconnect()
+            jumpConnection = nil
+        end
+    end
+    
+    return infiniteJumpEnabled
+end
+
+-- ============== KẾT NỐI NÚT ==============
+local flyBtn = pages["MOVEMENT"]:FindFirstChild("Fly")
+local noclipBtn = pages["MOVEMENT"]:FindFirstChild("NoClip")
+local infiniteJumpBtn = pages["MOVEMENT"]:FindFirstChild("Infinite Jump")
+
+if flyBtn then
+    flyBtn.MouseButton1Click:Connect(function()
+        local success = pcall(toggleFly)
+        if success then
+            flyBtn.Text = flyEnabled and "Fly: ON" or "Fly: OFF"
+        end
+    end)
+end
+
+if noclipBtn then
+    noclipBtn.MouseButton1Click:Connect(function()
+        local success = pcall(toggleNoclip)
+        if success then
+            noclipBtn.Text = noclipEnabled and "NoClip: ON" or "NoClip: OFF"
+        end
+    end)
+end
+
+if infiniteJumpBtn then
+    infiniteJumpBtn.MouseButton1Click:Connect(function()
+        local success = pcall(toggleInfiniteJump)
+        if success then
+            infiniteJumpBtn.Text = infiniteJumpEnabled and "Inf Jump: ON" or "Inf Jump: OFF"
+        end
+    end)
+end
+
+-- ============== KEY SYSTEM EVENTS ==============
+submitBtn.MouseButton1Click:Connect(function()
     local key = string.upper(string.gsub(keyInput.Text, "%s+", ""))
     
     if checkKey(key) then
         saveKey(key)
-        statusLabel.Text = "✅ Key hợp lệ - Đang mở menu..."
-        statusLabel.TextColor3 = Color3.fromRGB(0, 255, 0)
-        
-        game.StarterGui:SetCore("SendNotification", {
-            Title = "SKY HUB",
-            Text = "Chào mừng "..player.Name.." đã trở lại!",
-            Duration = 5,
-            Icon = "rbxassetid://57254792"
-        })
+        statusLabel.Text = "✅ KEY ACTIVATED! Loading premium features..."
+        statusLabel.TextColor3 = COLORS.SUCCESS
         
         wait(1)
-        keyGui.Visible = false
-        iconButton.Visible = true
+        keyFrame.Visible = false
+        menuFrame.Visible = true
+        menuIcon.Visible = true
+        
+        game.StarterGui:SetCore("SendNotification", {
+            Title = "DUNG SKY HUB",
+            Text = "Welcome to Premium Edition!",
+            Duration = 5,
+            Icon = "rbxassetid://6724771532"
+        })
     else
-        statusLabel.Text = "❌ Key không hợp lệ! Vui lòng thử lại"
-        statusLabel.TextColor3 = Color3.fromRGB(255, 50, 50)
+        statusLabel.Text = "❌ INVALID KEY! Please try again"
+        statusLabel.TextColor3 = COLORS.ERROR
     end
 end)
 
--- Kiểm tra key khi khởi chạy
+-- Auto login với key đã lưu
 if hasValidKey() then
-    -- Thông báo khi tự động đăng nhập bằng key đã lưu
-    game.StarterGui:SetCore("SendNotification", {
-        Title = "SKY HUB",
-        Text = "Chào mừng "..player.Name.." đã trở lại!",
-        Duration = 5,
-        Icon = "rbxassetid://57254792"
-    })
+    keyFrame.Visible = false
+    menuFrame.Visible = true
+    menuIcon.Visible = true
     
-    keyGui.Visible = false
-    iconButton.Visible = true
-else
-    keyGui.Visible = true
-    iconButton.Visible = false
+    game.StarterGui:SetCore("SendNotification", {
+        Title = "DUNG SKY HUB",
+        Text = "Welcome back, "..player.Name.."!",
+        Duration = 5,
+        Icon = "rbxassetid://6724771532"
+    })
 end
 
-local iconCorner = Instance.new("UICorner", iconButton)
-iconCorner.CornerRadius = UDim.new(0, 12)
+-- ============== MENU TOGGLE ==============
+menuIcon.MouseButton1Click:Connect(function()
+    menuFrame.Visible = not menuFrame.Visible
+    
+    if menuFrame.Visible then
+        menuFrame.Size = UDim2.new(0, 350, 0, 0)
+        TweenService:Create(menuFrame, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+            Size = UDim2.new(0, 350, 0, 500)
+        }):Play()
+    end
+end)
 
-local iconStroke = Instance.new("UIStroke", iconButton)
-iconStroke.Color = Color3.fromRGB(0, 255, 128)
-iconStroke.Thickness = 2
+-- ============== TAB SWITCHING ==============
+for tabName, tabBtn in pairs(tabs) do
+    tabBtn.MouseButton1Click:Connect(function()
+        -- Reset tất cả tab
+        for name, page in pairs(pages) do
+            page.Visible = false
+            TweenService:Create(tabs[name], TweenInfo.new(0.2), {
+                BackgroundColor3 = COLORS.LIGHT_BG,
+                TextColor3 = COLORS.TEXT
+            }):Play()
+        end
+        
+        -- Kích hoạt tab được chọn
+        pages[tabName].Visible = true
+        TweenService:Create(tabBtn, TweenInfo.new(0.2), {
+            BackgroundColor3 = COLORS.PRIMARY,
+            TextColor3 = Color3.new(1, 1, 1)
+        }):Play()
+    end)
+end
 
--- Main Frame - Tự động điều chỉnh kích thước
-local mainFrame = Instance.new("Frame")
-mainFrame.Size = UDim2.new(0, 500, 0, 550)
-mainFrame.Position = UDim2.new(0.5, -150, 0.5, -100)
-mainFrame.AnchorPoint = Vector2.new(0.5, 0.5)
-mainFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
-mainFrame.BorderSizePixel = 0
-mainFrame.Visible = false
-mainFrame.ClipsDescendants = true
-mainFrame.Parent = screenGui
-
--- Cho phép di chuyển mainFrame
+-- ============== DRAGGABLE MENU ==============
 local dragging = false
-local dragInput, dragStart, startPos
+local dragStart, startPos
 
-local function updateInput(input)
-    local delta = input.Position - dragStart
-    mainFrame.Position = UDim2.new(
-        startPos.X.Scale, 
-        startPos.X.Offset + delta.X,
-        startPos.Y.Scale, 
-        startPos.Y.Offset + delta.Y
-    )
-end
-
-mainFrame.InputBegan:Connect(function(input)
+menuFrame.InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1 then
         dragging = true
         dragStart = input.Position
-        startPos = mainFrame.Position
+        startPos = menuFrame.Position
         
         input.Changed:Connect(function()
             if input.UserInputState == Enum.UserInputState.End then
@@ -231,1429 +667,73 @@ mainFrame.InputBegan:Connect(function(input)
     end
 end)
 
-mainFrame.InputChanged:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseMovement and dragging then
-        dragInput = input
-    end
-end)
-
 UserInputService.InputChanged:Connect(function(input)
-    if input == dragInput and dragging then
-        updateInput(input)
-    end
-end)
-
-local mainCorner = Instance.new("UICorner", mainFrame)
-mainCorner.CornerRadius = UDim.new(0, 12)
-
-local mainStroke = Instance.new("UIStroke", mainFrame)
-mainStroke.Color = Color3.fromRGB(0, 255, 128)
-mainStroke.Thickness = 3
-
--- Title
-local titleLabel = Instance.new("TextLabel")
-titleLabel.Size = UDim2.new(1, -20, 0, 40)
-titleLabel.Position = UDim2.new(0, 10, 0, 10)
-titleLabel.BackgroundTransparency = 1
-titleLabel.Text = "⚡ SKY HUB ⚡"
-titleLabel.Font = Enum.Font.GothamBlack
-titleLabel.TextSize = 22
-titleLabel.TextColor3 = Color3.fromRGB(0, 255, 128)
-titleLabel.TextStrokeTransparency = 0
-titleLabel.TextStrokeColor3 = Color3.fromRGB(0, 100, 50)
-titleLabel.Parent = mainFrame
-
--- Tabs Container
-local tabButtons = Instance.new("Frame")
-tabButtons.Size = UDim2.new(1, -20, 0, 40)
-tabButtons.Position = UDim2.new(0, 10, 0, 60)
-tabButtons.BackgroundTransparency = 1
-tabButtons.Parent = mainFrame
-
-local tabLayout = Instance.new("UIListLayout", tabButtons)
-tabLayout.FillDirection = Enum.FillDirection.Horizontal
-tabLayout.Padding = UDim.new(0, 10)
-tabLayout.SortOrder = Enum.SortOrder.LayoutOrder
-
--- Tab Pages với ScrollingFrame
-local pages = Instance.new("Frame")
-pages.Name = "Pages"
-pages.Size = UDim2.new(1, -20, 1, -110)
-pages.Position = UDim2.new(0, 10, 0, 110)
-pages.BackgroundTransparency = 1
-pages.Parent = mainFrame
-
--- Hàm tạo tab với ScrollingFrame tự động điều chỉnh
-local function createTab(name)
-    local button = Instance.new("TextButton")
-    button.Size = UDim2.new(0, 80, 1, 0)
-    button.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
-    button.Text = name
-    button.TextColor3 = Color3.fromRGB(0, 255, 128)
-    button.Font = Enum.Font.GothamBold
-    button.TextSize = 14
-    button.Parent = tabButtons
-
-    local tabCorner = Instance.new("UICorner", button)
-    tabCorner.CornerRadius = UDim.new(0, 8)
-
-    local scrollFrame = Instance.new("ScrollingFrame")
-    scrollFrame.Name = name.."Tab"
-    scrollFrame.Size = UDim2.new(1, 0, 1, 0)
-    scrollFrame.BackgroundTransparency = 1
-    scrollFrame.Visible = false
-    scrollFrame.ScrollBarThickness = 5
-    scrollFrame.ScrollingDirection = Enum.ScrollingDirection.Y
-    scrollFrame.Parent = pages
-    
-    local listLayout = Instance.new("UIListLayout", scrollFrame)
-    listLayout.Padding = UDim.new(0, 10)
-    listLayout.SortOrder = Enum.SortOrder.LayoutOrder
-    
-    listLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-        scrollFrame.CanvasSize = UDim2.new(0, 0, 0, listLayout.AbsoluteContentSize.Y + 20)
-        local newHeight = math.clamp(110 + listLayout.AbsoluteContentSize.Y + 20, 200, 500)
-        mainFrame.Size = UDim2.new(0, 300, 0, newHeight)
-    end)
-
-    return button, scrollFrame
-end
-
--- Tạo Tab 
-local mainTabButton, MainTab = createTab("Main")
-local settingsTabButton, SettingsTab = createTab("Settings")
-local modTabButton, ModTab = createTab("Mod")
-local shopTabButton, ShopTab = createTab("Shop")
-
--- Hàm tạo nút tiêu chuẩn với hiệu ứng nhấn màu xanh
-local function createStandardButton(parent, text, yOffset)
-    local button = Instance.new("TextButton")
-    button.Size = UDim2.new(1, -20, 0, 40)
-    button.Position = UDim2.new(0, 10, 0, yOffset or 0)
-    button.Text = text
-    button.Font = Enum.Font.GothamBold
-    button.TextSize = 16
-    button.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-    button.TextColor3 = Color3.new(1, 1, 1)
-    button.AutoButtonColor = false
-    button.Parent = parent
-    
-    local corner = Instance.new("UICorner", button)
-    corner.CornerRadius = UDim.new(0, 8)
-    
-    local stroke = Instance.new("UIStroke", button)
-    stroke.Color = Color3.fromRGB(0, 255, 128)
-    stroke.Thickness = 1
-    
-    -- Hiệu ứng hover
-    button.MouseEnter:Connect(function()
-        TweenService:Create(button, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(50, 50, 50)}):Play()
-    end)
-    
-    button.MouseLeave:Connect(function()
-        TweenService:Create(button, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(30, 30, 30)}):Play()
-    end)
-    
-    -- Hiệu ứng nhấn màu xanh
-    button.MouseButton1Down:Connect(function()
-        TweenService:Create(button, TweenInfo.new(0.1), {BackgroundColor3 = Color3.fromRGB(0, 170, 255)}):Play()
-    end)
-    
-    button.MouseButton1Up:Connect(function()
-        TweenService:Create(button, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(50, 50, 50)}):Play()
-    end)
-    
-    return button
-end
-
--- 💥
-
--- Thêm nút vào MainTab
-local spinBtn = createStandardButton(MainTab, "Bắt đầu quay", 10)
-local autoClickButton = createStandardButton(MainTab, "Tự Động Đánh: OFF", 60)
-local aimbotButton = createStandardButton(MainTab, "Aimbot: OFF", 160)
-local flyButton = createStandardButton(MainTab, "Fly", 210) -- 
-local bossButton = createStandardButton(MainTab, "Boss", 200)
-
--- Thêm nút vào SettingsTab
-local afkButton = createStandardButton(SettingsTab, "Bật AFK", 10)
-local fixLagButton = createStandardButton(SettingsTab, "Fix Lag: OFF", 60)
-local espButton = createStandardButton(SettingsTab, "ESP: OFF", 110)
-local hideNamesButton = createStandardButton(SettingsTab, "Ẩn tên: OFF", 210)
-local infoButton = createStandardButton(SettingsTab, "Thông Tin Server", 210)
-
--- Thêm nút vào ModTab
-local noClipButton = createStandardButton(ModTab, "NoClip: OFF", 10)
-local infJumpButton = createStandardButton(ModTab, "Nhảy vô hạn: OFF", 110)
-local hitboxButton = createStandardButton(ModTab, "Hitbox: OFF", 160)
-
--- Thêm nút vài ShopTab
-local buyPhoLonButton = createStandardButton(ShopTab, "Mua Phóng Lợn", 110)
-local buyMaTauButton = createStandardButton(ShopTab, "Mua Mã Tấu", 110)
-local buyBandageButton = createStandardButton(ShopTab, "Mua Băng Gạc", 10)
-local autoBuyBandageButton = createStandardButton(ShopTab, "Tự Động Mua Băng Gạc: OFF", 60)
-
--- Kích hoạt tab mặc định
-MainTab.Visible = true
-settingsTabButton.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
-mainTabButton.BackgroundColor3 = Color3.fromRGB(0, 100, 50)
-
--- Sửa lại hàm switchTab
-local function switchTab(tabToShow)
-    -- Ẩn tất cả các tab
-    MainTab.Visible = false
-    SettingsTab.Visible = false
-    ModTab.Visible = false
-    ShopTab.Visible = false
-    
-    -- Hiển thị tab được chọn
-    tabToShow.Visible = true
-    
-    -- Cập nhật màu nút tab
-    mainTabButton.BackgroundColor3 = tabToShow == MainTab and Color3.fromRGB(0, 100, 50) or Color3.fromRGB(20, 20, 20)
-    settingsTabButton.BackgroundColor3 = tabToShow == SettingsTab and Color3.fromRGB(0, 100, 50) or Color3.fromRGB(20, 20, 20)
-    modTabButton.BackgroundColor3 = tabToShow == ModTab and Color3.fromRGB(0, 100, 50) or Color3.fromRGB(20, 20, 20)
-    shopTabButton.BackgroundColor3 = tabToShow == ShopTab and Color3.fromRGB(0, 100, 50) or Color3.fromRGB(20, 20, 20)
-end
-
--- Cập nhật sự kiện click cho các tab
-mainTabButton.MouseButton1Click:Connect(function()
-    switchTab(MainTab)
-end)
-
-settingsTabButton.MouseButton1Click:Connect(function()
-    switchTab(SettingsTab)
-end)
-
-modTabButton.MouseButton1Click:Connect(function()
-    switchTab(ModTab)
-end)
-
-shopTabButton.MouseButton1Click:Connect(function()
-    switchTab(ShopTab)
-end)
-
--- Toggle hiển thị menu với hiệu ứng
-iconButton.MouseButton1Click:Connect(function()
-    mainFrame.Visible = not mainFrame.Visible
-    if mainFrame.Visible then
-        mainFrame.Size = UDim2.new(0, 300, 0, 0)
-        TweenService:Create(mainFrame, TweenInfo.new(0.3), {
-            Size = UDim2.new(0, 300, 0, 200)
-        }):Play()
-    end
-end)
-
--- Thêm nút đóng GUI
-local closeButton = Instance.new("TextButton")
-closeButton.Name = "CloseButton"
-closeButton.Size = UDim2.new(0, 30, 0, 30)
-closeButton.Position = UDim2.new(1, -40, 0, 10)
-closeButton.Text = "X"
-closeButton.Font = Enum.Font.GothamBold
-closeButton.TextSize = 18
-closeButton.TextColor3 = Color3.fromRGB(255, 50, 50)
-closeButton.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-closeButton.BorderSizePixel = 0
-closeButton.Parent = mainFrame
-
-local closeCorner = Instance.new("UICorner", closeButton)
-closeCorner.CornerRadius = UDim.new(0, 8)
-
-local closeStroke = Instance.new("UIStroke", closeButton)
-closeStroke.Color = Color3.fromRGB(255, 50, 50)
-closeStroke.Thickness = 2
-
--- Hiệu ứng hover cho nút đóng
-closeButton.MouseEnter:Connect(function()
-    TweenService:Create(closeButton, TweenInfo.new(0.2), {
-        BackgroundColor3 = Color3.fromRGB(50, 50, 50)
-    }):Play()
-end)
-
-closeButton.MouseLeave:Connect(function()
-    TweenService:Create(closeButton, TweenInfo.new(0.2), {
-        BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-    }):Play()
-end)
-
--- Sự kiện đóng GUI
-closeButton.MouseButton1Click:Connect(function()
-    mainFrame.Visible = false
-end)
-
--- ⚙️ SPIN
-local function getCharacter()
-    local char = player.Character or player.CharacterAdded:Wait()
-    while not char:FindFirstChild("HumanoidRootPart") do
-        char = player.Character or player.CharacterAdded:Wait()
-    end
-    return char
-end
-
-local character = getCharacter()
-local hrp = character:WaitForChild("HumanoidRootPart")
-
-local bav = Instance.new("BodyAngularVelocity")
-bav.AngularVelocity = Vector3.new(0, 150, 0)
-bav.MaxTorque = Vector3.new(0, math.huge, 0)
-bav.P = 1000
-bav.Name = "Spinner"
-
-local isSpinning = false
-
-spinBtn.MouseButton1Click:Connect(function()
-    isSpinning = not isSpinning
-    if isSpinning then
-        bav.Parent = hrp
-        spinBtn.Text = "Dừng quay"
-    else
-        bav.Parent = nil
-        spinBtn.Text = "Bắt đầu quay"
-    end
-end)
-
-player.CharacterAdded:Connect(function(char)
-    character = char
-    hrp = character:WaitForChild("HumanoidRootPart")
-    if isSpinning then
-        bav.Parent = hrp
-    end
-end)
-
--- ⚙️ AFK
-local afk = false
-local heartbeatConnection
-
-afkButton.MouseButton1Click:Connect(function()
-    afk = not afk
-    afkButton.Text = afk and "Đang AFK" or "Bật AFK"
-
-    if afk then
-        heartbeatConnection = RunService.Heartbeat:Connect(function()
-            local char = player.Character
-            if char and char:FindFirstChild("HumanoidRootPart") then
-                local hrp = char.HumanoidRootPart
-                hrp.CFrame = hrp.CFrame * CFrame.new(0.01, 0, 0)
-                wait(1.5)
-                hrp.CFrame = hrp.CFrame * CFrame.new(-0.01, 0, 0)
-            end
-        end)
-    else
-        if heartbeatConnection then
-            heartbeatConnection:Disconnect()
-            heartbeatConnection = nil
-        end
-    end
-end)
-
--- ⚙️ FIX LAG
-local fixLag = false
-
-fixLagButton.MouseButton1Click:Connect(function()
-    fixLag = not fixLag
-    fixLagButton.Text = "Fix Lag: " .. (fixLag and "ON" or "OFF")
-
-    if fixLag then
-        settings().Rendering.QualityLevel = Enum.QualityLevel.Level01
-        for _, v in pairs(workspace:GetDescendants()) do
-            if v:IsA("ParticleEmitter") or v:IsA("Trail") or v:IsA("Beam") then
-                v.Enabled = false
-            end
-        end
-    else
-        settings().Rendering.QualityLevel = Enum.QualityLevel.Automatic
-        for _, v in pairs(workspace:GetDescendants()) do
-            if v:IsA("ParticleEmitter") or v:IsA("Trail") or v:IsA("Beam") then
-                v.Enabled = true
-            end
-        end
-    end
-end)
-
--- ⚙️ ESP
-local showESP = false
-
-local function createESP(player)
-    if player == LocalPlayer then return end
-    if not player.Character or not player.Character:FindFirstChild("HumanoidRootPart") then return end
-
-    -- Tạo BillboardGui hiển thị tên và máu
-    local billboard = Instance.new("BillboardGui")
-    billboard.Name = "ESP"
-    billboard.Adornee = player.Character:WaitForChild("Head")
-    billboard.Size = UDim2.new(0, 200, 0, 50)
-    billboard.StudsOffset = Vector3.new(0, 2, 0)
-    billboard.AlwaysOnTop = true
-    billboard.Parent = player.Character
-
-    local nameLabel = Instance.new("TextLabel", billboard)
-    nameLabel.Size = UDim2.new(1, 0, 0.5, 0)
-    nameLabel.Text = player.Name
-    nameLabel.BackgroundTransparency = 1
-    nameLabel.TextColor3 = Color3.new(1, 1, 1)
-    nameLabel.TextStrokeTransparency = 0
-    nameLabel.TextScaled = true
-
-    local healthLabel = Instance.new("TextLabel", billboard)
-    healthLabel.Position = UDim2.new(0, 0, 0.5, 0)
-    healthLabel.Size = UDim2.new(1, 0, 0.5, 0)
-    healthLabel.BackgroundTransparency = 1
-    healthLabel.TextColor3 = Color3.fromRGB(0, 255, 0)
-    healthLabel.TextStrokeTransparency = 0
-    healthLabel.TextScaled = true
-
-    -- Tạo dây nối (tracer line)
-    local tracer = Instance.new("Part")
-    tracer.Name = "ESPTracer"
-    tracer.Anchored = true
-    tracer.CanCollide = false
-    tracer.Transparency = 0.7
-    tracer.Color = Color3.fromRGB(0, 255, 0) -- Màu xanh lá cây
-    tracer.Size = Vector3.new(0.1, 0.1, 1)
-    tracer.Material = Enum.Material.Neon
-    tracer.Parent = player.Character
-
-    local connection
-    connection = game:GetService("RunService").RenderStepped:Connect(function()
-        if player.Character and player.Character:FindFirstChild("Humanoid") then
-            -- Cập nhật máu
-            local hp = math.floor(player.Character.Humanoid.Health)
-            healthLabel.Text = "HP: " .. hp
-            
-            -- Cập nhật dây nối nếu cả hai người chơi đều có head
-            if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Head") and player.Character:FindFirstChild("Head") then
-                local startPos = LocalPlayer.Character.Head.Position
-                local endPos = player.Character.Head.Position
-                
-                -- Tính toán vị trí và hướng của dây nối
-                tracer.Position = (startPos + endPos) / 2
-                tracer.CFrame = CFrame.lookAt(tracer.Position, endPos)
-                
-                -- Điều chỉnh độ dài dây nối
-                local distance = (startPos - endPos).Magnitude
-                tracer.Size = Vector3.new(0.1, 0.1, distance)
-            end
-        end
-    end)
-
-    player.CharacterRemoving:Connect(function()
-        if billboard then billboard:Destroy() end
-        if tracer then tracer:Destroy() end
-        if connection then connection:Disconnect() end
-    end)
-end
-
-local function toggleESP(state)
-    for _, plr in pairs(game:GetService("Players"):GetPlayers()) do
-        if plr ~= LocalPlayer and plr.Character then
-            if state then
-                createESP(plr)
-            else
-                local esp = plr.Character:FindFirstChild("ESP")
-                if esp then esp:Destroy() end
-                
-                local tracer = plr.Character:FindFirstChild("ESPTracer")
-                if tracer then tracer:Destroy() end
-            end
-        end
-    end
-end
-
--- Giả sử bạn đã có button ESP
-espButton.MouseButton1Click:Connect(function()
-    showESP = not showESP
-    espButton.Text = "ESP: " .. (showESP and "ON" or "OFF")
-    toggleESP(showESP)
-end)
-
-game:GetService("Players").PlayerAdded:Connect(function(plr)
-    plr.CharacterAdded:Connect(function()
-        if showESP then 
-            wait(1) 
-            createESP(plr) 
-        end
-    end)
-end)
-
--- Xử lý khi local player spawn
-LocalPlayer.CharacterAdded:Connect(function()
-    if showESP then
-        for _, plr in pairs(game:GetService("Players"):GetPlayers()) do
-            if plr ~= LocalPlayer then
-                createESP(plr)
-            end
-        end
-    end
-end)
-
--- ⚙️ AIMBOT
-local camera = workspace.CurrentCamera
-local isAimbotOn = false
-
-local function getClosestPlayer()
-    local closest, minDist = nil, math.huge
-    for _, target in pairs(Players:GetPlayers()) do
-        if target ~= player and target.Character and target.Character:FindFirstChild("HumanoidRootPart") then
-            local dist = (hrp.Position - target.Character.HumanoidRootPart.Position).Magnitude
-            if dist < minDist then
-                closest = target
-                minDist = dist
-            end
-        end
-    end
-    return closest
-end
-
-local aimConnection = nil
-
-aimbotButton.MouseButton1Click:Connect(function()
-    isAimbotOn = not isAimbotOn
-    aimbotButton.Text = "Aimbot: " .. (isAimbotOn and "ON" or "OFF")
-
-    if isAimbotOn then
-        aimConnection = RunService.RenderStepped:Connect(function()
-            local target = getClosestPlayer()
-            if target and target.Character and target.Character:FindFirstChild("HumanoidRootPart") then
-                local targetPos = target.Character.HumanoidRootPart.Position + Vector3.new(0, 2, 0)
-                camera.CFrame = CFrame.new(camera.CFrame.Position, targetPos)
-            end
-        end)
-    else
-        if aimConnection then
-            aimConnection:Disconnect()
-            aimConnection = nil
-        end
-    end
-end)
-
--- ⚙️ AUTO CLICK
-local isAutoClicking = false
-local autoClickConnection = nil
-
-autoClickButton.MouseButton1Click:Connect(function()
-    isAutoClicking = not isAutoClicking
-    autoClickButton.Text = "Tự Động Đánh: " .. (isAutoClicking and "ON" or "OFF")
-
-    if isAutoClicking then
-        autoClickConnection = RunService.RenderStepped:Connect(function()
-            local char = player.Character
-            if char then
-                local tool = char:FindFirstChildOfClass("Tool")
-                if tool then
-                    tool:Activate()
-                end
-            end
-        end)
-    else
-        if autoClickConnection then
-            autoClickConnection:Disconnect()
-            autoClickConnection = nil
-        end
-    end
-end)
-
--- ⚙️ ẨN TÊN NGƯỜI DÙNG (PHIÊN BẢN HOÀN CHỈNH)
-local hideNames = false
-local nameTags = {}
-
-local function toggleNameVisibility(player, hide)
-    if not player.Character then return end
-    
-    -- Tìm tất cả các BillboardGui hiển thị tên
-    for _, child in ipairs(player.Character:GetDescendants()) do
-        if child:IsA("BillboardGui") and (child.Name == "NameTag" or child.Name == "Nametag" or child:FindFirstChildOfClass("TextLabel")) then
-            if hide then
-                -- Lưu trạng thái gốc và ẩn đi
-                nameTags[child] = child.Enabled
-                child.Enabled = false
-            else
-                -- Khôi phục trạng thái gốc
-                if nameTags[child] ~= nil then
-                    child.Enabled = nameTags[child]
-                else
-                    child.Enabled = true
-                end
-            end
-        end
-    end
-    
-    -- Xử lý với Humanoid (nếu có)
-    local humanoid = player.Character:FindFirstChildOfClass("Humanoid")
-    if humanoid then
-        if hide then
-            nameTags[humanoid] = humanoid.DisplayName
-            humanoid.DisplayName = ""
-        else
-            if nameTags[humanoid] then
-                humanoid.DisplayName = nameTags[humanoid]
-            end
-        end
-    end
-end
-
-local function toggleAllNames(hide)
-    for _, player in ipairs(Players:GetPlayers()) do
-        if player ~= Players.LocalPlayer then
-            toggleNameVisibility(player, hide)
-        end
-    end
-end
-
-hideNamesButton.MouseButton1Click:Connect(function()
-    hideNames = not hideNames
-    hideNamesButton.Text = "Ẩn tên: " .. (hideNames and "ON" or "OFF")
-    toggleAllNames(hideNames)
-end)
-
--- Xử lý khi có người chơi mới tham gia
-Players.PlayerAdded:Connect(function(player)
-    if hideNames then
-        player.CharacterAdded:Connect(function(character)
-            if hideNames then
-                toggleNameVisibility(player, true)
-            end
-        end)
-    end
-end)
-
--- Xử lý khi người chơi rời khỏi game
-Players.PlayerRemoving:Connect(function(player)
-    -- Dọn dẹp dữ liệu
-    for k, v in pairs(nameTags) do
-        if not k:IsDescendantOf(game) then
-            nameTags[k] = nil
-        end
-    end
-end)
-
--- ⚙️ NOCIP FUNCTION (Phiên bản nâng cao)
-local isNoClip = false
-local noClipConnection = nil
-local originalCollisions = {}
-
-noClipButton.MouseButton1Click:Connect(function()
-    isNoClip = not isNoClip
-    noClipButton.Text = "NoClip: " .. (isNoClip and "ON" or "OFF")
-    
-    local function setNoClipState(character, state)
-        for _, part in ipairs(character:GetDescendants()) do
-            if part:IsA("BasePart") then
-                if state then
-                    -- Lưu trạng thái gốc và áp dụng NoClip
-                    originalCollisions[part] = {
-                        CanCollide = part.CanCollide,
-                        Massless = part.Massless
-                    }
-                    part.CanCollide = false
-                    part.Massless = true
-                else
-                    -- Khôi phục trạng thái gốc
-                    if originalCollisions[part] then
-                        part.CanCollide = originalCollisions[part].CanCollide
-                        part.Massless = originalCollisions[part].Massless
-                        originalCollisions[part] = nil
-                    else
-                        -- Mặc định nếu không có thông tin gốc
-                        part.CanCollide = true
-                        part.Massless = false
-                    end
-                end
-            end
-        end
-    end
-
-    if isNoClip then
-        -- Bật NoClip
-        if player.Character then
-            setNoClipState(player.Character, true)
-        end
-        
-        -- Kết nối sự kiện CharacterAdded
-        noClipConnection = player.CharacterAdded:Connect(function(char)
-            wait(0.5) -- Đợi character load đầy đủ
-            if isNoClip then
-                setNoClipState(char, true)
-            end
-        end)
-    else
-        -- Tắt NoClip
-        if noClipConnection then
-            noClipConnection:Disconnect()
-            noClipConnection = nil
-        end
-        
-        if player.Character then
-            setNoClipState(player.Character, false)
-        end
-    end
-end)
-
--- ⚙️ NHẢY VÔ HẠN
-local isInfJump = false
-local jumpConnection = nil
-
-infJumpButton.MouseButton1Click:Connect(function()
-    isInfJump = not isInfJump
-    infJumpButton.Text = "Nhảy vô hạn: " .. (isInfJump and "ON" or "OFF")
-    
-    if isInfJump then
-        jumpConnection = UserInputService.JumpRequest:Connect(function()
-            local character = player.Character
-            if character then
-                local humanoid = character:FindFirstChildOfClass("Humanoid")
-                if humanoid then
-                    humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
-                end
-            end
-        end)
-    else
-        if jumpConnection then
-            jumpConnection:Disconnect()
-            jumpConnection = nil
-        end
-    end
-end)
-
--- ⚙️ HITBOX
-local hitboxEnabled = false
-
-local function expandHitboxes()
-    for _, target in pairs(Players:GetPlayers()) do
-        if target ~= player and target.Character and target.Character:FindFirstChild("HumanoidRootPart") then
-            local hrp = target.Character.HumanoidRootPart
-            hrp.Size = Vector3.new(10, 10, 10)
-            hrp.Transparency = 0.7
-            hrp.Material = Enum.Material.Neon
-            hrp.Color = Color3.fromRGB(255, 0, 0)
-            hrp.CanCollide = false
-        end
-    end
-end
-
--- Liên tục cập nhật nếu bật
-RunService.RenderStepped:Connect(function()
-    if hitboxEnabled then
-        pcall(expandHitboxes)
-    end
-end)
-
--- Khi nhấn nút hitbox
-hitboxButton.MouseButton1Click:Connect(function()
-    hitboxEnabled = not hitboxEnabled
-    hitboxButton.Text = "Hitbox: " .. (hitboxEnabled and "ON" or "OFF")
-end)
-
--- ⚙️ INFOSERVER
-local infoGui = Instance.new("Frame")
-infoGui.Size = UDim2.new(0, 260, 0, 130)
-infoGui.Position = UDim2.new(0.5, -130, 0.5, -65)
-infoGui.AnchorPoint = Vector2.new(0.5, 0.5)
-infoGui.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
-infoGui.Visible = false
-infoGui.Parent = screenGui
-
-local infoCorner = Instance.new("UICorner", infoGui)
-infoCorner.CornerRadius = UDim.new(0, 10)
-
-local infoStroke = Instance.new("UIStroke", infoGui)
-infoStroke.Color = Color3.fromRGB(0, 255, 128)
-infoStroke.Thickness = 2
-
-local infoText = Instance.new("TextLabel")
-infoText.Size = UDim2.new(1, -20, 1, -20)
-infoText.Position = UDim2.new(0, 10, 0, 10)
-infoText.BackgroundTransparency = 1
-infoText.TextColor3 = Color3.new(1, 1, 1)
-infoText.Font = Enum.Font.Gotham
-infoText.TextSize = 14
-infoText.TextXAlignment = Enum.TextXAlignment.Left
-infoText.TextYAlignment = Enum.TextYAlignment.Top
-infoText.TextWrapped = true
-infoText.Text = "Đang tải thông tin..."
-infoText.Parent = infoGui
-
-local infoVisible = false
-
-infoButton.MouseButton1Click:Connect(function()
-	infoVisible = not infoVisible
-	infoGui.Visible = infoVisible
-end)
-
-local startTime = tick()
-
-task.spawn(function()
-	while true do
-		local playerCount = #Players:GetPlayers()
-		local vipServer = game.VIPServerId ~= "" and game.VIPServerOwnerId ~= 0
-		local elapsed = math.floor(tick() - startTime)
-		local minutes = math.floor(elapsed / 60)
-		local seconds = elapsed % 60
-		local version = game.JobId or "Không rõ"
-
-		infoText.Text = string.format([[
-⚡ SKYHUB BY DUNGSKY ⚡
-♯ Phiên Bản v4 
-♯ Người chơi: %d
-♯ Server đã chạy: %d phút %02d giây
-♯ Loại server: %s
-♯ Server JobId: %s
-]], playerCount, minutes, seconds, vipServer and "VIP" or "Thường", version)
-
-		wait(1)
-	end
-end)
-
-local draggingInfo = false
-local dragInputInfo, dragStartInfo, startPosInfo
-
-local function updateInfoInput(input)
-	local delta = input.Position - dragStartInfo
-	infoGui.Position = UDim2.new(
-		startPosInfo.X.Scale,
-		startPosInfo.X.Offset + delta.X,
-		startPosInfo.Y.Scale,
-		startPosInfo.Y.Offset + delta.Y
-	)
-end
-
-infoGui.InputBegan:Connect(function(input)
-	if input.UserInputType == Enum.UserInputType.MouseButton1 then
-		draggingInfo = true
-		dragStartInfo = input.Position
-		startPosInfo = infoGui.Position
-
-		input.Changed:Connect(function()
-			if input.UserInputState == Enum.UserInputState.End then
-				draggingInfo = false
-			end
-		end)
-	end
-end)
-
-infoGui.InputChanged:Connect(function(input)
-	if input.UserInputType == Enum.UserInputType.MouseMovement and draggingInfo then
-		dragInputInfo = input
-	end
-end)
-
-UserInputService.InputChanged:Connect(function(input)
-	if input == dragInputInfo and draggingInfo then
-		updateInfoInput(input)
-	end
-end)
-
--- ⚙️ SHOP
-buyMaTauButton.MouseButton1Click:Connect(function()
-    local args = {"MaTau"}
-    local success, err = pcall(function()
-        game:GetService("ReplicatedStorage"):WaitForChild("KnitPackages"):WaitForChild("_Index"):WaitForChild("sleitnick_knit@1.7.0"):WaitForChild("knit"):WaitForChild("Services"):WaitForChild("ShopService"):WaitForChild("RE"):WaitForChild("buyItem"):FireServer(unpack(args))
-    end)
-    
-    if success then
-        game.StarterGui:SetCore("SendNotification", {
-            Title = "THÀNH CÔNG",
-            Text = "Đã mua Mã Tấu thành công!",
-            Duration = 3,
-            Icon = "rbxassetid://57254792"
-        })
-    else
-        game.StarterGui:SetCore("SendNotification", {
-            Title = "LỖI",
-            Text = "Mua Mã Tấu thất bại: "..tostring(err),
-            Duration = 5,
-            Icon = "rbxassetid://57254792"
-        })
-    end
-end)
-
-buyPhoLonButton.MouseButton1Click:Connect(function()
-    local args = {"PhongLon"}
-    local success, err = pcall(function()
-        game:GetService("ReplicatedStorage"):WaitForChild("KnitPackages"):WaitForChild("_Index"):WaitForChild("sleitnick_knit@1.7.0"):WaitForChild("knit"):WaitForChild("Services"):WaitForChild("ShopService"):WaitForChild("RE"):WaitForChild("buyItem"):FireServer(unpack(args))
-    end)
-    
-    if success then
-        game.StarterGui:SetCore("SendNotification", {
-            Title = "THÀNH CÔNG",
-            Text = "Đã mua Phóng Lợn thành công!",
-            Duration = 3,
-            Icon = "rbxassetid://57254792"
-        })
-    else
-        game.StarterGui:SetCore("SendNotification", {
-            Title = "LỖI",
-            Text = "Mua Phóng Lợn thất bại: "..tostring(err),
-            Duration = 5,
-            Icon = "rbxassetid://57254792"
-        })
-    end
-end)
-
--- Xử lý sự kiện click
-buyBandageButton.MouseButton1Click:Connect(function()
-    local args = {
-        "băng gạc", -- Tên item (đã được decode từ UTF-8)
-        1 -- Số lượng
-    }
-    
-    local success, err = pcall(function()
-        game:GetService("ReplicatedStorage"):WaitForChild("KnitPackages"):WaitForChild("_Index"):WaitForChild("sleitnick_knit@1.7.0"):WaitForChild("knit"):WaitForChild("Services"):WaitForChild("ShopService"):WaitForChild("RE"):WaitForChild("buyItem"):FireServer(unpack(args))
-    end)
-    
-    if success then
-        game.StarterGui:SetCore("SendNotification", {
-            Title = "THÀNH CÔNG",
-            Text = "Đã mua băng gạc thành công!",
-            Duration = 3,
-            Icon = "rbxassetid://57254792"
-        })
-    else
-        game.StarterGui:SetCore("SendNotification", {
-            Title = "LỖI",
-            Text = "Mua băng gạc thất bại: "..tostring(err),
-            Duration = 5,
-            Icon = "rbxassetid://57254792"
-        })
-    end
-end)
-
--- Phiên bản tự động mua (nếu cần)
-local isAutoBuyingBandage = false
-local autoBuyConnection = nil
-
-autoBuyBandageButton.MouseButton1Click:Connect(function()
-    isAutoBuyingBandage = not isAutoBuyingBandage
-    autoBuyBandageButton.Text = "Tự Động Mua Băng Gạc: " .. (isAutoBuyingBandage and "ON" or "OFF")
-    
-    if isAutoBuyingBandage then
-        autoBuyConnection = RunService.Heartbeat:Connect(function()
-            local args = {
-                "băng gạc",
-                1
-            }
-            game:GetService("ReplicatedStorage"):WaitForChild("KnitPackages"):WaitForChild("_Index"):WaitForChild("sleitnick_knit@1.7.0"):WaitForChild("knit"):WaitForChild("Services"):WaitForChild("ShopService"):WaitForChild("RE"):WaitForChild("buyItem"):FireServer(unpack(args))
-            wait(1) -- Đợi 1 giây giữa các lần mua
-        end)
-    else
-        if autoBuyConnection then
-            autoBuyConnection:Disconnect()
-            autoBuyConnection = nil
-        end
-    end
-end) 
-
--- ⚙️ Fly
-local speed = 50
-local flying = false
-local bg, bv
-local flyGui -- GUI điều khiển fly
-
--- Hàm bật/tắt fly
-local function toggleFlyState()
-    local char = game.Players.LocalPlayer.Character
-    if not char or not char:FindFirstChild("HumanoidRootPart") then return end
-    
-    flying = not flying
-    if flying then
-        bg = Instance.new("BodyGyro")
-        bv = Instance.new("BodyVelocity")
-        
-        bg.P = 9e4
-        bg.MaxTorque = Vector3.new(9e9, 9e9, 9e9)
-        bg.CFrame = char.HumanoidRootPart.CFrame
-        bg.Parent = char.HumanoidRootPart
-        
-        bv.Velocity = Vector3.new(0, 0, 0)
-        bv.MaxForce = Vector3.new(9e9, 9e9, 9e9)
-        bv.Parent = char.HumanoidRootPart
-        
-        spawn(function()
-            while flying and char and char:FindFirstChild("HumanoidRootPart") do
-                bg.CFrame = workspace.CurrentCamera.CFrame
-                bv.Velocity = workspace.CurrentCamera.CFrame.LookVector * speed
-                task.wait()
-            end
-        end)
-    else
-        if bg then bg:Destroy() end
-        if bv then bv:Destroy() end
-    end
-end
-
--- Hàm tạo GUI điều khiển Fly
-local function createFlyGui()
-    if flyGui then flyGui:Destroy() end
-    
-    flyGui = Instance.new("ScreenGui")
-    flyGui.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
-    
-    local frame = Instance.new("Frame")
-    frame.Size = UDim2.new(0, 200, 0, 150)
-    frame.Position = UDim2.new(0.4, 0, 0.4, 0)
-    frame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
-    frame.Active = true
-    frame.Draggable = true
-    frame.Parent = flyGui
-    
-    local title = Instance.new("TextLabel")
-    title.Size = UDim2.new(1, -30, 0, 25)
-    title.Position = UDim2.new(0, 5, 0, 5)
-    title.BackgroundTransparency = 1
-    title.Text = "Fly Control"
-    title.TextColor3 = Color3.fromRGB(0, 255, 128)
-    title.Font = Enum.Font.GothamBold
-    title.TextSize = 14
-    title.TextXAlignment = Enum.TextXAlignment.Left
-    title.Parent = frame
-    
-    local closeBtn = Instance.new("TextButton")
-    closeBtn.Size = UDim2.new(0, 20, 0, 20)
-    closeBtn.Position = UDim2.new(1, -25, 0, 5)
-    closeBtn.Text = "X"
-    closeBtn.BackgroundColor3 = Color3.fromRGB(200, 0, 0)
-    closeBtn.TextColor3 = Color3.new(1,1,1)
-    closeBtn.Font = Enum.Font.GothamBold
-    closeBtn.TextSize = 14
-    closeBtn.Parent = frame
-    closeBtn.MouseButton1Click:Connect(function()
-        flying = false
-        if bg then bg:Destroy() end
-        if bv then bv:Destroy() end
-        flyGui:Destroy()
-    end)
-    
-    local speedLabel = Instance.new("TextLabel")
-    speedLabel.Size = UDim2.new(1, -20, 0, 20)
-    speedLabel.Position = UDim2.new(0, 10, 0, 40)
-    speedLabel.BackgroundTransparency = 1
-    speedLabel.Text = "Tốc độ: "..speed
-    speedLabel.TextColor3 = Color3.fromRGB(0, 255, 128)
-    speedLabel.Font = Enum.Font.Gotham
-    speedLabel.TextSize = 14
-    speedLabel.Parent = frame
-    
-    local speedUpButton = Instance.new("TextButton")
-    speedUpButton.Size = UDim2.new(0, 80, 0, 30)
-    speedUpButton.Position = UDim2.new(0, 10, 0, 70)
-    speedUpButton.Text = "+ Speed"
-    speedUpButton.BackgroundColor3 = Color3.fromRGB(0, 100, 50)
-    speedUpButton.TextColor3 = Color3.new(1,1,1)
-    speedUpButton.Font = Enum.Font.Gotham
-    speedUpButton.TextSize = 14
-    speedUpButton.Parent = frame
-    speedUpButton.MouseButton1Click:Connect(function()
-        speed = math.min(speed + 10, 200)
-        speedLabel.Text = "Tốc độ: "..speed
-    end)
-    
-    local speedDownButton = Instance.new("TextButton")
-    speedDownButton.Size = UDim2.new(0, 80, 0, 30)
-    speedDownButton.Position = UDim2.new(0, 110, 0, 70)
-    speedDownButton.Text = "- Speed"
-    speedDownButton.BackgroundColor3 = Color3.fromRGB(100, 0, 0)
-    speedDownButton.TextColor3 = Color3.new(1,1,1)
-    speedDownButton.Font = Enum.Font.Gotham
-    speedDownButton.TextSize = 14
-    speedDownButton.Parent = frame
-    speedDownButton.MouseButton1Click:Connect(function()
-        speed = math.max(10, speed - 10)
-        speedLabel.Text = "Tốc độ: "..speed
-    end)
-    
-    local toggleBtn = Instance.new("TextButton")
-    toggleBtn.Size = UDim2.new(0, 180, 0, 30)
-    toggleBtn.Position = UDim2.new(0, 10, 0, 110)
-    toggleBtn.Text = "Fly: OFF"
-    toggleBtn.BackgroundColor3 = Color3.fromRGB(0, 50, 25)
-    toggleBtn.TextColor3 = Color3.new(1,1,1)
-    toggleBtn.Font = Enum.Font.Gotham
-    toggleBtn.TextSize = 14
-    toggleBtn.Parent = frame
-    toggleBtn.MouseButton1Click:Connect(function()
-        toggleFlyState()
-        toggleBtn.Text = flying and "Fly: ON" or "Fly: OFF"
-    end)
-end
-
-flyButton.MouseButton1Click:Connect(function()
-    createFlyGui()
-end)
-
--- ⚙️ BOSS CONTROL PANEL
--- Màu sắc
-local NEON_GREEN = Color3.fromRGB(0, 255, 128)
-local DARK_GREEN = Color3.fromRGB(0, 50, 25)
-
--- ==============================================
--- PHẦN MENU CHÍNH
--- ==============================================
-
-local mainGui = Instance.new("ScreenGui")
-mainGui.Name = "MainMenu"
-mainGui.Parent = playerGui
-
-local mainFrame = Instance.new("Frame")
-mainFrame.Size = UDim2.new(0, 300, 0, 400)
-mainFrame.Position = UDim2.new(0.5, -150, 0.5, -200)
-mainFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 25)
-mainFrame.Active = true
-mainFrame.Draggable = true
-mainFrame.Parent = mainGui
-
-local mainCorner = Instance.new("UICorner")
-mainCorner.CornerRadius = UDim.new(0, 8)
-mainCorner.Parent = mainFrame
-
-local mainStroke = Instance.new("UIStroke")
-mainStroke.Color = NEON_GREEN
-mainStroke.Thickness = 2
-mainStroke.Parent = mainFrame
-
--- Title
-local titleLabel = Instance.new("TextLabel")
-titleLabel.Size = UDim2.new(1, -20, 0, 40)
-titleLabel.Position = UDim2.new(0, 10, 0, 10)
-titleLabel.BackgroundTransparency = 1
-titleLabel.Text = "MAIN MENU"
-titleLabel.Font = Enum.Font.GothamBlack
-titleLabel.TextSize = 22
-titleLabel.TextColor3 = NEON_GREEN
-titleLabel.Parent = mainFrame
-
--- Tabs
-local tabButtons = Instance.new("Frame")
-tabButtons.Size = UDim2.new(1, -20, 0, 40)
-tabButtons.Position = UDim2.new(0, 10, 0, 60)
-tabButtons.BackgroundTransparency = 1
-tabButtons.Parent = mainFrame
-
-local tabLayout = Instance.new("UIListLayout", tabButtons)
-tabLayout.FillDirection = Enum.FillDirection.Horizontal
-tabLayout.Padding = UDim.new(0, 10)
-
--- Tab Pages
-local pages = Instance.new("Frame")
-pages.Name = "Pages"
-pages.Size = UDim2.new(1, -20, 1, -110)
-pages.Position = UDim2.new(0, 10, 0, 110)
-pages.BackgroundTransparency = 1
-pages.Parent = mainFrame
-
--- Hàm tạo tab
-local function createTab(name)
-    local button = Instance.new("TextButton")
-    button.Size = UDim2.new(0, 80, 1, 0)
-    button.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-    button.Text = name
-    button.TextColor3 = Color3.new(1, 1, 1)
-    button.Font = Enum.Font.GothamBold
-    button.TextSize = 14
-    button.Parent = tabButtons
-
-    local scrollFrame = Instance.new("ScrollingFrame")
-    scrollFrame.Name = name.."Tab"
-    scrollFrame.Size = UDim2.new(1, 0, 1, 0)
-    scrollFrame.BackgroundTransparency = 1
-    scrollFrame.Visible = false
-    scrollFrame.ScrollBarThickness = 5
-    scrollFrame.Parent = pages
-    
-    local listLayout = Instance.new("UIListLayout", scrollFrame)
-    listLayout.Padding = UDim.new(0, 10)
-    
-    return button, scrollFrame
-end
-
--- Tạo các tab
-local mainTabButton, MainTab = createTab("Main")
-local combatTabButton, CombatTab = createTab("Combat")
-
--- Hàm tạo nút tiêu chuẩn
-local function createStandardButton(parent, text, yOffset)
-    local button = Instance.new("TextButton")
-    button.Size = UDim2.new(1, -20, 0, 40)
-    button.Position = UDim2.new(0, 10, 0, yOffset or 0)
-    button.Text = text
-    button.Font = Enum.Font.GothamBold
-    button.TextSize = 16
-    button.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-    button.TextColor3 = Color3.new(1, 1, 1)
-    button.Parent = parent
-    
-    local corner = Instance.new("UICorner")
-    corner.CornerRadius = UDim.new(0, 6)
-    corner.Parent = button
-    
-    local stroke = Instance.new("UIStroke")
-    stroke.Color = NEON_GREEN
-    stroke.Thickness = 1
-    stroke.Parent = button
-    
-    return button
-end
-
--- ==============================================
--- PHẦN BOSS CONTROL
--- ==============================================
-
-local bossGui = Instance.new("ScreenGui")
-bossGui.Name = "BossControlGUI"
-bossGui.Enabled = false
-bossGui.Parent = playerGui
-
-local bossFrame = Instance.new("Frame")
-bossFrame.Size = UDim2.new(0, 300, 0, 350)
-bossFrame.Position = UDim2.new(0.5, -150, 0.5, -175)
-bossFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 25)
-bossFrame.Active = true
-bossFrame.Draggable = true
-bossFrame.Parent = bossGui
-
-local bossCorner = Instance.new("UICorner")
-bossCorner.CornerRadius = UDim.new(0, 8)
-bossCorner.Parent = bossFrame
-
-local bossStroke = Instance.new("UIStroke")
-bossStroke.Color = NEON_GREEN
-bossStroke.Thickness = 2
-bossStroke.Parent = bossFrame
-
--- Title
-local bossTitle = Instance.new("TextLabel")
-bossTitle.Size = UDim2.new(1, -20, 0, 40)
-bossTitle.Position = UDim2.new(0, 10, 0, 10)
-bossTitle.BackgroundTransparency = 1
-bossTitle.Text = "BOSS CONTROL"
-bossTitle.Font = Enum.Font.GothamBlack
-bossTitle.TextSize = 18
-bossTitle.TextColor3 = NEON_GREEN
-bossTitle.Parent = bossFrame
-
--- Hiển thị máu boss
-local bossHealthLabel = Instance.new("TextLabel")
-bossHealthLabel.Size = UDim2.new(1, -20, 0, 25)
-bossHealthLabel.Position = UDim2.new(0, 10, 0, 60)
-bossHealthLabel.BackgroundTransparency = 1
-bossHealthLabel.TextColor3 = NEON_GREEN
-bossHealthLabel.Font = Enum.Font.Gotham
-bossHealthLabel.TextSize = 14
-bossHealthLabel.Text = "BOSS HEALTH: N/A"
-bossHealthLabel.Parent = bossFrame
-
--- Hàm tìm NPC gần nhất
-local function findNearestNPC()
-    local closestNPC = nil
-    local closestDistance = math.huge
-    local character = player.Character
-    if not character then return nil end
-    
-    local humanoidRootPart = character:FindFirstChild("HumanoidRootPart")
-    if not humanoidRootPart then return nil end
-    
-    for _, npc in ipairs(workspace:GetChildren()) do
-        if npc:FindFirstChild("Humanoid") and npc:FindFirstChild("HumanoidRootPart") and npc ~= character then
-            local distance = (humanoidRootPart.Position - npc.HumanoidRootPart.Position).Magnitude
-            if distance < closestDistance then
-                closestDistance = distance
-                closestNPC = npc
-            end
-        end
-    end
-    
-    return closestNPC
-end
-
--- AIM BOSS
-local aimingBoss = false
-local aimConnection
-
-local function startAimBoss()
-    aimingBoss = true
-    aimConnection = RunService.RenderStepped:Connect(function()
-        if not aimingBoss then return end
-        
-        local target = findNearestNPC()
-        if target and target:FindFirstChild("HumanoidRootPart") and workspace.CurrentCamera then
-            workspace.CurrentCamera.CFrame = CFrame.new(
-                workspace.CurrentCamera.CFrame.Position,
-                target.HumanoidRootPart.Position
-            )
-        end
-    end)
-end
-
-local function stopAimBoss()
-    aimingBoss = false
-    if aimConnection then
-        aimConnection:Disconnect()
-        aimConnection = nil
-    end
-end
-
--- Nút AIM BOSS
-local aimBtn = createStandardButton(bossFrame, "AIM BOSS: OFF", 100)
-aimBtn.MouseButton1Click:Connect(function()
-    aimingBoss = not aimingBoss
-    if aimingBoss then
-        startAimBoss()
-        aimBtn.Text = "AIM BOSS: ON"
-        TweenService:Create(aimBtn, TweenInfo.new(0.2), {BackgroundColor3 = NEON_GREEN}):Play()
-    else
-        stopAimBoss()
-        aimBtn.Text = "AIM BOSS: OFF"
-        TweenService:Create(aimBtn, TweenInfo.new(0.2), {BackgroundColor3 = DARK_GREEN}):Play()
-    end
-end)
-
--- CIRCLE FLIGHT
-local circleFlight = {
-    Config = {
-        Center = Vector3.new(0, 0, 0), -- Thay bằng tọa độ bạn muốn
-        Radius = 30,
-        Height = 20,
-        Speed = 1
-    },
-    IsActive = false,
-    Connection = nil
-}
-
-local function startCircleFlight()
-    if circleFlight.IsActive or not player.Character then return end
-    
-    local humanoid = player.Character:FindFirstChild("Humanoid")
-    local rootPart = player.Character:FindFirstChild("HumanoidRootPart")
-    if not humanoid or not rootPart then return end
-
-    -- Cập nhật tâm bay theo vị trí boss
-    local target = findNearestNPC()
-    if target and target:FindFirstChild("HumanoidRootPart") then
-        circleFlight.Config.Center = target.HumanoidRootPart.Position
-    end
-
-    circleFlight.IsActive = true
-    local angle = 0
-
-    circleFlight.Connection = RunService.Heartbeat:Connect(function(delta)
-        if not player.Character then
-            stopCircleFlight()
-            return
-        end
-        
-        angle = angle + delta * circleFlight.Config.Speed
-        local orbitPos = circleFlight.Config.Center + Vector3.new(
-            math.cos(angle) * circleFlight.Config.Radius,
-            circleFlight.Config.Height,
-            math.sin(angle) * circleFlight.Config.Radius
+    if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+        local delta = input.Position - dragStart
+        menuFrame.Position = UDim2.new(
+            startPos.X.Scale, 
+            startPos.X.Offset + delta.X,
+            startPos.Y.Scale, 
+            startPos.Y.Offset + delta.Y
         )
-        rootPart.CFrame = CFrame.new(orbitPos, circleFlight.Config.Center)
-        humanoid:ChangeState(Enum.HumanoidStateType.Freefall)
+    end
+end)
+
+-- ============== CHARACTER PROTECTION ==============
+player.CharacterAdded:Connect(function(character)
+    wait(1) -- Đợi character load
+    
+    -- Tự động bật lại noclip nếu đang bật
+    if noclipEnabled then
+        task.wait(0.5)
+        toggleNoclip()
+    end
+    
+    -- Tự động bật lại fly nếu đang bật
+    if flyEnabled then
+        task.wait(0.5)
+        toggleFly()
+    end
+end)
+
+-- ============== AUTO-CLOSE NO CLIP KHI CHẾT ==============
+player.CharacterRemoving:Connect(function()
+    if noclipConnection then
+        noclipConnection:Disconnect()
+        noclipConnection = nil
+    end
+    
+    if flyConnection then
+        flyConnection:Disconnect()
+        flyConnection = nil
+    end
+end)
+
+-- ============== SPEED CONTROL ==============
+local speedBtn = pages["MOVEMENT"]:FindFirstChild("Speed")
+if speedBtn then
+    local speedEnabled = false
+    local speedValue = 16
+    
+    speedBtn.MouseButton1Click:Connect(function()
+        speedEnabled = not speedEnabled
+        
+        if speedEnabled and player.Character then
+            local humanoid = player.Character:FindFirstChildOfClass("Humanoid")
+            if humanoid then
+                humanoid.WalkSpeed = speedValue
+            end
+            speedBtn.Text = "Speed: "..speedValue
+        else
+            if player.Character then
+                local humanoid = player.Character:FindFirstChildOfClass("Humanoid")
+                if humanoid then
+                    humanoid.WalkSpeed = 16
+                end
+            end
+            speedBtn.Text = "Speed: OFF"
+        end
     end)
 end
 
-local function stopCircleFlight()
-    if not circleFlight.IsActive then return end
-    
-    if circleFlight.Connection then
-        circleFlight.Connection:Disconnect()
-        circleFlight.Connection = nil
-    end
-    
-    circleFlight.IsActive = false
-    
-    if player.Character then
-        local humanoid = player.Character:FindFirstChild("Humanoid")
-        if humanoid then
-            humanoid:ChangeState(Enum.HumanoidStateType.Landed)
-        end
-    end
-end
-
--- Nút CIRCLE FLIGHT
-local flightBtn = createStandardButton(bossFrame, "CIRCLE FLIGHT: OFF", 150)
-flightBtn.MouseButton1Click:Connect(function()
-    circleFlight.IsActive = not circleFlight.IsActive
-    if circleFlight.IsActive then
-        startCircleFlight()
-        flightBtn.Text = "CIRCLE FLIGHT: ON"
-        TweenService:Create(flightBtn, TweenInfo.new(0.2), {BackgroundColor3 = NEON_GREEN}):Play()
-    else
-        stopCircleFlight()
-        flightBtn.Text = "CIRCLE FLIGHT: OFF"
-        TweenService:Create(flightBtn, TweenInfo.new(0.2), {BackgroundColor3 = DARK_GREEN}):Play()
-    end
-end)
-
--- Nút đóng
-local closeBtn = Instance.new("TextButton")
-closeBtn.Size = UDim2.new(0, 30, 0, 30)
-closeBtn.Position = UDim2.new(1, -40, 0, 10)
-closeBtn.Text = "X"
-closeBtn.Font = Enum.Font.GothamBold
-closeBtn.TextSize = 18
-closeBtn.TextColor3 = Color3.fromRGB(255, 50, 50)
-closeBtn.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-closeBtn.Parent = bossFrame
-
-closeBtn.MouseButton1Click:Connect(function()
-    bossGui.Enabled = false
-    stopAimBoss()
-    stopCircleFlight()
-end)
-
--- Cập nhật máu boss
-RunService.Heartbeat:Connect(function()
-    if bossGui.Enabled then
-        local target = findNearestNPC()
-        if target and target:FindFirstChild("Humanoid") then
-            bossHealthLabel.Text = "BOSS HEALTH: "..math.floor(target.Humanoid.Health)
-        else
-            bossHealthLabel.Text = "BOSS HEALTH: N/A"
-        end
-    end
-end)
-
--- ==============================================
--- TÍCH HỢP VÀO MENU CHÍNH
--- ==============================================
-
--- Thêm nút BOSS CONTROL vào tab Combat
-local bossButton = createStandardButton(CombatTab, "BOSS CONTROL", 10)
-bossButton.MouseButton1Click:Connect(function()
-    bossGui.Enabled = not bossGui.Enabled
-    if not bossGui.Enabled then
-        stopAimBoss()
-        stopCircleFlight()
-    end
-end)
-
--- Kích hoạt tab mặc định
-MainTab.Visible = true
-mainTabButton.BackgroundColor3 = Color3.fromRGB(0, 100, 50)
-
--- Hàm chuyển tab
-local function switchTab(tabToShow)
-    MainTab.Visible = false
-    CombatTab.Visible = false
-    
-    tabToShow.Visible = true
-    
-    mainTabButton.BackgroundColor3 = tabToShow == MainTab and Color3.fromRGB(0, 100, 50) or Color3.fromRGB(30, 30, 30)
-    combatTabButton.BackgroundColor3 = tabToShow == CombatTab and Color3.fromRGB(0, 100, 50) or Color3.fromRGB(30, 30, 30)
-end
-
-mainTabButton.MouseButton1Click:Connect(function()
-    switchTab(MainTab)
-end)
-
-combatTabButton.MouseButton1Click:Connect(function()
-    switchTab(CombatTab)
-end)
-
--- Bo góc cho các nút
-local buttons = {aimBtn, flightBtn, closeBtn, bossButton}
-for _, btn in ipairs(buttons) do
-    local btnCorner = Instance.new("UICorner")
-    btnCorner.CornerRadius = UDim.new(0, 6)
-    btnCorner.Parent = btn
-end
+print("Dung Sky Hub Premium loaded successfully!")

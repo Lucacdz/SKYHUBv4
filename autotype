@@ -1,0 +1,284 @@
+-- LocalScript (đặt trong ScreenGui)
+local Players = game:GetService("Players")
+local UserInputService = game:GetService("UserInputService")
+local player = Players.LocalPlayer
+
+-- ========== DANH SÁCH TỪ ==========
+local wordList = {
+	"Apple", "Ant", "Airplane", "Arrow", "Animal", "Amazing", "Artist", "Angel", "Awesome", "Answer",
+	"Ball", "Banana", "Bird", "Book", "Bread", "Butterfly", "Beach", "Brother", "Beautiful", "Bottle",
+	"Cat", "Car", "Cake", "Cloud", "Chair", "Computer", "Candy", "Castle", "Circle", "Camera",
+	"Dog", "Door", "Duck", "Dance", "Dragon", "Diamond", "Doctor", "Dream", "Dinner", "Dollar",
+	"Elephant", "Egg", "Earth", "Eagle", "Energy", "Engine", "Evening", "Eye", "Elephant", "Engineer",
+	"Fish", "Flower", "Fire", "Frog", "Friend", "Forest", "Family", "Food", "Future", "Finger",
+	"Goat", "Game", "Guitar", "Garden", "Ghost", "Gold", "Girl", "Grass", "Green", "Glass",
+	"House", "Hat", "Horse", "Heart", "Honey", "Helicopter", "Happy", "Hand", "Hotel", "Human",
+	"Ice", "Island", "Iron", "Idea", "Insect", "Igloo", "Icecream", "Ink", "Internet", "Important",
+	"Jump", "Juice", "Jacket", "Jungle", "Jewel", "Joke", "Jam", "Jet", "Journey", "Jungle",
+	"King", "Kite", "Key", "Kangaroo", "Kitchen", "Knife", "Kid", "Kiss", "Knowledge", "Keyboard",
+	"Lion", "Leaf", "Lamp", "Love", "Lemon", "Laptop", "Light", "Lake", "Letter", "Library",
+	"Moon", "Mouse", "Music", "Mountain", "Monkey", "Magic", "Milk", "Map", "Mother", "Morning",
+	"Night", "Nose", "Nest", "Number", "Needle", "Nurse", "Name", "Net", "Nature", "Notebook",
+	"Orange", "Owl", "Ocean", "Onion", "Octopus", "Office", "Oil", "Open", "Outside", "Orange",
+	"Pig", "Pizza", "Pencil", "Planet", "Panda", "Phone", "Paper", "Park", "Picture", "People",
+	"Queen", "Quiet", "Question", "Quilt", "Quick", "Quote", "Quiz", "Queen", "Quality", "Quarter",
+	"Rabbit", "Rain", "Robot", "River", "Rose", "Rocket", "Red", "Road", "Rainbow", "Radio",
+	"Sun", "Snake", "Star", "School", "Sugar", "Soccer", "Smile", "Sea", "Summer", "Sister",
+	"Tree", "Tiger", "Table", "Train", "Turtle", "Tomato", "Time", "Toy", "Teacher", "Telephone",
+	"Umbrella", "Uncle", "Universe", "Uniform", "Ugly", "Useful", "Up", "Under", "Unique", "Understand",
+	"Violin", "Voice", "Village", "Vegetable", "Victory", "Volcano", "Van", "View", "Vacation", "Video",
+	"Water", "Wolf", "Window", "Whale", "World", "Watch", "Wind", "Woman", "Winter", "Wonderful",
+	"Xylophone", "X-ray", "Xenon", "Xerox", "Xbox",
+	"Yellow", "Yacht", "Yogurt", "Youth", "Year", "Yoyo", "Yes", "Yard", "Yesterday", "Young",
+	"Zebra", "Zoo", "Zero", "Zipper", "Zone", "Zigzag", "Zoom", "Zombie"
+}
+
+-- ========== TẠO GUI ==========
+local screenGui = script.Parent
+screenGui.Name = "WordHelperGui"
+screenGui.ResetOnSpawn = false
+screenGui.Enabled = true
+
+local mainFrame = Instance.new("Frame")
+mainFrame.Name = "MainFrame"
+mainFrame.Size = UDim2.new(0, 300, 0, 260)
+mainFrame.Position = UDim2.new(0.5, -150, 0.7, 0)
+mainFrame.BackgroundColor3 = Color3.fromRGB(28, 28, 38)
+mainFrame.BorderSizePixel = 0
+mainFrame.Parent = screenGui
+
+local corner = Instance.new("UICorner")
+corner.CornerRadius = UDim.new(0, 14)
+corner.Parent = mainFrame
+
+local title = Instance.new("TextLabel")
+title.Size = UDim2.new(1, -50, 0, 36)
+title.Position = UDim2.new(0, 12, 0, 4)
+title.BackgroundTransparency = 1
+title.Text = "Word Helper • 2 chữ cái"
+title.TextColor3 = Color3.fromRGB(255, 255, 255)
+title.Font = Enum.Font.GothamBold
+title.TextSize = 16
+title.TextXAlignment = Enum.TextXAlignment.Left
+title.Parent = mainFrame
+
+local toggleBtn = Instance.new("TextButton")
+toggleBtn.Name = "ToggleBtn"
+toggleBtn.Size = UDim2.new(0, 34, 0, 34)
+toggleBtn.Position = UDim2.new(1, -42, 0, 4)
+toggleBtn.BackgroundColor3 = Color3.fromRGB(55, 55, 75)
+toggleBtn.Text = "−"
+toggleBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+toggleBtn.Font = Enum.Font.GothamBold
+toggleBtn.TextSize = 20
+toggleBtn.Parent = mainFrame
+
+local toggleCorner = Instance.new("UICorner")
+toggleCorner.CornerRadius = UDim.new(0, 8)
+toggleCorner.Parent = toggleBtn
+
+local inputBox = Instance.new("TextBox")
+inputBox.Size = UDim2.new(0.9, 0, 0, 40)
+inputBox.Position = UDim2.new(0.05, 0, 0, 50)
+inputBox.PlaceholderText = "Gõ 1 hoặc 2 chữ cái..."
+inputBox.Text = ""
+inputBox.BackgroundColor3 = Color3.fromRGB(45, 45, 60)
+inputBox.TextColor3 = Color3.fromRGB(255, 255, 255)
+inputBox.Font = Enum.Font.Gotham
+inputBox.TextSize = 18
+inputBox.ClearTextOnFocus = false
+inputBox.TextXAlignment = Enum.TextXAlignment.Center
+inputBox.Parent = mainFrame
+
+local inputCorner = Instance.new("UICorner")
+inputCorner.CornerRadius = UDim.new(0, 10)
+inputCorner.Parent = inputBox
+
+-- Khung chứa 2 nút gợi ý
+local suggestFrame = Instance.new("Frame")
+suggestFrame.Size = UDim2.new(0.9, 0, 0, 90)
+suggestFrame.Position = UDim2.new(0.05, 0, 0, 100)
+suggestFrame.BackgroundColor3 = Color3.fromRGB(38, 38, 52)
+suggestFrame.BorderSizePixel = 0
+suggestFrame.Parent = mainFrame
+
+local suggestCorner = Instance.new("UICorner")
+suggestCorner.CornerRadius = UDim.new(0, 10)
+suggestCorner.Parent = suggestFrame
+
+local wordBtn1 = Instance.new("TextButton")
+wordBtn1.Name = "WordBtn1"
+wordBtn1.Size = UDim2.new(1, -10, 0, 38)
+wordBtn1.Position = UDim2.new(0, 5, 0, 6)
+wordBtn1.BackgroundColor3 = Color3.fromRGB(50, 50, 70)
+wordBtn1.Text = "Gõ 1-2 chữ cái"
+wordBtn1.TextColor3 = Color3.fromRGB(160, 255, 170)
+wordBtn1.Font = Enum.Font.GothamBold
+wordBtn1.TextSize = 18
+wordBtn1.Parent = suggestFrame
+
+local wordBtn1Corner = Instance.new("UICorner")
+wordBtn1Corner.CornerRadius = UDim.new(0, 8)
+wordBtn1Corner.Parent = wordBtn1
+
+local wordBtn2 = Instance.new("TextButton")
+wordBtn2.Name = "WordBtn2"
+wordBtn2.Size = UDim2.new(1, -10, 0, 38)
+wordBtn2.Position = UDim2.new(0, 5, 0, 48)
+wordBtn2.BackgroundColor3 = Color3.fromRGB(50, 50, 70)
+wordBtn2.Text = ""
+wordBtn2.TextColor3 = Color3.fromRGB(160, 255, 170)
+wordBtn2.Font = Enum.Font.GothamBold
+wordBtn2.TextSize = 18
+wordBtn2.Parent = suggestFrame
+
+local wordBtn2Corner = Instance.new("UICorner")
+wordBtn2Corner.CornerRadius = UDim.new(0, 8)
+wordBtn2Corner.Parent = wordBtn2
+
+-- Nút Điền nhanh
+local fillBtn = Instance.new("TextButton")
+fillBtn.Name = "FillBtn"
+fillBtn.Size = UDim2.new(0.9, 0, 0, 36)
+fillBtn.Position = UDim2.new(0.05, 0, 0, 200)
+fillBtn.BackgroundColor3 = Color3.fromRGB(0, 170, 255)
+fillBtn.Text = "Điền nhanh từ đầu tiên"
+fillBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+fillBtn.Font = Enum.Font.GothamBold
+fillBtn.TextSize = 15
+fillBtn.Parent = mainFrame
+
+local fillCorner = Instance.new("UICorner")
+fillCorner.CornerRadius = UDim.new(0, 10)
+fillCorner.Parent = fillBtn
+
+local showBtn = Instance.new("TextButton")
+showBtn.Name = "ShowBtn"
+showBtn.Size = UDim2.new(0, 52, 0, 52)
+showBtn.Position = UDim2.new(1, -70, 0.55, 0)
+showBtn.BackgroundColor3 = Color3.fromRGB(0, 170, 255)
+showBtn.Text = "W"
+showBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+showBtn.Font = Enum.Font.GothamBold
+showBtn.TextSize = 22
+showBtn.Visible = false
+showBtn.Parent = screenGui
+
+local showCorner = Instance.new("UICorner")
+showCorner.CornerRadius = UDim.new(1, 0)
+showCorner.Parent = showBtn
+
+-- ========== LOGIC ==========
+local isVisible = true
+local currentWords = {nil, nil}
+
+local function getTwoWords(prefix)
+	prefix = string.upper(prefix)
+	local matches = {}
+
+	for _, word in ipairs(wordList) do
+		if string.sub(string.upper(word), 1, #prefix) == prefix then
+			table.insert(matches, word)
+		end
+	end
+
+	if #matches == 0 then
+		return nil, nil
+	end
+
+	-- Xáo trộn
+	for i = #matches, 2, -1 do
+		local j = math.random(1, i)
+		matches[i], matches[j] = matches[j], matches[i]
+	end
+
+	local w1 = matches[1]
+	local w2 = matches[2] or matches[1]
+
+	return w1, w2
+end
+
+-- Tìm TextBox đang được focus trong game (để tự điền)
+local function getFocusedTextBox()
+	local focused = UserInputService:GetFocusedTextBox()
+	if focused and focused:IsA("TextBox") and focused ~= inputBox then
+		return focused
+	end
+	return nil
+end
+
+-- Hàm tự điền từ vào ô nhập + TextBox game (nếu có)
+local function autoFill(word)
+	if not word or word == "" then return end
+
+	-- Điền vào helper
+	inputBox.Text = word
+
+	-- Điền vào TextBox đang focus trong game (nếu có)
+	local gameBox = getFocusedTextBox()
+	if gameBox then
+		gameBox.Text = word
+		-- Có thể thêm :CaptureFocus() nếu muốn giữ focus
+	end
+end
+
+local function updateSuggestions()
+	local text = string.upper(inputBox.Text)
+	-- Chỉ lấy tối đa 2 chữ cái
+	text = string.sub(text, 1, 2)
+	inputBox.Text = text -- tự động cắt còn 2 chữ
+
+	if text == "" then
+		wordBtn1.Text = "Gõ 1-2 chữ cái"
+		wordBtn2.Text = ""
+		currentWords = {nil, nil}
+		return
+	end
+
+	local w1, w2 = getTwoWords(text)
+	currentWords = {w1, w2}
+
+	if w1 then
+		wordBtn1.Text = w1
+		wordBtn2.Text = w2 or ""
+	else
+		wordBtn1.Text = "Không tìm thấy từ"
+		wordBtn2.Text = ""
+		currentWords = {nil, nil}
+	end
+end
+
+-- Kết nối sự kiện
+inputBox:GetPropertyChangedSignal("Text"):Connect(updateSuggestions)
+
+wordBtn1.MouseButton1Click:Connect(function()
+	if currentWords[1] then
+		autoFill(currentWords[1])
+	end
+end)
+
+wordBtn2.MouseButton1Click:Connect(function()
+	if currentWords[2] then
+		autoFill(currentWords[2])
+	end
+end)
+
+fillBtn.MouseButton1Click:Connect(function()
+	if currentWords[1] then
+		autoFill(currentWords[1])
+	end
+end)
+
+toggleBtn.MouseButton1Click:Connect(function()
+	isVisible = not isVisible
+	mainFrame.Visible = isVisible
+	showBtn.Visible = not isVisible
+	toggleBtn.Text = isVisible and "−" or "+"
+end)
+
+showBtn.MouseButton1Click:Connect(function()
+	isVisible = true
+	mainFrame.Visible = true
+	showBtn.Visible = false
+	toggleBtn.Text = "−"
+end)

@@ -1,7 +1,8 @@
--- LocalScript (đặt trong ScreenGui)
+-- Word Helper (chạy bằng executor)
 local Players = game:GetService("Players")
 local UserInputService = game:GetService("UserInputService")
 local player = Players.LocalPlayer
+local PlayerGui = player:WaitForChild("PlayerGui")
 
 -- ========== DANH SÁCH TỪ ==========
 local wordList = {
@@ -33,16 +34,22 @@ local wordList = {
 	"Zebra", "Zoo", "Zero", "Zipper", "Zone", "Zigzag", "Zoom", "Zombie"
 }
 
+-- Xóa GUI cũ nếu đã chạy trước đó
+if PlayerGui:FindFirstChild("WordHelperGui") then
+	PlayerGui.WordHelperGui:Destroy()
+end
+
 -- ========== TẠO GUI ==========
-local screenGui = script.Parent
+local screenGui = Instance.new("ScreenGui")
 screenGui.Name = "WordHelperGui"
 screenGui.ResetOnSpawn = false
-screenGui.Enabled = true
+screenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+screenGui.Parent = PlayerGui
 
 local mainFrame = Instance.new("Frame")
 mainFrame.Name = "MainFrame"
 mainFrame.Size = UDim2.new(0, 300, 0, 260)
-mainFrame.Position = UDim2.new(0.5, -150, 0.7, 0)
+mainFrame.Position = UDim2.new(0.5, -150, 0.65, 0)
 mainFrame.BackgroundColor3 = Color3.fromRGB(28, 28, 38)
 mainFrame.BorderSizePixel = 0
 mainFrame.Parent = screenGui
@@ -94,7 +101,6 @@ local inputCorner = Instance.new("UICorner")
 inputCorner.CornerRadius = UDim.new(0, 10)
 inputCorner.Parent = inputBox
 
--- Khung chứa 2 nút gợi ý
 local suggestFrame = Instance.new("Frame")
 suggestFrame.Size = UDim2.new(0.9, 0, 0, 90)
 suggestFrame.Position = UDim2.new(0.05, 0, 0, 100)
@@ -136,7 +142,6 @@ local wordBtn2Corner = Instance.new("UICorner")
 wordBtn2Corner.CornerRadius = UDim.new(0, 8)
 wordBtn2Corner.Parent = wordBtn2
 
--- Nút Điền nhanh
 local fillBtn = Instance.new("TextButton")
 fillBtn.Name = "FillBtn"
 fillBtn.Size = UDim2.new(0.9, 0, 0, 36)
@@ -186,19 +191,14 @@ local function getTwoWords(prefix)
 		return nil, nil
 	end
 
-	-- Xáo trộn
 	for i = #matches, 2, -1 do
 		local j = math.random(1, i)
 		matches[i], matches[j] = matches[j], matches[i]
 	end
 
-	local w1 = matches[1]
-	local w2 = matches[2] or matches[1]
-
-	return w1, w2
+	return matches[1], matches[2] or matches[1]
 end
 
--- Tìm TextBox đang được focus trong game (để tự điền)
 local function getFocusedTextBox()
 	local focused = UserInputService:GetFocusedTextBox()
 	if focused and focused:IsA("TextBox") and focused ~= inputBox then
@@ -207,26 +207,20 @@ local function getFocusedTextBox()
 	return nil
 end
 
--- Hàm tự điền từ vào ô nhập + TextBox game (nếu có)
 local function autoFill(word)
 	if not word or word == "" then return end
-
-	-- Điền vào helper
 	inputBox.Text = word
 
-	-- Điền vào TextBox đang focus trong game (nếu có)
 	local gameBox = getFocusedTextBox()
 	if gameBox then
 		gameBox.Text = word
-		-- Có thể thêm :CaptureFocus() nếu muốn giữ focus
 	end
 end
 
 local function updateSuggestions()
 	local text = string.upper(inputBox.Text)
-	-- Chỉ lấy tối đa 2 chữ cái
 	text = string.sub(text, 1, 2)
-	inputBox.Text = text -- tự động cắt còn 2 chữ
+	inputBox.Text = text
 
 	if text == "" then
 		wordBtn1.Text = "Gõ 1-2 chữ cái"
@@ -248,7 +242,6 @@ local function updateSuggestions()
 	end
 end
 
--- Kết nối sự kiện
 inputBox:GetPropertyChangedSignal("Text"):Connect(updateSuggestions)
 
 wordBtn1.MouseButton1Click:Connect(function()
@@ -282,3 +275,5 @@ showBtn.MouseButton1Click:Connect(function()
 	showBtn.Visible = false
 	toggleBtn.Text = "−"
 end)
+
+print("Word Helper đã load thành công!")

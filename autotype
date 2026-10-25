@@ -1,6 +1,7 @@
--- Word Helper (chạy bằng executor)
+-- Word Helper Pro (kéo được + tự phát hiện + tự điền)
 local Players = game:GetService("Players")
 local UserInputService = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
 local player = Players.LocalPlayer
 local PlayerGui = player:WaitForChild("PlayerGui")
 
@@ -34,7 +35,7 @@ local wordList = {
 	"Zebra", "Zoo", "Zero", "Zipper", "Zone", "Zigzag", "Zoom", "Zombie"
 }
 
--- Xóa GUI cũ nếu đã chạy trước đó
+-- Xóa GUI cũ
 if PlayerGui:FindFirstChild("WordHelperGui") then
 	PlayerGui.WordHelperGui:Destroy()
 end
@@ -48,10 +49,12 @@ screenGui.Parent = PlayerGui
 
 local mainFrame = Instance.new("Frame")
 mainFrame.Name = "MainFrame"
-mainFrame.Size = UDim2.new(0, 300, 0, 260)
-mainFrame.Position = UDim2.new(0.5, -150, 0.65, 0)
+mainFrame.Size = UDim2.new(0, 300, 0, 280)
+mainFrame.Position = UDim2.new(0.5, -150, 0.55, 0)
 mainFrame.BackgroundColor3 = Color3.fromRGB(28, 28, 38)
 mainFrame.BorderSizePixel = 0
+mainFrame.Active = true          -- quan trọng để kéo
+mainFrame.Draggable = true       -- cho phép kéo
 mainFrame.Parent = screenGui
 
 local corner = Instance.new("UICorner")
@@ -59,18 +62,17 @@ corner.CornerRadius = UDim.new(0, 14)
 corner.Parent = mainFrame
 
 local title = Instance.new("TextLabel")
-title.Size = UDim2.new(1, -50, 0, 36)
+title.Size = UDim2.new(1, -90, 0, 36)
 title.Position = UDim2.new(0, 12, 0, 4)
 title.BackgroundTransparency = 1
-title.Text = "Word Helper • 2 chữ cái"
+title.Text = "Word Helper • Tự phát hiện"
 title.TextColor3 = Color3.fromRGB(255, 255, 255)
 title.Font = Enum.Font.GothamBold
-title.TextSize = 16
+title.TextSize = 15
 title.TextXAlignment = Enum.TextXAlignment.Left
 title.Parent = mainFrame
 
 local toggleBtn = Instance.new("TextButton")
-toggleBtn.Name = "ToggleBtn"
 toggleBtn.Size = UDim2.new(0, 34, 0, 34)
 toggleBtn.Position = UDim2.new(1, -42, 0, 4)
 toggleBtn.BackgroundColor3 = Color3.fromRGB(55, 55, 75)
@@ -84,10 +86,24 @@ local toggleCorner = Instance.new("UICorner")
 toggleCorner.CornerRadius = UDim.new(0, 8)
 toggleCorner.Parent = toggleBtn
 
+local detectLabel = Instance.new("TextLabel")
+detectLabel.Size = UDim2.new(0.9, 0, 0, 28)
+detectLabel.Position = UDim2.new(0.05, 0, 0, 42)
+detectLabel.BackgroundColor3 = Color3.fromRGB(40, 40, 55)
+detectLabel.TextColor3 = Color3.fromRGB(255, 220, 100)
+detectLabel.Font = Enum.Font.GothamBold
+detectLabel.TextSize = 14
+detectLabel.Text = "Đang tìm chữ cái..."
+detectLabel.Parent = mainFrame
+
+local detectCorner = Instance.new("UICorner")
+detectCorner.CornerRadius = UDim.new(0, 8)
+detectCorner.Parent = detectLabel
+
 local inputBox = Instance.new("TextBox")
-inputBox.Size = UDim2.new(0.9, 0, 0, 40)
-inputBox.Position = UDim2.new(0.05, 0, 0, 50)
-inputBox.PlaceholderText = "Gõ 1 hoặc 2 chữ cái..."
+inputBox.Size = UDim2.new(0.9, 0, 0, 36)
+inputBox.Position = UDim2.new(0.05, 0, 0, 78)
+inputBox.PlaceholderText = "Hoặc gõ thủ công..."
 inputBox.Text = ""
 inputBox.BackgroundColor3 = Color3.fromRGB(45, 45, 60)
 inputBox.TextColor3 = Color3.fromRGB(255, 255, 255)
@@ -101,53 +117,39 @@ local inputCorner = Instance.new("UICorner")
 inputCorner.CornerRadius = UDim.new(0, 10)
 inputCorner.Parent = inputBox
 
-local suggestFrame = Instance.new("Frame")
-suggestFrame.Size = UDim2.new(0.9, 0, 0, 90)
-suggestFrame.Position = UDim2.new(0.05, 0, 0, 100)
-suggestFrame.BackgroundColor3 = Color3.fromRGB(38, 38, 52)
-suggestFrame.BorderSizePixel = 0
-suggestFrame.Parent = mainFrame
-
-local suggestCorner = Instance.new("UICorner")
-suggestCorner.CornerRadius = UDim.new(0, 10)
-suggestCorner.Parent = suggestFrame
-
 local wordBtn1 = Instance.new("TextButton")
-wordBtn1.Name = "WordBtn1"
-wordBtn1.Size = UDim2.new(1, -10, 0, 38)
-wordBtn1.Position = UDim2.new(0, 5, 0, 6)
+wordBtn1.Size = UDim2.new(0.9, 0, 0, 38)
+wordBtn1.Position = UDim2.new(0.05, 0, 0, 125)
 wordBtn1.BackgroundColor3 = Color3.fromRGB(50, 50, 70)
-wordBtn1.Text = "Gõ 1-2 chữ cái"
+wordBtn1.Text = "Từ 1"
 wordBtn1.TextColor3 = Color3.fromRGB(160, 255, 170)
 wordBtn1.Font = Enum.Font.GothamBold
 wordBtn1.TextSize = 18
-wordBtn1.Parent = suggestFrame
+wordBtn1.Parent = mainFrame
 
 local wordBtn1Corner = Instance.new("UICorner")
 wordBtn1Corner.CornerRadius = UDim.new(0, 8)
 wordBtn1Corner.Parent = wordBtn1
 
 local wordBtn2 = Instance.new("TextButton")
-wordBtn2.Name = "WordBtn2"
-wordBtn2.Size = UDim2.new(1, -10, 0, 38)
-wordBtn2.Position = UDim2.new(0, 5, 0, 48)
+wordBtn2.Size = UDim2.new(0.9, 0, 0, 38)
+wordBtn2.Position = UDim2.new(0.05, 0, 0, 170)
 wordBtn2.BackgroundColor3 = Color3.fromRGB(50, 50, 70)
-wordBtn2.Text = ""
+wordBtn2.Text = "Từ 2"
 wordBtn2.TextColor3 = Color3.fromRGB(160, 255, 170)
 wordBtn2.Font = Enum.Font.GothamBold
 wordBtn2.TextSize = 18
-wordBtn2.Parent = suggestFrame
+wordBtn2.Parent = mainFrame
 
 local wordBtn2Corner = Instance.new("UICorner")
 wordBtn2Corner.CornerRadius = UDim.new(0, 8)
 wordBtn2Corner.Parent = wordBtn2
 
 local fillBtn = Instance.new("TextButton")
-fillBtn.Name = "FillBtn"
 fillBtn.Size = UDim2.new(0.9, 0, 0, 36)
-fillBtn.Position = UDim2.new(0.05, 0, 0, 200)
+fillBtn.Position = UDim2.new(0.05, 0, 0, 220)
 fillBtn.BackgroundColor3 = Color3.fromRGB(0, 170, 255)
-fillBtn.Text = "Điền nhanh từ đầu tiên"
+fillBtn.Text = "ĐIỀN TỪ ĐẦU TIÊN"
 fillBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 fillBtn.Font = Enum.Font.GothamBold
 fillBtn.TextSize = 15
@@ -158,7 +160,6 @@ fillCorner.CornerRadius = UDim.new(0, 10)
 fillCorner.Parent = fillBtn
 
 local showBtn = Instance.new("TextButton")
-showBtn.Name = "ShowBtn"
 showBtn.Size = UDim2.new(0, 52, 0, 52)
 showBtn.Position = UDim2.new(1, -70, 0.55, 0)
 showBtn.BackgroundColor3 = Color3.fromRGB(0, 170, 255)
@@ -176,20 +177,20 @@ showCorner.Parent = showBtn
 -- ========== LOGIC ==========
 local isVisible = true
 local currentWords = {nil, nil}
+local lastDetected = ""
 
 local function getTwoWords(prefix)
-	prefix = string.upper(prefix)
-	local matches = {}
+	prefix = string.upper(tostring(prefix or ""))
+	if #prefix == 0 then return nil, nil end
 
+	local matches = {}
 	for _, word in ipairs(wordList) do
 		if string.sub(string.upper(word), 1, #prefix) == prefix then
 			table.insert(matches, word)
 		end
 	end
 
-	if #matches == 0 then
-		return nil, nil
-	end
+	if #matches == 0 then return nil, nil end
 
 	for i = #matches, 2, -1 do
 		local j = math.random(1, i)
@@ -199,67 +200,109 @@ local function getTwoWords(prefix)
 	return matches[1], matches[2] or matches[1]
 end
 
-local function getFocusedTextBox()
-	local focused = UserInputService:GetFocusedTextBox()
-	if focused and focused:IsA("TextBox") and focused ~= inputBox then
-		return focused
-	end
-	return nil
-end
-
 local function autoFill(word)
 	if not word or word == "" then return end
+
+	-- Điền vào helper
 	inputBox.Text = word
 
-	local gameBox = getFocusedTextBox()
-	if gameBox then
-		gameBox.Text = word
+	-- Tìm TextBox đang focus trong game
+	local focused = UserInputService:GetFocusedTextBox()
+	if focused and focused:IsA("TextBox") and focused ~= inputBox then
+		focused.Text = word
+		focused:CaptureFocus()
 	end
 end
 
-local function updateSuggestions()
-	local text = string.upper(inputBox.Text)
-	text = string.sub(text, 1, 2)
-	inputBox.Text = text
+local function updateSuggestions(prefix)
+	prefix = string.upper(tostring(prefix or ""))
+	prefix = string.sub(prefix, 1, 2)
 
-	if text == "" then
-		wordBtn1.Text = "Gõ 1-2 chữ cái"
+	if prefix == "" then
+		wordBtn1.Text = "Chưa có chữ cái"
 		wordBtn2.Text = ""
 		currentWords = {nil, nil}
 		return
 	end
 
-	local w1, w2 = getTwoWords(text)
+	local w1, w2 = getTwoWords(prefix)
 	currentWords = {w1, w2}
 
 	if w1 then
 		wordBtn1.Text = w1
 		wordBtn2.Text = w2 or ""
 	else
-		wordBtn1.Text = "Không tìm thấy từ"
+		wordBtn1.Text = "Không tìm thấy"
 		wordBtn2.Text = ""
 		currentWords = {nil, nil}
 	end
 end
 
-inputBox:GetPropertyChangedSignal("Text"):Connect(updateSuggestions)
+-- ========== TỰ PHÁT HIỆN CHỮ CÁI ==========
+local function detectPrefix()
+	local found = ""
+
+	-- Quét toàn bộ PlayerGui tìm TextLabel có chứa chữ cái ngắn
+	for _, gui in ipairs(PlayerGui:GetDescendants()) do
+		if gui:IsA("TextLabel") or gui:IsA("TextButton") then
+			local text = string.upper(gui.Text or "")
+
+			-- Tìm pattern kiểu "BẰNG A", "BẰNG AB", "STARTING WITH A"...
+			local match = string.match(text, "BẮT ĐẦU BẰNG%s*([A-Z]{1,2})") 
+				or string.match(text, "BẰNG%s*([A-Z]{1,2})")
+				or string.match(text, "STARTING WITH%s*([A-Z]{1,2})")
+				or string.match(text, "STARTS WITH%s*([A-Z]{1,2})")
+
+			if match and #match <= 2 then
+				found = match
+				break
+			end
+
+			-- Nếu text rất ngắn (1-2 chữ cái) và nằm gần giữa màn hình
+			if #text >= 1 and #text <= 2 and text:match("^[A-Z]+$") then
+				local pos = gui.AbsolutePosition
+				local size = gui.AbsoluteSize
+				if pos.Y > 50 and pos.Y < 400 and size.X > 20 then
+					found = text
+					break
+				end
+			end
+		end
+	end
+
+	if found ~= "" and found ~= lastDetected then
+		lastDetected = found
+		detectLabel.Text = "Phát hiện: " .. found
+		inputBox.Text = found
+		updateSuggestions(found)
+	elseif found == "" then
+		detectLabel.Text = "Chưa phát hiện chữ cái"
+	end
+end
+
+-- Chạy phát hiện liên tục
+task.spawn(function()
+	while screenGui.Parent do
+		detectPrefix()
+		task.wait(0.8)
+	end
+end)
+
+-- Kết nối sự kiện
+inputBox:GetPropertyChangedSignal("Text"):Connect(function()
+	updateSuggestions(inputBox.Text)
+end)
 
 wordBtn1.MouseButton1Click:Connect(function()
-	if currentWords[1] then
-		autoFill(currentWords[1])
-	end
+	if currentWords[1] then autoFill(currentWords[1]) end
 end)
 
 wordBtn2.MouseButton1Click:Connect(function()
-	if currentWords[2] then
-		autoFill(currentWords[2])
-	end
+	if currentWords[2] then autoFill(currentWords[2]) end
 end)
 
 fillBtn.MouseButton1Click:Connect(function()
-	if currentWords[1] then
-		autoFill(currentWords[1])
-	end
+	if currentWords[1] then autoFill(currentWords[1]) end
 end)
 
 toggleBtn.MouseButton1Click:Connect(function()
@@ -276,4 +319,4 @@ showBtn.MouseButton1Click:Connect(function()
 	toggleBtn.Text = "−"
 end)
 
-print("Word Helper đã load thành công!")
+print("✅ Word Helper Pro đã load!")

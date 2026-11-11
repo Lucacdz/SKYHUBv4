@@ -84,7 +84,7 @@ local S = {
     Speed = 50,
     Noclip = false,
     Spin = false,
-    SpinSpeed = 15,
+    SpinSpeed = 3000, -- độ/giây
 }
 
 -- ===== HÀM TIỆN ÍCH GUI =====
@@ -659,7 +659,7 @@ Toggle(MovePage, "Noclip (xuyên tường)", S.Noclip, function(v) S.Noclip = v 
 
 Section(MovePage, "SPIN")
 Toggle(MovePage, "Xoay tròn (Spin)", S.Spin, function(v) S.Spin = v end)
-Slider(MovePage, "Tốc độ xoay", 2, 40, S.SpinSpeed, 1, nil, function(v) S.SpinSpeed = v end)
+Slider(MovePage, "Tốc độ xoay", 200, 20000, S.SpinSpeed, 200, function(v) return v .. "°/s" end, function(v) S.SpinSpeed = v end)
 
 -- ===== LOGIC CHUNG =====
 local function IsAlive(char)
@@ -890,7 +890,7 @@ table.insert(Conns, UserInputService.JumpRequest:Connect(function()
 end))
 
 -- Tốc độ / sức mạnh nhảy / spin
-table.insert(Conns, RunService.Heartbeat:Connect(function()
+table.insert(Conns, RunService.Heartbeat:Connect(function(dt)
     local char = LocalPlayer.Character
     local hum = char and char:FindFirstChildOfClass("Humanoid")
     if not hum then return end
@@ -924,7 +924,8 @@ table.insert(Conns, RunService.Heartbeat:Connect(function()
     if S.Spin then
         local root = char:FindFirstChild("HumanoidRootPart")
         if root then
-            root.CFrame = root.CFrame * CFrame.Angles(0, math.rad(S.SpinSpeed), 0)
+            root.CFrame = root.CFrame * CFrame.Angles(0, math.rad(S.SpinSpeed * dt), 0)
+            root.AssemblyAngularVelocity = Vector3.new(0, 0, 0)
         end
     end
 end))

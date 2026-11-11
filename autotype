@@ -65,6 +65,14 @@ local S = {
     AimDist = 1000,
     AimTeam = false,
     WallCheck = false,
+    -- Auto Fire
+    AutoFire = false,
+    FireDelay = 120,
+    -- Camera FOV
+    CamFOV = 70,
+    CamFOVOn = false,
+    -- Giả lập chuột phải
+    HoldRMB = false,
     -- ESP
     ESP = true,
     Chams = true,
@@ -127,6 +135,8 @@ local function EncodeConfig()
     data.Aura = false
     data.Swim = false
     data.ThirdPerson = false
+    data.AutoFire = false
+    data.HoldRMB = false
     return HttpService:JSONEncode(data)
 end
 
@@ -168,6 +178,8 @@ local function LoadConfig()
         S.Aura = false
         S.Swim = false
         S.ThirdPerson = false
+        S.AutoFire = false
+        S.HoldRMB = false
     end
     return ok
 end
@@ -773,6 +785,17 @@ end)
 Toggle(AimPage, "Bỏ qua đồng đội", S.AimTeam, function(v) S.AimTeam = v end)
 Toggle(AimPage, "Kiểm tra vật cản (wall check)", S.WallCheck, function(v) S.WallCheck = v end)
 
+Section(AimPage, "TỰ ĐỘNG BẮN")
+Toggle(AimPage, "Tự động bắn", S.AutoFire, function(v) S.AutoFire = v end)
+Slider(AimPage, "Độ trễ bắn (ms)", 50, 500, S.FireDelay, 10, function(v) return v .. " ms" end, function(v) S.FireDelay = v end)
+
+Section(AimPage, "FOV CAMERA")
+Toggle(AimPage, "Chỉnh FOV camera", S.CamFOVOn, function(v) S.CamFOVOn = v end)
+Slider(AimPage, "FOV camera", 40, 120, S.CamFOV, 1, nil, function(v) S.CamFOV = v end)
+
+Section(AimPage, "CHUỘT")
+Toggle(AimPage, "Giả lập đè chuột phải", S.HoldRMB, function(v) S.HoldRMB = v end)
+
 -- ===== TAB ESP =====
 Section(ESPPage, "CHÍNH")
 Toggle(ESPPage, "Bật ESP", S.ESP, function(v) S.ESP = v end)
@@ -988,7 +1011,12 @@ _G.SkyHubProConn = RunService.RenderStepped:Connect(function()
     Camera = workspace.CurrentCamera
     if not Camera then return end
 
-    Circle.Visible = S.Aim and S.ShowCircle
+    -- Camera FOV
+    if S.CamFOVOn then
+        Camera.FieldOfView = S.CamFOV
+    end
+
+    Circle.Visible = (S.Aim or S.AutoFire) and S.ShowCircle
 
     if not S.Aim then
         lastTarget = nil
@@ -1007,6 +1035,83 @@ _G.SkyHubProConn = RunService.RenderStepped:Connect(function()
         local goal = CFrame.lookAt(Camera.CFrame.Position, target.Position)
         local alpha = math.clamp(1 - S.Smooth / 100, 0.05, 1)
         Camera.CFrame = Camera.CFrame:Lerp(goal, alpha)
+    end
+end)
+
+-- Giả lập chuột phải
+local function SetRMB(down)
+    local ok = pcall(function()
+        local VIM = game:GetService("VirtualInputManager")
+        -- button 1 = right mouse
+        VIM:SendMouseButtonEvent(0, 0, 1, down, game, 0)
+    end)
+    if not ok then
+        pcall(function()
+            if down then
+                if mouse2press then mouse2press() end
+            else
+                if mouse2release then mouse2release() end
+            end
+        end)
+    end
+end
+
+-- Auto Fire (giả lập đè chuột phải khi có mục tiêu)
+local lastFire = 0
+local autoHolding = false
+task.spawn(function()
+    while Gui.Parent do
+        if S.AutoFire then
+            local target = GetTarget()
+            if target then
+                if not autoHolding then
+                    SetRMB(true)
+                    autoHolding = true
+                end
+                -- vẫn gọi Activate thêm cho game hỗ trợ
+                local now = tick()
+                if now - lastFire >= (S.FireDelay / 1000) then
+                    local char = LocalPlayer.Character
+                    local tool = char and char:FindFirstChildOfClass("Tool")
+                    if tool then
+                        pcall(function() tool:Activate() end)
+                    end
+                    lastFire = now
+                end
+            else
+                if autoHolding then
+                    SetRMB(false)
+                    autoHolding = false
+                end
+            end
+        else
+            if autoHolding then
+                SetRMB(false)
+                autoHolding = false
+            end
+        end
+        task.wait(0.05)
+    end
+    if autoHolding then
+        SetRMB(false)
+    end
+end)
+
+-- Giả lập đè chuột phải (RMB) - toggle riêng
+local holdingRMB = false
+task.spawn(function()
+    while Gui.Parent do
+        if S.HoldRMB and not holdingRMB then
+            SetRMB(true)
+            holdingRMB = true
+        elseif not S.HoldRMB and holdingRMB then
+            SetRMB(false)
+            holdingRMB = false
+        end
+        task.wait(0.1)
+    end
+    if holdingRMB then
+        SetRMB(false)
     end
 end)
 
@@ -1045,7 +1150,6 @@ local function ApplyESP(p)
     local color = S.ESPColor
     if S.ESPTeamColor and p.Team then color = p.TeamColor.Color end
 
-    -- Highlight
     local hl = char:FindFirstChild("SkyESP")
     if S.Chams then
         if not hl then
@@ -1062,7 +1166,6 @@ local function ApplyESP(p)
         hl:Destroy()
     end
 
-    -- Tag tên / khoảng cách / máu
     local tag = head:FindFirstChild("SkyTag")
     if S.ShowName or S.ShowDist or S.ShowHP then
         local lines = {}
@@ -1153,7 +1256,6 @@ local function RestoreMovement()
     MoveState.JP = nil
 end
 
--- Nhảy vô hạn
 table.insert(Conns, UserInputService.JumpRequest:Connect(function()
     if S.InfJump then
         local hum = GetHum()
@@ -1161,7 +1263,6 @@ table.insert(Conns, UserInputService.JumpRequest:Connect(function()
     end
 end))
 
--- Tốc độ / sức mạnh nhảy / spin
 table.insert(Conns, RunService.Heartbeat:Connect(function(dt)
     local char = LocalPlayer.Character
     local hum = char and char:FindFirstChildOfClass("Humanoid")
@@ -1201,12 +1302,10 @@ table.insert(Conns, RunService.Heartbeat:Connect(function(dt)
         end
     end
 
-    -- Swim
     if S.Swim then
         hum:ChangeState(Enum.HumanoidStateType.Swimming)
     end
 
-    -- Tool Spin
     if S.ToolSpin then
         local tool = char:FindFirstChildOfClass("Tool")
         if tool and tool:FindFirstChild("Handle") then
@@ -1216,7 +1315,6 @@ table.insert(Conns, RunService.Heartbeat:Connect(function(dt)
     end
 end))
 
--- Noclip
 table.insert(Conns, RunService.Stepped:Connect(function()
     if not S.Noclip then return end
     local char = LocalPlayer.Character
@@ -1228,7 +1326,6 @@ table.insert(Conns, RunService.Stepped:Connect(function()
     end
 end))
 
--- Fake Lag
 task.spawn(function()
     while Gui.Parent do
         if S.FakeLag then
@@ -1253,7 +1350,7 @@ local function CreateAura(root)
     ClearAura()
     local typ = S.AuraType
 
-    if typ == 1 then -- Particle
+    if typ == 1 then
         local e = Instance.new("ParticleEmitter")
         e.Name = "SkyAura"
         e.Rate = 50
@@ -1265,8 +1362,7 @@ local function CreateAura(root)
         e.SpreadAngle = Vector2.new(180, 180)
         e.Parent = root
         table.insert(AuraObjects, e)
-
-    elseif typ == 2 then -- Ring (client only)
+    elseif typ == 2 then
         local ring = Instance.new("Part")
         ring.Name = "SkyAuraRing"
         ring.Size = Vector3.new(8, 0.2, 8)
@@ -1280,8 +1376,7 @@ local function CreateAura(root)
         ring.CFrame = root.CFrame * CFrame.new(0, -2.5, 0) * CFrame.Angles(0, 0, math.rad(90))
         ring.Parent = root
         table.insert(AuraObjects, ring)
-
-    elseif typ == 3 then -- Glow
+    elseif typ == 3 then
         local hl = Instance.new("Highlight")
         hl.Name = "SkyAuraGlow"
         hl.FillTransparency = 0.7
@@ -1291,8 +1386,7 @@ local function CreateAura(root)
         hl.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
         hl.Parent = root.Parent
         table.insert(AuraObjects, hl)
-
-    elseif typ == 4 then -- Fire
+    elseif typ == 4 then
         local fire = Instance.new("Fire")
         fire.Name = "SkyAuraFire"
         fire.Size = 6
@@ -1301,15 +1395,13 @@ local function CreateAura(root)
         fire.SecondaryColor = Color3.fromRGB(255, 180, 0)
         fire.Parent = root
         table.insert(AuraObjects, fire)
-
-    elseif typ == 5 then -- Sparkle
+    elseif typ == 5 then
         local spark = Instance.new("Sparkles")
         spark.Name = "SkyAuraSpark"
         spark.SparkleColor = T.Accent
         spark.Parent = root
         table.insert(AuraObjects, spark)
-
-    elseif typ == 6 then -- Rainbow
+    elseif typ == 6 then
         local e = Instance.new("ParticleEmitter")
         e.Name = "SkyAuraRainbow"
         e.Rate = 60
@@ -1347,7 +1439,6 @@ local function UpdateAura()
         if needRecreate then
             CreateAura(root)
         else
-            -- Update ring position if exists
             if S.AuraType == 2 and AuraObjects[1] and AuraObjects[1]:IsA("BasePart") then
                 AuraObjects[1].CFrame = root.CFrame * CFrame.new(0, -2.5, 0) * CFrame.Angles(0, 0, math.rad(90))
             end
@@ -1365,13 +1456,11 @@ task.spawn(function()
     ClearAura()
 end)
 
--- Cập nhật FPS & Ping + Third Person cho tab INFO / MOD
 local fpsFrames = 0
 local lastFpsTime = tick()
 local oldMinZoom, oldMaxZoom = nil, nil
 
 table.insert(Conns, RunService.RenderStepped:Connect(function()
-    -- FPS
     fpsFrames = fpsFrames + 1
     local now = tick()
     if now - lastFpsTime >= 1 then
@@ -1382,7 +1471,6 @@ table.insert(Conns, RunService.RenderStepped:Connect(function()
         lastFpsTime = now
     end
 
-    -- Third Person
     if S.ThirdPerson then
         LocalPlayer.CameraMode = Enum.CameraMode.Classic
         if Camera then
@@ -1418,7 +1506,6 @@ task.spawn(function()
     end
 end)
 
--- Nút đóng hẳn
 CloseBtn.MouseButton1Click:Connect(function()
     S.Aim = false
     S.InfJump = false
@@ -1431,6 +1518,9 @@ CloseBtn.MouseButton1Click:Connect(function()
     S.ToolSpin = false
     S.Aura = false
     S.ThirdPerson = false
+    S.AutoFire = false
+    S.CamFOVOn = false
+    S.HoldRMB = false
     RestoreMovement()
     ClearAura()
     if oldMinZoom then

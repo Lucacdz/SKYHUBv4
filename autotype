@@ -91,6 +91,15 @@ local S = {
     Noclip = false,
     Spin = false,
     SpinSpeed = 3000, -- độ/giây
+    -- Fake Lag & Swim
+    FakeLag = false,
+    FakeLagDelay = 150, -- ms
+    Swim = false,
+    -- Mod
+    ToolSpin = false,
+    ToolSpinSpeed = 800, -- độ/giây
+    Aura = false,
+    AuraType = 1,
 }
 
 -- ===== LƯU / TẢI CẤU HÌNH =====
@@ -110,6 +119,10 @@ local function EncodeConfig()
     data.Aim = false
     data.Spin = false
     data.Noclip = false
+    data.FakeLag = false
+    data.ToolSpin = false
+    data.Aura = false
+    data.Swim = false
     return HttpService:JSONEncode(data)
 end
 
@@ -139,12 +152,17 @@ local function LoadConfig()
         S.ESPIdx = math.clamp(math.floor(S.ESPIdx), 1, #PaletteColors)
         S.AimPartIdx = math.clamp(math.floor(S.AimPartIdx), 1, 2)
         S.AimMode = math.clamp(math.floor(S.AimMode), 1, 4)
+        S.AuraType = math.clamp(math.floor(S.AuraType or 1), 1, 6)
         S.CircleColor = PaletteColors[S.CircleIdx]
         S.ESPColor = PaletteColors[S.ESPIdx]
         S.AimPart = (S.AimPartIdx == 1) and "Head" or "HumanoidRootPart"
         S.Aim = false
         S.Spin = false
         S.Noclip = false
+        S.FakeLag = false
+        S.ToolSpin = false
+        S.Aura = false
+        S.Swim = false
     end
     return ok
 end
@@ -323,41 +341,61 @@ local TabBar = New("Frame", {
 }, Main)
 
 local TabAim = New("TextButton", {
-    Size = UDim2.new(1 / 4, 0, 1, -3),
+    Size = UDim2.new(1 / 6, 0, 1, -3),
     BackgroundTransparency = 1,
     Text = "AIM",
     Font = Enum.Font.GothamBold,
-    TextSize = 14,
+    TextSize = 12,
     TextColor3 = T.Text,
 }, TabBar)
 
 local TabESP = New("TextButton", {
-    Size = UDim2.new(1 / 4, 0, 1, -3),
-    Position = UDim2.new(1 / 4, 0, 0, 0),
+    Size = UDim2.new(1 / 6, 0, 1, -3),
+    Position = UDim2.new(1 / 6, 0, 0, 0),
     BackgroundTransparency = 1,
     Text = "ESP",
     Font = Enum.Font.GothamBold,
-    TextSize = 14,
+    TextSize = 12,
     TextColor3 = T.Sub,
 }, TabBar)
 
 local TabMove = New("TextButton", {
-    Size = UDim2.new(1 / 4, 0, 1, -3),
-    Position = UDim2.new(2 / 4, 0, 0, 0),
+    Size = UDim2.new(1 / 6, 0, 1, -3),
+    Position = UDim2.new(2 / 6, 0, 0, 0),
     BackgroundTransparency = 1,
     Text = "MOVE",
     Font = Enum.Font.GothamBold,
-    TextSize = 14,
+    TextSize = 12,
+    TextColor3 = T.Sub,
+}, TabBar)
+
+local TabMod = New("TextButton", {
+    Size = UDim2.new(1 / 6, 0, 1, -3),
+    Position = UDim2.new(3 / 6, 0, 0, 0),
+    BackgroundTransparency = 1,
+    Text = "MOD",
+    Font = Enum.Font.GothamBold,
+    TextSize = 12,
+    TextColor3 = T.Sub,
+}, TabBar)
+
+local TabInfo = New("TextButton", {
+    Size = UDim2.new(1 / 6, 0, 1, -3),
+    Position = UDim2.new(4 / 6, 0, 0, 0),
+    BackgroundTransparency = 1,
+    Text = "INFO",
+    Font = Enum.Font.GothamBold,
+    TextSize = 12,
     TextColor3 = T.Sub,
 }, TabBar)
 
 local TabCfg = New("TextButton", {
-    Size = UDim2.new(1 / 4, 0, 1, -3),
-    Position = UDim2.new(3 / 4, 0, 0, 0),
+    Size = UDim2.new(1 / 6, 0, 1, -3),
+    Position = UDim2.new(5 / 6, 0, 0, 0),
     BackgroundTransparency = 1,
     Text = "CFG",
     Font = Enum.Font.GothamBold,
-    TextSize = 14,
+    TextSize = 12,
     TextColor3 = T.Sub,
 }, TabBar)
 
@@ -369,7 +407,7 @@ New("Frame", {
 }, TabBar)
 
 local Indicator = New("Frame", {
-    Size = UDim2.new(1 / 4, 0, 0, 3),
+    Size = UDim2.new(1 / 6, 0, 0, 3),
     Position = UDim2.new(0, 0, 1, -3),
     BackgroundColor3 = T.Accent,
     BorderSizePixel = 0,
@@ -401,12 +439,16 @@ end
 local AimPage = MakePage(true)
 local ESPPage = MakePage(false)
 local MovePage = MakePage(false)
+local ModPage = MakePage(false)
+local InfoPage = MakePage(false)
 local CfgPage = MakePage(false)
 
 local function SetScroll(enabled)
     AimPage.ScrollingEnabled = enabled
     ESPPage.ScrollingEnabled = enabled
     MovePage.ScrollingEnabled = enabled
+    ModPage.ScrollingEnabled = enabled
+    InfoPage.ScrollingEnabled = enabled
     CfgPage.ScrollingEnabled = enabled
 end
 
@@ -414,17 +456,23 @@ local function SwitchTab(name)
     AimPage.Visible = name == "Aim"
     ESPPage.Visible = name == "ESP"
     MovePage.Visible = name == "Move"
+    ModPage.Visible = name == "Mod"
+    InfoPage.Visible = name == "Info"
     CfgPage.Visible = name == "Cfg"
     TabAim.TextColor3 = name == "Aim" and T.Text or T.Sub
     TabESP.TextColor3 = name == "ESP" and T.Text or T.Sub
     TabMove.TextColor3 = name == "Move" and T.Text or T.Sub
+    TabMod.TextColor3 = name == "Mod" and T.Text or T.Sub
+    TabInfo.TextColor3 = name == "Info" and T.Text or T.Sub
     TabCfg.TextColor3 = name == "Cfg" and T.Text or T.Sub
-    local idx = (name == "Aim" and 0) or (name == "ESP" and 1) or (name == "Move" and 2) or 3
-    Indicator.Position = UDim2.new(idx / 4, 0, 1, -3)
+    local idx = (name == "Aim" and 0) or (name == "ESP" and 1) or (name == "Move" and 2) or (name == "Mod" and 3) or (name == "Info" and 4) or 5
+    Indicator.Position = UDim2.new(idx / 6, 0, 1, -3)
 end
 TabAim.MouseButton1Click:Connect(function() SwitchTab("Aim") end)
 TabESP.MouseButton1Click:Connect(function() SwitchTab("ESP") end)
 TabMove.MouseButton1Click:Connect(function() SwitchTab("Move") end)
+TabMod.MouseButton1Click:Connect(function() SwitchTab("Mod") end)
+TabInfo.MouseButton1Click:Connect(function() SwitchTab("Info") end)
 TabCfg.MouseButton1Click:Connect(function() SwitchTab("Cfg") end)
 
 -- ===== THÀNH PHẦN GIAO DIỆN =====
@@ -762,6 +810,24 @@ Section(MovePage, "SPIN")
 Toggle(MovePage, "Xoay tròn (Spin)", S.Spin, function(v) S.Spin = v end)
 Slider(MovePage, "Tốc độ xoay", 200, 20000, S.SpinSpeed, 200, function(v) return v .. "°/s" end, function(v) S.SpinSpeed = v end)
 
+Section(MovePage, "FAKE LAG")
+Toggle(MovePage, "Fake High Ping / Lag", S.FakeLag, function(v) S.FakeLag = v end)
+Slider(MovePage, "Độ trễ (ms)", 50, 500, S.FakeLagDelay, 10, function(v) return v .. " ms" end, function(v) S.FakeLagDelay = v end)
+
+Section(MovePage, "BƠI")
+Toggle(MovePage, "Bơi (Swim)", S.Swim, function(v) S.Swim = v end)
+
+-- ===== TAB MOD =====
+Section(ModPage, "VẬT PHẨM")
+Toggle(ModPage, "Xoay vật phẩm cầm tay", S.ToolSpin, function(v) S.ToolSpin = v end)
+Slider(ModPage, "Tốc độ xoay vật phẩm", 200, 5000, S.ToolSpinSpeed, 100, function(v) return v .. "°/s" end, function(v) S.ToolSpinSpeed = v end)
+
+Section(ModPage, "AURA")
+Toggle(ModPage, "Bật Aura", S.Aura, function(v) S.Aura = v end)
+Choice(ModPage, "Kiểu Aura", {"Particle", "Ring", "Glow", "Fire", "Sparkle", "Rainbow"}, S.AuraType, function(i)
+    S.AuraType = i
+end)
+
 -- ===== TAB CẤU HÌNH =====
 local StatusFrame = ItemFrame(CfgPage, 44)
 local StatusLbl = New("TextLabel", {
@@ -807,6 +873,42 @@ Button(CfgPage, "Xóa cấu hình (về mặc định)", Color3.fromRGB(200, 60,
     AutoSaveSet(false)
     SetStatus("Đã xóa cấu hình và tắt tự động lưu. Chạy lại script để dùng mặc định.")
 end)
+
+-- ===== TAB INFO =====
+local PingVal, FpsVal
+
+local function InfoRow(page, labelText, valueText)
+    local f = ItemFrame(page, 36)
+    New("TextLabel", {
+        Size = UDim2.new(0.42, 0, 1, 0),
+        Position = UDim2.new(0, 10, 0, 0),
+        BackgroundTransparency = 1,
+        Text = labelText,
+        TextColor3 = T.Sub,
+        Font = Enum.Font.Gotham,
+        TextSize = 13,
+        TextXAlignment = Enum.TextXAlignment.Left,
+    }, f)
+    local val = New("TextLabel", {
+        Size = UDim2.new(0.55, -12, 1, 0),
+        Position = UDim2.new(0.43, 0, 0, 0),
+        BackgroundTransparency = 1,
+        Text = valueText,
+        TextColor3 = T.Text,
+        Font = Enum.Font.GothamBold,
+        TextSize = 13,
+        TextXAlignment = Enum.TextXAlignment.Right,
+        TextTruncate = Enum.TextTruncate.AtEnd,
+    }, f)
+    return val
+end
+
+Section(InfoPage, "THÔNG TIN")
+PingVal = InfoRow(InfoPage, "Ping", "Đang tải...")
+FpsVal = InfoRow(InfoPage, "FPS", "Đang tải...")
+InfoRow(InfoPage, "Server ID", game.JobId ~= "" and game.JobId or "Không có")
+InfoRow(InfoPage, "Người dùng", LocalPlayer.Name)
+InfoRow(InfoPage, "Owner", "Nguyễn Duy Anh (Lucac)")
 
 -- ===== LOGIC CHUNG =====
 local function IsAlive(char)
@@ -1089,6 +1191,20 @@ table.insert(Conns, RunService.Heartbeat:Connect(function(dt)
             root.AssemblyAngularVelocity = Vector3.new(0, 0, 0)
         end
     end
+
+    -- Swim
+    if S.Swim then
+        hum:ChangeState(Enum.HumanoidStateType.Swimming)
+    end
+
+    -- Tool Spin
+    if S.ToolSpin then
+        local tool = char:FindFirstChildOfClass("Tool")
+        if tool and tool:FindFirstChild("Handle") then
+            local handle = tool.Handle
+            handle.CFrame = handle.CFrame * CFrame.Angles(0, math.rad(S.ToolSpinSpeed * dt), 0)
+        end
+    end
 end))
 
 -- Noclip
@@ -1103,6 +1219,173 @@ table.insert(Conns, RunService.Stepped:Connect(function()
     end
 end))
 
+-- Fake Lag
+task.spawn(function()
+    while Gui.Parent do
+        if S.FakeLag then
+            task.wait(S.FakeLagDelay / 1000)
+        else
+            task.wait(0.1)
+        end
+    end
+end)
+
+-- Aura
+local AuraObjects = {}
+
+local function ClearAura()
+    for _, obj in ipairs(AuraObjects) do
+        pcall(function() obj:Destroy() end)
+    end
+    AuraObjects = {}
+end
+
+local function CreateAura(root)
+    ClearAura()
+    local typ = S.AuraType
+
+    if typ == 1 then -- Particle
+        local e = Instance.new("ParticleEmitter")
+        e.Name = "SkyAura"
+        e.Rate = 50
+        e.Lifetime = NumberRange.new(0.5, 1.4)
+        e.Speed = NumberRange.new(1, 8)
+        e.Size = NumberSequence.new(1.5, 0)
+        e.Transparency = NumberSequence.new(0.2, 1)
+        e.Color = ColorSequence.new(T.Accent)
+        e.SpreadAngle = Vector2.new(180, 180)
+        e.Parent = root
+        table.insert(AuraObjects, e)
+
+    elseif typ == 2 then -- Ring
+        local ring = Instance.new("Part")
+        ring.Name = "SkyAuraRing"
+        ring.Size = Vector3.new(8, 0.2, 8)
+        ring.Shape = Enum.PartType.Cylinder
+        ring.Material = Enum.Material.Neon
+        ring.Color = T.Accent
+        ring.Transparency = 0.4
+        ring.CanCollide = false
+        ring.Anchored = true
+        ring.CFrame = root.CFrame * CFrame.new(0, -2.5, 0) * CFrame.Angles(0, 0, math.rad(90))
+        ring.Parent = workspace
+        table.insert(AuraObjects, ring)
+
+    elseif typ == 3 then -- Glow
+        local hl = Instance.new("Highlight")
+        hl.Name = "SkyAuraGlow"
+        hl.FillTransparency = 0.7
+        hl.OutlineTransparency = 0
+        hl.FillColor = T.Accent
+        hl.OutlineColor = T.Accent
+        hl.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+        hl.Parent = root.Parent
+        table.insert(AuraObjects, hl)
+
+    elseif typ == 4 then -- Fire
+        local fire = Instance.new("Fire")
+        fire.Name = "SkyAuraFire"
+        fire.Size = 6
+        fire.Heat = 8
+        fire.Color = T.Accent
+        fire.SecondaryColor = Color3.fromRGB(255, 180, 0)
+        fire.Parent = root
+        table.insert(AuraObjects, fire)
+
+    elseif typ == 5 then -- Sparkle
+        local spark = Instance.new("Sparkles")
+        spark.Name = "SkyAuraSpark"
+        spark.SparkleColor = T.Accent
+        spark.Parent = root
+        table.insert(AuraObjects, spark)
+
+    elseif typ == 6 then -- Rainbow
+        local e = Instance.new("ParticleEmitter")
+        e.Name = "SkyAuraRainbow"
+        e.Rate = 60
+        e.Lifetime = NumberRange.new(0.4, 1)
+        e.Speed = NumberRange.new(3, 10)
+        e.Size = NumberSequence.new(1.8, 0)
+        e.Transparency = NumberSequence.new(0.1, 1)
+        e.Color = ColorSequence.new({
+            ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 0, 0)),
+            ColorSequenceKeypoint.new(0.2, Color3.fromRGB(255, 165, 0)),
+            ColorSequenceKeypoint.new(0.4, Color3.fromRGB(255, 255, 0)),
+            ColorSequenceKeypoint.new(0.6, Color3.fromRGB(0, 255, 0)),
+            ColorSequenceKeypoint.new(0.8, Color3.fromRGB(0, 100, 255)),
+            ColorSequenceKeypoint.new(1, Color3.fromRGB(150, 0, 255)),
+        })
+        e.SpreadAngle = Vector2.new(180, 180)
+        e.Parent = root
+        table.insert(AuraObjects, e)
+    end
+end
+
+local function UpdateAura()
+    local char = LocalPlayer.Character
+    local root = char and char:FindFirstChild("HumanoidRootPart")
+    if S.Aura and root then
+        local needRecreate = #AuraObjects == 0
+        if not needRecreate then
+            for _, obj in ipairs(AuraObjects) do
+                if not obj or not obj.Parent then
+                    needRecreate = true
+                    break
+                end
+            end
+        end
+        if needRecreate then
+            CreateAura(root)
+        else
+            -- Update ring position if exists
+            if S.AuraType == 2 and AuraObjects[1] and AuraObjects[1]:IsA("BasePart") then
+                AuraObjects[1].CFrame = root.CFrame * CFrame.new(0, -2.5, 0) * CFrame.Angles(0, 0, math.rad(90))
+            end
+        end
+    else
+        ClearAura()
+    end
+end
+
+task.spawn(function()
+    while Gui.Parent do
+        pcall(UpdateAura)
+        task.wait(0.3)
+    end
+    ClearAura()
+end)
+
+-- Cập nhật FPS & Ping cho tab INFO
+local fpsFrames = 0
+local lastFpsTime = tick()
+table.insert(Conns, RunService.RenderStepped:Connect(function()
+    fpsFrames = fpsFrames + 1
+    local now = tick()
+    if now - lastFpsTime >= 1 then
+        if FpsVal then
+            FpsVal.Text = tostring(fpsFrames)
+        end
+        fpsFrames = 0
+        lastFpsTime = now
+    end
+end))
+
+task.spawn(function()
+    while Gui.Parent do
+        local ok, ping = pcall(function()
+            return math.floor(LocalPlayer:GetNetworkPing() * 1000)
+        end)
+        if PingVal then
+            if ok then
+                PingVal.Text = ping .. " ms"
+            else
+                PingVal.Text = "N/A"
+            end
+        end
+        task.wait(1)
+    end
+end)
+
 -- Nút đóng hẳn
 CloseBtn.MouseButton1Click:Connect(function()
     S.Aim = false
@@ -1111,7 +1394,12 @@ CloseBtn.MouseButton1Click:Connect(function()
     S.Spin = false
     S.SpeedOn = false
     S.JumpOn = false
+    S.FakeLag = false
+    S.Swim = false
+    S.ToolSpin = false
+    S.Aura = false
     RestoreMovement()
+    ClearAura()
     for _, c in ipairs(Conns) do
         pcall(function() c:Disconnect() end)
     end

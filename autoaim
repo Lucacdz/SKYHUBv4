@@ -1,21 +1,20 @@
--- Sky Hub Universal | Aim + ESP
--- Universal (không phải map riêng)
+-- Sky Hub Universal | Aim + ESP (bản đã sửa lỗi)
 
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local TweenService = game:GetService("TweenService")
+local UserInputService = game:GetService("UserInputService")
 
 local LocalPlayer = Players.LocalPlayer
 local Camera = workspace.CurrentCamera
 
 print("Đang load Sky Hub...")
 
--- Cài đặt
+-- ===== CÀI ĐẶT =====
 local AimEnabled = false
 local ESPEnabled = true
 local FOVRadius = 150
 local AutoOffOnDeath = true
-local SelectedPlayer = nil
 local ShowDistance = true
 local ShowBox = true
 local ShowTracer = true
@@ -24,8 +23,19 @@ local CircleColor = Color3.fromRGB(255, 50, 50)
 local ESPColor = Color3.fromRGB(0, 255, 120)
 local TracerColor = Color3.fromRGB(255, 255, 50)
 
--- FOV Circle
-local FOVCircle = Drawing.new("Circle")
+-- ===== DRAWING AN TOÀN =====
+local HasDrawing = (typeof(Drawing) == "table" or typeof(Drawing) == "userdata") and Drawing.new ~= nil
+
+local function NewDrawing(kind)
+    if HasDrawing then
+        local ok, obj = pcall(function() return Drawing.new(kind) end)
+        if ok and obj then return obj end
+    end
+    -- đối tượng giả nếu executor không hỗ trợ Drawing
+    return setmetatable({Remove = function() end}, {__newindex = function() end})
+end
+
+local FOVCircle = NewDrawing("Circle")
 FOVCircle.Thickness = 2
 FOVCircle.NumSides = 64
 FOVCircle.Filled = false
@@ -43,24 +53,30 @@ ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 ScreenGui.DisplayOrder = 1000
 ScreenGui.IgnoreGuiInset = true
 
--- Parent cho Delta
+local parented = false
 pcall(function()
     if gethui then
         ScreenGui.Parent = gethui()
-    else
-        ScreenGui.Parent = game:GetService("CoreGui")
+        parented = ScreenGui.Parent ~= nil
     end
 end)
-if not ScreenGui.Parent then
+if not parented then
+    pcall(function()
+        ScreenGui.Parent = game:GetService("CoreGui")
+        parented = ScreenGui.Parent ~= nil
+    end)
+end
+if not parented then
     ScreenGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
 end
 
 local MainFrame = Instance.new("Frame")
-MainFrame.Size = UDim2.new(0, 280, 0, 360)
+MainFrame.Size = UDim2.new(0, 280, 0, 300)
 MainFrame.Position = UDim2.new(0.03, 0, 0.3, 0)
 MainFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 25)
 MainFrame.BorderSizePixel = 0
 MainFrame.Active = true
+MainFrame.ClipsDescendants = true
 MainFrame.Parent = ScreenGui
 Instance.new("UICorner", MainFrame).CornerRadius = UDim.new(0, 10)
 
@@ -71,6 +87,7 @@ Title.Text = "Sky Hub"
 Title.TextColor3 = Color3.fromRGB(255, 255, 255)
 Title.Font = Enum.Font.GothamBold
 Title.TextSize = 16
+Title.Active = true
 Title.Parent = MainFrame
 Instance.new("UICorner", Title).CornerRadius = UDim.new(0, 10)
 
@@ -78,7 +95,7 @@ local CloseBtn = Instance.new("TextButton")
 CloseBtn.Size = UDim2.new(0, 26, 0, 26)
 CloseBtn.Position = UDim2.new(1, -32, 0.5, -13)
 CloseBtn.BackgroundColor3 = Color3.fromRGB(200, 60, 60)
-CloseBtn.Text = "−"
+CloseBtn.Text = "-"
 CloseBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 CloseBtn.Font = Enum.Font.GothamBold
 CloseBtn.TextSize = 16
@@ -97,14 +114,43 @@ MiniBox.Visible = false
 MiniBox.Parent = ScreenGui
 Instance.new("UICorner", MiniBox).CornerRadius = UDim.new(0, 8)
 
+-- Kéo GUI (chuột + cảm ứng)
+do
+    local dragging, dragStart, startPos
+    Title.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            dragging = true
+            dragStart = input.Position
+            startPos = MainFrame.Position
+        end
+    end)
+    UserInputService.InputChanged:Connect(function(input)
+        if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+            local d = input.Position - dragStart
+            MainFrame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + d.X, startPos.Y.Scale, startPos.Y.Offset + d.Y)
+        end
+    end)
+    UserInputService.InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            dragging = false
+        end
+    end)
+end
+
 local isOpen = true
+local busy = false
 local function ToggleGUI()
+    if busy then return end
+    busy = true
     isOpen = not isOpen
     if isOpen then
         MiniBox.Visible = false
-        MainFrame.Visible = true
+        MainFrame.Position = MiniBox.Position
         MainFrame.Size = UDim2.new(0, 0, 0, 0)
-        TweenService:Create(MainFrame, TweenInfo.new(0.3, Enum.EasingStyle.Back), {Size = UDim2.new(0, 280, 0, 360)}):Play()
+        MainFrame.Visible = true
+        local t = TweenService:Create(MainFrame, TweenInfo.new(0.3, Enum.EasingStyle.Back), {Size = UDim2.new(0, 280, 0, 300)})
+        t:Play()
+        t.Completed:Connect(function() busy = false end)
     else
         local t = TweenService:Create(MainFrame, TweenInfo.new(0.25, Enum.EasingStyle.Quad), {Size = UDim2.new(0, 0, 0, 0)})
         t:Play()
@@ -112,6 +158,7 @@ local function ToggleGUI()
             MainFrame.Visible = false
             MiniBox.Position = MainFrame.Position
             MiniBox.Visible = true
+            busy = false
         end)
     end
 end
@@ -119,40 +166,35 @@ CloseBtn.MouseButton1Click:Connect(ToggleGUI)
 MiniBox.MouseButton1Click:Connect(ToggleGUI)
 
 -- Tabs
-local AimBtn = Instance.new("TextButton")
-AimBtn.Size = UDim2.new(0.48, 0, 0, 30)
-AimBtn.Position = UDim2.new(0.02, 0, 0, 42)
-AimBtn.BackgroundColor3 = Color3.fromRGB(55, 55, 70)
-AimBtn.Text = "Aim"
-AimBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-AimBtn.Font = Enum.Font.Gotham
-AimBtn.TextSize = 13
-AimBtn.Parent = MainFrame
-Instance.new("UICorner", AimBtn).CornerRadius = UDim.new(0, 6)
+local function MakeTab(text, xScale, active)
+    local b = Instance.new("TextButton")
+    b.Size = UDim2.new(0.48, 0, 0, 30)
+    b.Position = UDim2.new(xScale, 0, 0, 42)
+    b.BackgroundColor3 = active and Color3.fromRGB(55, 55, 70) or Color3.fromRGB(40, 40, 50)
+    b.Text = text
+    b.TextColor3 = Color3.fromRGB(255, 255, 255)
+    b.Font = Enum.Font.Gotham
+    b.TextSize = 13
+    b.Parent = MainFrame
+    Instance.new("UICorner", b).CornerRadius = UDim.new(0, 6)
+    return b
+end
 
-local ESPBtn = Instance.new("TextButton")
-ESPBtn.Size = UDim2.new(0.48, 0, 0, 30)
-ESPBtn.Position = UDim2.new(0.5, 0, 0, 42)
-ESPBtn.BackgroundColor3 = Color3.fromRGB(40, 40, 50)
-ESPBtn.Text = "ESP"
-ESPBtn.TextColor3 = Color3.fromRGB(200, 200, 200)
-ESPBtn.Font = Enum.Font.Gotham
-ESPBtn.TextSize = 13
-ESPBtn.Parent = MainFrame
-Instance.new("UICorner", ESPBtn).CornerRadius = UDim.new(0, 6)
+local AimBtn = MakeTab("Aim", 0.02, true)
+local ESPBtn = MakeTab("ESP", 0.5, false)
 
-local AimPage = Instance.new("Frame")
-AimPage.Size = UDim2.new(1, 0, 1, -80)
-AimPage.Position = UDim2.new(0, 0, 0, 78)
-AimPage.BackgroundTransparency = 1
-AimPage.Parent = MainFrame
+local function MakePage(visible)
+    local f = Instance.new("Frame")
+    f.Size = UDim2.new(1, 0, 1, -80)
+    f.Position = UDim2.new(0, 0, 0, 78)
+    f.BackgroundTransparency = 1
+    f.Visible = visible
+    f.Parent = MainFrame
+    return f
+end
 
-local ESPPage = Instance.new("Frame")
-ESPPage.Size = UDim2.new(1, 0, 1, -80)
-ESPPage.Position = UDim2.new(0, 0, 0, 78)
-ESPPage.BackgroundTransparency = 1
-ESPPage.Visible = false
-ESPPage.Parent = MainFrame
+local AimPage = MakePage(true)
+local ESPPage = MakePage(false)
 
 local function SwitchTab(name)
     AimPage.Visible = name == "Aim"
@@ -163,7 +205,7 @@ end
 AimBtn.MouseButton1Click:Connect(function() SwitchTab("Aim") end)
 ESPBtn.MouseButton1Click:Connect(function() SwitchTab("ESP") end)
 
--- Nút tạo nhanh
+-- Tạo nút nhanh
 local function Btn(parent, text, y, func)
     local b = Instance.new("TextButton")
     b.Size = UDim2.new(0.92, 0, 0, 30)
@@ -175,23 +217,32 @@ local function Btn(parent, text, y, func)
     b.TextSize = 13
     b.Parent = parent
     Instance.new("UICorner", b).CornerRadius = UDim.new(0, 6)
-    b.MouseButton1Click:Connect(func)
+    b.MouseButton1Click:Connect(function() func(b) end)
     return b
 end
 
--- Aim Page
+local function SetAim(state)
+    AimEnabled = state
+    -- aimToggle được gán bên dưới, nhưng hàm này chỉ chạy sau khi GUI dựng xong
+    if _G.__SkyAimToggle then
+        _G.__SkyAimToggle.Text = state and "AIM: BẬT" or "AIM: TẮT"
+        _G.__SkyAimToggle.BackgroundColor3 = state and Color3.fromRGB(40, 170, 70) or Color3.fromRGB(180, 50, 50)
+    end
+    FOVCircle.Visible = state
+end
+
+-- ===== AIM PAGE =====
 local aimToggle = Btn(AimPage, "AIM: TẮT", 8, function()
-    AimEnabled = not AimEnabled
-    aimToggle.Text = AimEnabled and "AIM: BẬT" or "AIM: TẮT"
-    aimToggle.BackgroundColor3 = AimEnabled and Color3.fromRGB(40, 170, 70) or Color3.fromRGB(180, 50, 50)
-    FOVCircle.Visible = AimEnabled
+    SetAim(not AimEnabled)
 end)
+aimToggle.BackgroundColor3 = Color3.fromRGB(180, 50, 50)
+_G.__SkyAimToggle = aimToggle
 
 local fovLabel = Instance.new("TextLabel")
 fovLabel.Size = UDim2.new(0.92, 0, 0, 18)
 fovLabel.Position = UDim2.new(0.04, 0, 0, 44)
 fovLabel.BackgroundTransparency = 1
-fovLabel.Text = "FOV: 150"
+fovLabel.Text = "FOV: " .. FOVRadius
 fovLabel.TextColor3 = Color3.fromRGB(220, 220, 220)
 fovLabel.Font = Enum.Font.Gotham
 fovLabel.TextSize = 13
@@ -200,45 +251,55 @@ fovLabel.Parent = AimPage
 Btn(AimPage, "Giảm FOV", 66, function()
     FOVRadius = math.max(40, FOVRadius - 20)
     fovLabel.Text = "FOV: " .. FOVRadius
-    FOVCircle.Radius = FOVRadius
 end)
 
 Btn(AimPage, "Tăng FOV", 100, function()
     FOVRadius = math.min(400, FOVRadius + 20)
     fovLabel.Text = "FOV: " .. FOVRadius
-    FOVCircle.Radius = FOVRadius
 end)
 
-local colors = {Color3.fromRGB(255,50,50), Color3.fromRGB(255,180,0), Color3.fromRGB(255,255,0), Color3.fromRGB(0,255,100), Color3.fromRGB(0,200,255), Color3.fromRGB(180,0,255)}
-local cIndex = 1
+local colors = {
+    Color3.fromRGB(255, 50, 50), Color3.fromRGB(255, 180, 0), Color3.fromRGB(255, 255, 0),
+    Color3.fromRGB(0, 255, 100), Color3.fromRGB(0, 200, 255), Color3.fromRGB(180, 0, 255)
+}
+local circleIndex, espIndex = 1, 4
+
 Btn(AimPage, "Đổi màu vòng tròn", 134, function()
-    cIndex = cIndex % #colors + 1
-    CircleColor = colors[cIndex]
-    FOVCircle.Color = CircleColor
+    circleIndex = circleIndex % #colors + 1
+    CircleColor = colors[circleIndex]
 end)
 
-local autoOff = Btn(AimPage, "Tắt khi chết: BẬT", 168, function()
+Btn(AimPage, "Tắt khi chết: BẬT", 168, function(b)
     AutoOffOnDeath = not AutoOffOnDeath
-    autoOff.Text = AutoOffOnDeath and "Tắt khi chết: BẬT" or "Tắt khi chết: TẮT"
+    b.Text = AutoOffOnDeath and "Tắt khi chết: BẬT" or "Tắt khi chết: TẮT"
 end)
 
--- ESP Page
-local espToggle = Btn(ESPPage, "ESP: BẬT", 8, function()
+-- ===== ESP PAGE =====
+Btn(ESPPage, "ESP: BẬT", 8, function(b)
     ESPEnabled = not ESPEnabled
-    espToggle.Text = ESPEnabled and "ESP: BẬT" or "ESP: TẮT"
+    b.Text = ESPEnabled and "ESP: BẬT" or "ESP: TẮT"
 end)
-Btn(ESPPage, "Hiện Tracer", 46, function() ShowTracer = not ShowTracer end)
-Btn(ESPPage, "Hiện Box", 84, function() ShowBox = not ShowBox end)
-Btn(ESPPage, "Hiện Distance", 122, function() ShowDistance = not ShowDistance end)
+Btn(ESPPage, "Tracer: BẬT", 46, function(b)
+    ShowTracer = not ShowTracer
+    b.Text = ShowTracer and "Tracer: BẬT" or "Tracer: TẮT"
+end)
+Btn(ESPPage, "Box: BẬT", 84, function(b)
+    ShowBox = not ShowBox
+    b.Text = ShowBox and "Box: BẬT" or "Box: TẮT"
+end)
+Btn(ESPPage, "Distance: BẬT", 122, function(b)
+    ShowDistance = not ShowDistance
+    b.Text = ShowDistance and "Distance: BẬT" or "Distance: TẮT"
+end)
 Btn(ESPPage, "Đổi màu ESP", 160, function()
-    cIndex = cIndex % #colors + 1
-    ESPColor = colors[cIndex]
-    TracerColor = colors[cIndex]
+    espIndex = espIndex % #colors + 1
+    ESPColor = colors[espIndex]
+    TracerColor = colors[espIndex]
 end)
 
 -- ===== LOGIC =====
 local function GetCenter()
-    return Vector2.new(Camera.ViewportSize.X/2, Camera.ViewportSize.Y/2)
+    return Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2)
 end
 
 local function IsInFOV(part)
@@ -249,13 +310,14 @@ end
 
 local function GetTarget()
     local nearest, shortest = nil, math.huge
-    local myRoot = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+    local myChar = LocalPlayer.Character
+    local myRoot = myChar and myChar:FindFirstChild("HumanoidRootPart")
     if not myRoot then return nil end
 
     for _, p in ipairs(Players:GetPlayers()) do
-        if p \~= LocalPlayer and p.Character then
+        if p ~= LocalPlayer and p.Character then
             local head = p.Character:FindFirstChild("Head")
-            local hum = p.Character:FindFirstChild("Humanoid")
+            local hum = p.Character:FindFirstChildOfClass("Humanoid")
             if head and hum and hum.Health > 0 and IsInFOV(head) then
                 local dist = (myRoot.Position - head.Position).Magnitude
                 if dist < shortest then
@@ -268,68 +330,97 @@ local function GetTarget()
     return nearest
 end
 
+local function RemoveESP(plr)
+    local o = ESPObjects[plr]
+    if o then
+        pcall(function() o.Tracer:Remove() end)
+        pcall(function() o.Box:Remove() end)
+        pcall(function() o.Text:Remove() end)
+        ESPObjects[plr] = nil
+    end
+end
+
+local function HideESP(o)
+    o.Tracer.Visible = false
+    o.Box.Visible = false
+    o.Text.Visible = false
+end
+
+Players.PlayerRemoving:Connect(RemoveESP)
+
+local lockedTarget = nil
+
 RunService.RenderStepped:Connect(function()
+    Camera = workspace.CurrentCamera
+    if not Camera then return end
+
     local center = GetCenter()
     FOVCircle.Position = center
     FOVCircle.Radius = FOVRadius
-    FOVCircle.Visible = AimEnabled
     FOVCircle.Color = CircleColor
+    FOVCircle.Visible = AimEnabled
 
+    -- AIM
     if AimEnabled then
-        local target = GetTarget()
-        if target then
-            Camera.CFrame = CFrame.lookAt(Camera.CFrame.Position, target.Position)
-            if AutoOffOnDeath then
-                local hum = target.Parent:FindFirstChild("Humanoid")
-                if hum and hum.Health <= 0 then
-                    AimEnabled = false
-                    aimToggle.Text = "AIM: TẮT"
-                    aimToggle.BackgroundColor3 = Color3.fromRGB(180, 50, 50)
-                    FOVCircle.Visible = false
-                end
+        -- tắt khi mục tiêu đang khóa chết
+        if AutoOffOnDeath and lockedTarget then
+            local hum = lockedTarget.Parent and lockedTarget.Parent:FindFirstChildOfClass("Humanoid")
+            if not hum or hum.Health <= 0 then
+                lockedTarget = nil
+                SetAim(false)
             end
         end
+        if AimEnabled then
+            local target = GetTarget()
+            lockedTarget = target
+            if target then
+                Camera.CFrame = CFrame.lookAt(Camera.CFrame.Position, target.Position)
+            end
+        end
+    else
+        lockedTarget = nil
     end
 
     -- ESP
     if not ESPEnabled then
-        for _, obj in pairs(ESPObjects) do
-            pcall(function()
-                obj.Tracer:Remove()
-                obj.Box:Remove()
-                obj.Text:Remove()
-            end)
+        for plr in pairs(ESPObjects) do
+            RemoveESP(plr)
         end
-        ESPObjects = {}
         return
     end
 
+    local myRoot = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
     local seen = {}
+
     for _, player in ipairs(Players:GetPlayers()) do
-        if player \~= LocalPlayer and player.Character and player.Character:FindFirstChild("Head") and player.Character:FindFirstChild("HumanoidRootPart") then
+        if player ~= LocalPlayer and player.Character then
             local char = player.Character
-            local head = char.Head
-            local root = char.HumanoidRootPart
-            local hum = char:FindFirstChild("Humanoid")
-            if hum and hum.Health > 0 then
+            local head = char:FindFirstChild("Head")
+            local root = char:FindFirstChild("HumanoidRootPart")
+            local hum = char:FindFirstChildOfClass("Humanoid")
+
+            if head and root and hum and hum.Health > 0 then
                 seen[player] = true
+
+                if not ESPObjects[player] then
+                    local o = {
+                        Tracer = NewDrawing("Line"),
+                        Box = NewDrawing("Square"),
+                        Text = NewDrawing("Text"),
+                    }
+                    o.Tracer.Thickness = 1.5
+                    o.Box.Thickness = 1.5
+                    o.Box.Filled = false
+                    o.Text.Size = 13
+                    o.Text.Center = true
+                    o.Text.Outline = true
+                    ESPObjects[player] = o
+                end
+
+                local o = ESPObjects[player]
                 local pos, onScreen = Camera:WorldToViewportPoint(head.Position)
+
                 if onScreen then
-                    if not ESPObjects[player] then
-                        ESPObjects[player] = {
-                            Tracer = Drawing.new("Line"),
-                            Box = Drawing.new("Square"),
-                            Text = Drawing.new("Text")
-                        }
-                        local o = ESPObjects[player]
-                        o.Tracer.Thickness = 1.5
-                        o.Box.Thickness = 1.5
-                        o.Box.Filled = false
-                        o.Text.Size = 13
-                        o.Text.Center = true
-                        o.Text.Outline = true
-                    end
-                    local o = ESPObjects[player]
                     o.Tracer.Visible = ShowTracer
                     o.Box.Visible = ShowBox
                     o.Text.Visible = ShowDistance
@@ -340,38 +431,33 @@ RunService.RenderStepped:Connect(function()
                         o.Tracer.Color = TracerColor
                     end
                     if ShowBox then
-                        local sz = (Camera:WorldToViewportPoint(root.Position) - Camera:WorldToViewportPoint(head.Position)).Magnitude * 2
+                        local rootPos = Camera:WorldToViewportPoint(root.Position)
+                        local sz = (Vector2.new(rootPos.X, rootPos.Y) - Vector2.new(pos.X, pos.Y)).Magnitude * 2
                         o.Box.Size = Vector2.new(sz * 0.65, sz)
-                        o.Box.Position = Vector2.new(pos.X - sz*0.32, pos.Y - sz*0.45)
+                        o.Box.Position = Vector2.new(pos.X - sz * 0.32, pos.Y - sz * 0.45)
                         o.Box.Color = ESPColor
                     end
                     if ShowDistance then
-                        local d = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") and math.floor((LocalPlayer.Character.HumanoidRootPart.Position - root.Position).Magnitude) or 0
+                        local d = myRoot and math.floor((myRoot.Position - root.Position).Magnitude) or 0
                         o.Text.Text = player.Name .. " [" .. d .. "]"
                         o.Text.Position = Vector2.new(pos.X, pos.Y - 28)
                         o.Text.Color = ESPColor
                     end
                 else
-                    if ESPObjects[player] then
-                        ESPObjects[player].Tracer.Visible = false
-                        ESPObjects[player].Box.Visible = false
-                        ESPObjects[player].Text.Visible = false
-                    end
+                    HideESP(o)
                 end
             end
         end
     end
 
-    for plr, _ in pairs(ESPObjects) do
+    for plr in pairs(ESPObjects) do
         if not seen[plr] then
-            pcall(function()
-                ESPObjects[plr].Tracer:Remove()
-                ESPObjects[plr].Box:Remove()
-                ESPObjects[plr].Text:Remove()
-            end)
-            ESPObjects[plr] = nil
+            RemoveESP(plr)
         end
     end
 end)
 
 print("Sky Hub Universal đã load!")
+if not HasDrawing then
+    warn("Executor không hỗ trợ Drawing: GUI vẫn chạy nhưng ESP/vòng FOV sẽ không hiện.")
+end

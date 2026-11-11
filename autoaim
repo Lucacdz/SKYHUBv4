@@ -1,0 +1,377 @@
+-- Sky Hub Universal | Aim + ESP
+-- Universal (không phải map riêng)
+
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local TweenService = game:GetService("TweenService")
+
+local LocalPlayer = Players.LocalPlayer
+local Camera = workspace.CurrentCamera
+
+print("Đang load Sky Hub...")
+
+-- Cài đặt
+local AimEnabled = false
+local ESPEnabled = true
+local FOVRadius = 150
+local AutoOffOnDeath = true
+local SelectedPlayer = nil
+local ShowDistance = true
+local ShowBox = true
+local ShowTracer = true
+
+local CircleColor = Color3.fromRGB(255, 50, 50)
+local ESPColor = Color3.fromRGB(0, 255, 120)
+local TracerColor = Color3.fromRGB(255, 255, 50)
+
+-- FOV Circle
+local FOVCircle = Drawing.new("Circle")
+FOVCircle.Thickness = 2
+FOVCircle.NumSides = 64
+FOVCircle.Filled = false
+FOVCircle.Transparency = 1
+FOVCircle.Color = CircleColor
+FOVCircle.Visible = false
+
+local ESPObjects = {}
+
+-- ===== GUI =====
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "SkyHub"
+ScreenGui.ResetOnSpawn = false
+ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+ScreenGui.DisplayOrder = 1000
+ScreenGui.IgnoreGuiInset = true
+
+-- Parent cho Delta
+pcall(function()
+    if gethui then
+        ScreenGui.Parent = gethui()
+    else
+        ScreenGui.Parent = game:GetService("CoreGui")
+    end
+end)
+if not ScreenGui.Parent then
+    ScreenGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
+end
+
+local MainFrame = Instance.new("Frame")
+MainFrame.Size = UDim2.new(0, 280, 0, 360)
+MainFrame.Position = UDim2.new(0.03, 0, 0.3, 0)
+MainFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 25)
+MainFrame.BorderSizePixel = 0
+MainFrame.Active = true
+MainFrame.Parent = ScreenGui
+Instance.new("UICorner", MainFrame).CornerRadius = UDim.new(0, 10)
+
+local Title = Instance.new("TextLabel")
+Title.Size = UDim2.new(1, 0, 0, 36)
+Title.BackgroundColor3 = Color3.fromRGB(35, 35, 45)
+Title.Text = "Sky Hub"
+Title.TextColor3 = Color3.fromRGB(255, 255, 255)
+Title.Font = Enum.Font.GothamBold
+Title.TextSize = 16
+Title.Parent = MainFrame
+Instance.new("UICorner", Title).CornerRadius = UDim.new(0, 10)
+
+local CloseBtn = Instance.new("TextButton")
+CloseBtn.Size = UDim2.new(0, 26, 0, 26)
+CloseBtn.Position = UDim2.new(1, -32, 0.5, -13)
+CloseBtn.BackgroundColor3 = Color3.fromRGB(200, 60, 60)
+CloseBtn.Text = "−"
+CloseBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+CloseBtn.Font = Enum.Font.GothamBold
+CloseBtn.TextSize = 16
+CloseBtn.Parent = Title
+Instance.new("UICorner", CloseBtn).CornerRadius = UDim.new(0, 6)
+
+local MiniBox = Instance.new("TextButton")
+MiniBox.Size = UDim2.new(0, 48, 0, 48)
+MiniBox.Position = MainFrame.Position
+MiniBox.BackgroundColor3 = Color3.fromRGB(45, 45, 55)
+MiniBox.Text = "Sky"
+MiniBox.TextColor3 = Color3.fromRGB(255, 255, 255)
+MiniBox.Font = Enum.Font.GothamBold
+MiniBox.TextSize = 13
+MiniBox.Visible = false
+MiniBox.Parent = ScreenGui
+Instance.new("UICorner", MiniBox).CornerRadius = UDim.new(0, 8)
+
+local isOpen = true
+local function ToggleGUI()
+    isOpen = not isOpen
+    if isOpen then
+        MiniBox.Visible = false
+        MainFrame.Visible = true
+        MainFrame.Size = UDim2.new(0, 0, 0, 0)
+        TweenService:Create(MainFrame, TweenInfo.new(0.3, Enum.EasingStyle.Back), {Size = UDim2.new(0, 280, 0, 360)}):Play()
+    else
+        local t = TweenService:Create(MainFrame, TweenInfo.new(0.25, Enum.EasingStyle.Quad), {Size = UDim2.new(0, 0, 0, 0)})
+        t:Play()
+        t.Completed:Connect(function()
+            MainFrame.Visible = false
+            MiniBox.Position = MainFrame.Position
+            MiniBox.Visible = true
+        end)
+    end
+end
+CloseBtn.MouseButton1Click:Connect(ToggleGUI)
+MiniBox.MouseButton1Click:Connect(ToggleGUI)
+
+-- Tabs
+local AimBtn = Instance.new("TextButton")
+AimBtn.Size = UDim2.new(0.48, 0, 0, 30)
+AimBtn.Position = UDim2.new(0.02, 0, 0, 42)
+AimBtn.BackgroundColor3 = Color3.fromRGB(55, 55, 70)
+AimBtn.Text = "Aim"
+AimBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+AimBtn.Font = Enum.Font.Gotham
+AimBtn.TextSize = 13
+AimBtn.Parent = MainFrame
+Instance.new("UICorner", AimBtn).CornerRadius = UDim.new(0, 6)
+
+local ESPBtn = Instance.new("TextButton")
+ESPBtn.Size = UDim2.new(0.48, 0, 0, 30)
+ESPBtn.Position = UDim2.new(0.5, 0, 0, 42)
+ESPBtn.BackgroundColor3 = Color3.fromRGB(40, 40, 50)
+ESPBtn.Text = "ESP"
+ESPBtn.TextColor3 = Color3.fromRGB(200, 200, 200)
+ESPBtn.Font = Enum.Font.Gotham
+ESPBtn.TextSize = 13
+ESPBtn.Parent = MainFrame
+Instance.new("UICorner", ESPBtn).CornerRadius = UDim.new(0, 6)
+
+local AimPage = Instance.new("Frame")
+AimPage.Size = UDim2.new(1, 0, 1, -80)
+AimPage.Position = UDim2.new(0, 0, 0, 78)
+AimPage.BackgroundTransparency = 1
+AimPage.Parent = MainFrame
+
+local ESPPage = Instance.new("Frame")
+ESPPage.Size = UDim2.new(1, 0, 1, -80)
+ESPPage.Position = UDim2.new(0, 0, 0, 78)
+ESPPage.BackgroundTransparency = 1
+ESPPage.Visible = false
+ESPPage.Parent = MainFrame
+
+local function SwitchTab(name)
+    AimPage.Visible = name == "Aim"
+    ESPPage.Visible = name == "ESP"
+    AimBtn.BackgroundColor3 = name == "Aim" and Color3.fromRGB(55, 55, 70) or Color3.fromRGB(40, 40, 50)
+    ESPBtn.BackgroundColor3 = name == "ESP" and Color3.fromRGB(55, 55, 70) or Color3.fromRGB(40, 40, 50)
+end
+AimBtn.MouseButton1Click:Connect(function() SwitchTab("Aim") end)
+ESPBtn.MouseButton1Click:Connect(function() SwitchTab("ESP") end)
+
+-- Nút tạo nhanh
+local function Btn(parent, text, y, func)
+    local b = Instance.new("TextButton")
+    b.Size = UDim2.new(0.92, 0, 0, 30)
+    b.Position = UDim2.new(0.04, 0, 0, y)
+    b.BackgroundColor3 = Color3.fromRGB(50, 50, 65)
+    b.Text = text
+    b.TextColor3 = Color3.fromRGB(255, 255, 255)
+    b.Font = Enum.Font.Gotham
+    b.TextSize = 13
+    b.Parent = parent
+    Instance.new("UICorner", b).CornerRadius = UDim.new(0, 6)
+    b.MouseButton1Click:Connect(func)
+    return b
+end
+
+-- Aim Page
+local aimToggle = Btn(AimPage, "AIM: TẮT", 8, function()
+    AimEnabled = not AimEnabled
+    aimToggle.Text = AimEnabled and "AIM: BẬT" or "AIM: TẮT"
+    aimToggle.BackgroundColor3 = AimEnabled and Color3.fromRGB(40, 170, 70) or Color3.fromRGB(180, 50, 50)
+    FOVCircle.Visible = AimEnabled
+end)
+
+local fovLabel = Instance.new("TextLabel")
+fovLabel.Size = UDim2.new(0.92, 0, 0, 18)
+fovLabel.Position = UDim2.new(0.04, 0, 0, 44)
+fovLabel.BackgroundTransparency = 1
+fovLabel.Text = "FOV: 150"
+fovLabel.TextColor3 = Color3.fromRGB(220, 220, 220)
+fovLabel.Font = Enum.Font.Gotham
+fovLabel.TextSize = 13
+fovLabel.Parent = AimPage
+
+Btn(AimPage, "Giảm FOV", 66, function()
+    FOVRadius = math.max(40, FOVRadius - 20)
+    fovLabel.Text = "FOV: " .. FOVRadius
+    FOVCircle.Radius = FOVRadius
+end)
+
+Btn(AimPage, "Tăng FOV", 100, function()
+    FOVRadius = math.min(400, FOVRadius + 20)
+    fovLabel.Text = "FOV: " .. FOVRadius
+    FOVCircle.Radius = FOVRadius
+end)
+
+local colors = {Color3.fromRGB(255,50,50), Color3.fromRGB(255,180,0), Color3.fromRGB(255,255,0), Color3.fromRGB(0,255,100), Color3.fromRGB(0,200,255), Color3.fromRGB(180,0,255)}
+local cIndex = 1
+Btn(AimPage, "Đổi màu vòng tròn", 134, function()
+    cIndex = cIndex % #colors + 1
+    CircleColor = colors[cIndex]
+    FOVCircle.Color = CircleColor
+end)
+
+local autoOff = Btn(AimPage, "Tắt khi chết: BẬT", 168, function()
+    AutoOffOnDeath = not AutoOffOnDeath
+    autoOff.Text = AutoOffOnDeath and "Tắt khi chết: BẬT" or "Tắt khi chết: TẮT"
+end)
+
+-- ESP Page
+local espToggle = Btn(ESPPage, "ESP: BẬT", 8, function()
+    ESPEnabled = not ESPEnabled
+    espToggle.Text = ESPEnabled and "ESP: BẬT" or "ESP: TẮT"
+end)
+Btn(ESPPage, "Hiện Tracer", 46, function() ShowTracer = not ShowTracer end)
+Btn(ESPPage, "Hiện Box", 84, function() ShowBox = not ShowBox end)
+Btn(ESPPage, "Hiện Distance", 122, function() ShowDistance = not ShowDistance end)
+Btn(ESPPage, "Đổi màu ESP", 160, function()
+    cIndex = cIndex % #colors + 1
+    ESPColor = colors[cIndex]
+    TracerColor = colors[cIndex]
+end)
+
+-- ===== LOGIC =====
+local function GetCenter()
+    return Vector2.new(Camera.ViewportSize.X/2, Camera.ViewportSize.Y/2)
+end
+
+local function IsInFOV(part)
+    local pos, onScreen = Camera:WorldToViewportPoint(part.Position)
+    if not onScreen then return false end
+    return (Vector2.new(pos.X, pos.Y) - GetCenter()).Magnitude <= FOVRadius
+end
+
+local function GetTarget()
+    local nearest, shortest = nil, math.huge
+    local myRoot = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+    if not myRoot then return nil end
+
+    for _, p in ipairs(Players:GetPlayers()) do
+        if p \~= LocalPlayer and p.Character then
+            local head = p.Character:FindFirstChild("Head")
+            local hum = p.Character:FindFirstChild("Humanoid")
+            if head and hum and hum.Health > 0 and IsInFOV(head) then
+                local dist = (myRoot.Position - head.Position).Magnitude
+                if dist < shortest then
+                    shortest = dist
+                    nearest = head
+                end
+            end
+        end
+    end
+    return nearest
+end
+
+RunService.RenderStepped:Connect(function()
+    local center = GetCenter()
+    FOVCircle.Position = center
+    FOVCircle.Radius = FOVRadius
+    FOVCircle.Visible = AimEnabled
+    FOVCircle.Color = CircleColor
+
+    if AimEnabled then
+        local target = GetTarget()
+        if target then
+            Camera.CFrame = CFrame.lookAt(Camera.CFrame.Position, target.Position)
+            if AutoOffOnDeath then
+                local hum = target.Parent:FindFirstChild("Humanoid")
+                if hum and hum.Health <= 0 then
+                    AimEnabled = false
+                    aimToggle.Text = "AIM: TẮT"
+                    aimToggle.BackgroundColor3 = Color3.fromRGB(180, 50, 50)
+                    FOVCircle.Visible = false
+                end
+            end
+        end
+    end
+
+    -- ESP
+    if not ESPEnabled then
+        for _, obj in pairs(ESPObjects) do
+            pcall(function()
+                obj.Tracer:Remove()
+                obj.Box:Remove()
+                obj.Text:Remove()
+            end)
+        end
+        ESPObjects = {}
+        return
+    end
+
+    local seen = {}
+    for _, player in ipairs(Players:GetPlayers()) do
+        if player \~= LocalPlayer and player.Character and player.Character:FindFirstChild("Head") and player.Character:FindFirstChild("HumanoidRootPart") then
+            local char = player.Character
+            local head = char.Head
+            local root = char.HumanoidRootPart
+            local hum = char:FindFirstChild("Humanoid")
+            if hum and hum.Health > 0 then
+                seen[player] = true
+                local pos, onScreen = Camera:WorldToViewportPoint(head.Position)
+                if onScreen then
+                    if not ESPObjects[player] then
+                        ESPObjects[player] = {
+                            Tracer = Drawing.new("Line"),
+                            Box = Drawing.new("Square"),
+                            Text = Drawing.new("Text")
+                        }
+                        local o = ESPObjects[player]
+                        o.Tracer.Thickness = 1.5
+                        o.Box.Thickness = 1.5
+                        o.Box.Filled = false
+                        o.Text.Size = 13
+                        o.Text.Center = true
+                        o.Text.Outline = true
+                    end
+                    local o = ESPObjects[player]
+                    o.Tracer.Visible = ShowTracer
+                    o.Box.Visible = ShowBox
+                    o.Text.Visible = ShowDistance
+
+                    if ShowTracer then
+                        o.Tracer.From = Vector2.new(center.X, 0)
+                        o.Tracer.To = Vector2.new(pos.X, pos.Y)
+                        o.Tracer.Color = TracerColor
+                    end
+                    if ShowBox then
+                        local sz = (Camera:WorldToViewportPoint(root.Position) - Camera:WorldToViewportPoint(head.Position)).Magnitude * 2
+                        o.Box.Size = Vector2.new(sz * 0.65, sz)
+                        o.Box.Position = Vector2.new(pos.X - sz*0.32, pos.Y - sz*0.45)
+                        o.Box.Color = ESPColor
+                    end
+                    if ShowDistance then
+                        local d = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") and math.floor((LocalPlayer.Character.HumanoidRootPart.Position - root.Position).Magnitude) or 0
+                        o.Text.Text = player.Name .. " [" .. d .. "]"
+                        o.Text.Position = Vector2.new(pos.X, pos.Y - 28)
+                        o.Text.Color = ESPColor
+                    end
+                else
+                    if ESPObjects[player] then
+                        ESPObjects[player].Tracer.Visible = false
+                        ESPObjects[player].Box.Visible = false
+                        ESPObjects[player].Text.Visible = false
+                    end
+                end
+            end
+        end
+    end
+
+    for plr, _ in pairs(ESPObjects) do
+        if not seen[plr] then
+            pcall(function()
+                ESPObjects[plr].Tracer:Remove()
+                ESPObjects[plr].Box:Remove()
+                ESPObjects[plr].Text:Remove()
+            end)
+            ESPObjects[plr] = nil
+        end
+    end
+end)
+
+print("Sky Hub Universal đã load!")

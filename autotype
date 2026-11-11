@@ -1,4 +1,4 @@
--- Sky Hub Pro | Tab Aim + Tab ESP
+-- Sky Hub Pro | Tab Aim + Tab ESP + Tab Mod + Movement mở rộng
 -- Không dùng Drawing, gắn GUI vào PlayerGui nên chạy được trên Delta điện thoại
 
 local Players = game:GetService("Players")
@@ -56,7 +56,7 @@ local S = {
     Aim = false,
     AutoOff = true,
     AimPart = "Head",
-    AimMode = 1, -- 1 gần tâm, 2 gần nhất, 3 xa nhất, 4 ít máu nhất
+    AimMode = 1,
     ShowCircle = true,
     FOV = 150,
     CircleThickness = 2,
@@ -77,11 +77,6 @@ local S = {
     ESPTeamColor = false,
     ESPDist = 1500,
     ESPTeam = false,
-    -- Chỉ số lựa chọn (để lưu cấu hình)
-    CircleIdx = 1,
-    ESPIdx = 4,
-    AimPartIdx = 1,
-    AutoSave = true,
     -- Movement
     InfJump = false,
     JumpOn = false,
@@ -90,7 +85,21 @@ local S = {
     Speed = 50,
     Noclip = false,
     Spin = false,
-    SpinSpeed = 3000, -- độ/giây
+    SpinSpeed = 3000,
+    FakeLag = false,
+    LagStrength = 5,
+    Swim = false,
+    -- Mod
+    ItemSpin = false,
+    ItemSpinSpeed = 500,
+    Aura = false,
+    AuraColor = PaletteColors[6],
+    -- Chỉ số lựa chọn
+    CircleIdx = 1,
+    ESPIdx = 4,
+    AimPartIdx = 1,
+    AuraIdx = 6,
+    AutoSave = true,
 }
 
 -- ===== LƯU / TẢI CẤU HÌNH =====
@@ -106,10 +115,10 @@ local function EncodeConfig()
             data[k] = v
         end
     end
-    -- Không lưu trạng thái đang chạy của các chức năng nguy hiểm
     data.Aim = false
     data.Spin = false
     data.Noclip = false
+    data.FakeLag = false
     return HttpService:JSONEncode(data)
 end
 
@@ -129,7 +138,7 @@ local function LoadConfig()
         if not isfile(CONFIG_FILE) then error("no file") end
         local data = HttpService:JSONDecode(readfile(CONFIG_FILE))
         for k, v in pairs(data) do
-            if S[k] ~= nil and typeof(S[k]) == typeof(v) then
+            if S[k] \~= nil and typeof(S[k]) == typeof(v) then
                 S[k] = v
             end
         end
@@ -139,12 +148,15 @@ local function LoadConfig()
         S.ESPIdx = math.clamp(math.floor(S.ESPIdx), 1, #PaletteColors)
         S.AimPartIdx = math.clamp(math.floor(S.AimPartIdx), 1, 2)
         S.AimMode = math.clamp(math.floor(S.AimMode), 1, 4)
+        S.AuraIdx = math.clamp(math.floor(S.AuraIdx or 6), 1, #PaletteColors)
         S.CircleColor = PaletteColors[S.CircleIdx]
         S.ESPColor = PaletteColors[S.ESPIdx]
+        S.AuraColor = PaletteColors[S.AuraIdx]
         S.AimPart = (S.AimPartIdx == 1) and "Head" or "HumanoidRootPart"
         S.Aim = false
         S.Spin = false
         S.Noclip = false
+        S.FakeLag = false
     end
     return ok
 end
@@ -212,7 +224,7 @@ Round(Circle, 9999)
 local CircleStroke = New("UIStroke", {Thickness = S.CircleThickness, Color = S.CircleColor}, Circle)
 
 -- ===== KHUNG CHÍNH =====
-local H = math.clamp(Camera.ViewportSize.Y - 80, 240, 340)
+local H = math.clamp(Camera.ViewportSize.Y - 80, 240, 360)
 
 local Main = New("Frame", {
     Name = "Main",
@@ -269,7 +281,6 @@ local CloseBtn = New("TextButton", {
 }, Header)
 Round(CloseBtn, 8)
 
--- Nút nhỏ khi thu gọn
 local MiniBtn = New("TextButton", {
     Size = UDim2.new(0, 46, 0, 46),
     Position = Main.Position,
@@ -283,7 +294,7 @@ local MiniBtn = New("TextButton", {
 }, Gui)
 Round(MiniBtn, 23)
 
--- Kéo khung bằng thanh tiêu đề
+-- Kéo khung
 do
     local dragging, dragStart, startPos = false, nil, nil
     Header.InputBegan:Connect(function(input)
@@ -323,41 +334,51 @@ local TabBar = New("Frame", {
 }, Main)
 
 local TabAim = New("TextButton", {
-    Size = UDim2.new(1 / 4, 0, 1, -3),
+    Size = UDim2.new(1/5, 0, 1, -3),
     BackgroundTransparency = 1,
     Text = "AIM",
     Font = Enum.Font.GothamBold,
-    TextSize = 14,
+    TextSize = 12,
     TextColor3 = T.Text,
 }, TabBar)
 
 local TabESP = New("TextButton", {
-    Size = UDim2.new(1 / 4, 0, 1, -3),
-    Position = UDim2.new(1 / 4, 0, 0, 0),
+    Size = UDim2.new(1/5, 0, 1, -3),
+    Position = UDim2.new(1/5, 0, 0, 0),
     BackgroundTransparency = 1,
     Text = "ESP",
     Font = Enum.Font.GothamBold,
-    TextSize = 14,
+    TextSize = 12,
     TextColor3 = T.Sub,
 }, TabBar)
 
 local TabMove = New("TextButton", {
-    Size = UDim2.new(1 / 4, 0, 1, -3),
-    Position = UDim2.new(2 / 4, 0, 0, 0),
+    Size = UDim2.new(1/5, 0, 1, -3),
+    Position = UDim2.new(2/5, 0, 0, 0),
     BackgroundTransparency = 1,
     Text = "MOVE",
     Font = Enum.Font.GothamBold,
-    TextSize = 14,
+    TextSize = 12,
+    TextColor3 = T.Sub,
+}, TabBar)
+
+local TabMod = New("TextButton", {
+    Size = UDim2.new(1/5, 0, 1, -3),
+    Position = UDim2.new(3/5, 0, 0, 0),
+    BackgroundTransparency = 1,
+    Text = "MOD",
+    Font = Enum.Font.GothamBold,
+    TextSize = 12,
     TextColor3 = T.Sub,
 }, TabBar)
 
 local TabCfg = New("TextButton", {
-    Size = UDim2.new(1 / 4, 0, 1, -3),
-    Position = UDim2.new(3 / 4, 0, 0, 0),
+    Size = UDim2.new(1/5, 0, 1, -3),
+    Position = UDim2.new(4/5, 0, 0, 0),
     BackgroundTransparency = 1,
     Text = "CFG",
     Font = Enum.Font.GothamBold,
-    TextSize = 14,
+    TextSize = 12,
     TextColor3 = T.Sub,
 }, TabBar)
 
@@ -369,7 +390,7 @@ New("Frame", {
 }, TabBar)
 
 local Indicator = New("Frame", {
-    Size = UDim2.new(1 / 4, 0, 0, 3),
+    Size = UDim2.new(1/5, 0, 0, 3),
     Position = UDim2.new(0, 0, 1, -3),
     BackgroundColor3 = T.Accent,
     BorderSizePixel = 0,
@@ -401,12 +422,14 @@ end
 local AimPage = MakePage(true)
 local ESPPage = MakePage(false)
 local MovePage = MakePage(false)
+local ModPage = MakePage(false)
 local CfgPage = MakePage(false)
 
 local function SetScroll(enabled)
     AimPage.ScrollingEnabled = enabled
     ESPPage.ScrollingEnabled = enabled
     MovePage.ScrollingEnabled = enabled
+    ModPage.ScrollingEnabled = enabled
     CfgPage.ScrollingEnabled = enabled
 end
 
@@ -414,17 +437,20 @@ local function SwitchTab(name)
     AimPage.Visible = name == "Aim"
     ESPPage.Visible = name == "ESP"
     MovePage.Visible = name == "Move"
+    ModPage.Visible = name == "Mod"
     CfgPage.Visible = name == "Cfg"
     TabAim.TextColor3 = name == "Aim" and T.Text or T.Sub
     TabESP.TextColor3 = name == "ESP" and T.Text or T.Sub
     TabMove.TextColor3 = name == "Move" and T.Text or T.Sub
+    TabMod.TextColor3 = name == "Mod" and T.Text or T.Sub
     TabCfg.TextColor3 = name == "Cfg" and T.Text or T.Sub
-    local idx = (name == "Aim" and 0) or (name == "ESP" and 1) or (name == "Move" and 2) or 3
-    Indicator.Position = UDim2.new(idx / 4, 0, 1, -3)
+    local idx = (name == "Aim" and 0) or (name == "ESP" and 1) or (name == "Move" and 2) or (name == "Mod" and 3) or 4
+    Indicator.Position = UDim2.new(idx / 5, 0, 1, -3)
 end
 TabAim.MouseButton1Click:Connect(function() SwitchTab("Aim") end)
 TabESP.MouseButton1Click:Connect(function() SwitchTab("ESP") end)
 TabMove.MouseButton1Click:Connect(function() SwitchTab("Move") end)
+TabMod.MouseButton1Click:Connect(function() SwitchTab("Mod") end)
 TabCfg.MouseButton1Click:Connect(function() SwitchTab("Cfg") end)
 
 -- ===== THÀNH PHẦN GIAO DIỆN =====
@@ -471,7 +497,6 @@ local function ItemLabel(parent, text, y)
     }, parent)
 end
 
--- Công tắc
 local function Toggle(page, text, def, cb)
     local f = ItemFrame(page, 36)
     New("TextLabel", {
@@ -522,7 +547,6 @@ local function Toggle(page, text, def, cb)
     end
 end
 
--- Thanh trượt
 local function Slider(page, text, min, max, def, step, fmt, cb)
     local f = ItemFrame(page, 50)
     ItemLabel(f, text, 4)
@@ -601,7 +625,6 @@ local function Slider(page, text, min, max, def, step, fmt, cb)
     set(def)
 end
 
--- Bảng màu
 local function Palette(page, text, defIdx, cb)
     local f = ItemFrame(page, 62)
     ItemLabel(f, text, 4)
@@ -629,7 +652,6 @@ local function Palette(page, text, defIdx, cb)
     cb(PaletteColors[defIdx], defIdx)
 end
 
--- Lựa chọn nhiều nút
 local function Choice(page, text, options, defIdx, cb)
     local f = ItemFrame(page, 62)
     ItemLabel(f, text, 4)
@@ -663,7 +685,6 @@ local function Choice(page, text, options, defIdx, cb)
     cb(defIdx, options[defIdx])
 end
 
--- Nút bấm
 local function Button(page, text, color, cb)
     local b = New("TextButton", {
         Size = UDim2.new(1, 0, 0, 36),
@@ -762,6 +783,23 @@ Section(MovePage, "SPIN")
 Toggle(MovePage, "Xoay tròn (Spin)", S.Spin, function(v) S.Spin = v end)
 Slider(MovePage, "Tốc độ xoay", 200, 20000, S.SpinSpeed, 200, function(v) return v .. "°/s" end, function(v) S.SpinSpeed = v end)
 
+Section(MovePage, "LAG & SWIM")
+Toggle(MovePage, "Fake Lag (High Ping)", S.FakeLag, function(v) S.FakeLag = v end)
+Slider(MovePage, "Độ mạnh Lag", 1, 15, S.LagStrength, 1, nil, function(v) S.LagStrength = v end)
+Toggle(MovePage, "Swim (Bơi trên không)", S.Swim, function(v) S.Swim = v end)
+
+-- ===== TAB MOD =====
+Section(ModPage, "ITEM")
+Toggle(ModPage, "Xoay item cầm trên tay", S.ItemSpin, function(v) S.ItemSpin = v end)
+Slider(ModPage, "Tốc độ xoay item", 100, 2000, S.ItemSpinSpeed, 50, function(v) return v .. "°/s" end, function(v) S.ItemSpinSpeed = v end)
+
+Section(ModPage, "AURA")
+Toggle(ModPage, "Bật Aura", S.Aura, function(v) S.Aura = v end)
+Palette(ModPage, "Màu Aura", S.AuraIdx, function(c, i)
+    S.AuraIdx = i
+    S.AuraColor = c
+end)
+
 -- ===== TAB CẤU HÌNH =====
 local StatusFrame = ItemFrame(CfgPage, 44)
 local StatusLbl = New("TextLabel", {
@@ -797,7 +835,7 @@ Button(CfgPage, "Lưu cấu hình ngay", T.Accent, function()
 end)
 
 Button(CfgPage, "Xóa cấu hình (về mặc định)", Color3.fromRGB(200, 60, 70), function()
-    if not CanSave or typeof(delfile) ~= "function" then
+    if not CanSave or typeof(delfile) \~= "function" then
         SetStatus("Executor không hỗ trợ xóa file.")
         return
     end
@@ -811,11 +849,11 @@ end)
 -- ===== LOGIC CHUNG =====
 local function IsAlive(char)
     local hum = char and char:FindFirstChildOfClass("Humanoid")
-    return hum ~= nil and hum.Health > 0
+    return hum \~= nil and hum.Health > 0
 end
 
 local function IsTeammate(p)
-    return LocalPlayer.Team ~= nil and p.Team == LocalPlayer.Team
+    return LocalPlayer.Team \~= nil and p.Team == LocalPlayer.Team
 end
 
 -- ===== AIM =====
@@ -838,7 +876,7 @@ local function GetTarget()
     local camPos = Camera.CFrame.Position
 
     for _, p in ipairs(Players:GetPlayers()) do
-        if p ~= LocalPlayer and p.Character and IsAlive(p.Character) then
+        if p \~= LocalPlayer and p.Character and IsAlive(p.Character) then
             if not (S.AimTeam and IsTeammate(p)) then
                 local part = p.Character:FindFirstChild(S.AimPart) or p.Character:FindFirstChild("Head")
                 if part then
@@ -849,14 +887,14 @@ local function GetTarget()
                         if d2 <= S.FOV and d3 <= S.AimDist then
                             local score
                             if S.AimMode == 2 then
-                                score = d3                -- gần nhất (theo khoảng cách thật)
+                                score = d3
                             elseif S.AimMode == 3 then
-                                score = -d3               -- xa nhất
+                                score = -d3
                             elseif S.AimMode == 4 then
                                 local hum = p.Character:FindFirstChildOfClass("Humanoid")
-                                score = (hum and hum.Health or 100) + d2 / 10000 -- ít máu nhất
+                                score = (hum and hum.Health or 100) + d2 / 10000
                             else
-                                score = d2                -- gần tâm màn hình
+                                score = d2
                             end
                             if score < bestDist and (not S.WallCheck or IsVisible(part)) then
                                 bestDist = score
@@ -934,7 +972,6 @@ local function ApplyESP(p)
     local color = S.ESPColor
     if S.ESPTeamColor and p.Team then color = p.TeamColor.Color end
 
-    -- Highlight
     local hl = char:FindFirstChild("SkyESP")
     if S.Chams then
         if not hl then
@@ -951,7 +988,6 @@ local function ApplyESP(p)
         hl:Destroy()
     end
 
-    -- Tag tên / khoảng cách / máu
     local tag = head:FindFirstChild("SkyTag")
     if S.ShowName or S.ShowDist or S.ShowHP then
         local lines = {}
@@ -992,7 +1028,7 @@ end
 task.spawn(function()
     while Gui.Parent do
         for _, p in ipairs(Players:GetPlayers()) do
-            if p ~= LocalPlayer then
+            if p \~= LocalPlayer then
                 pcall(ApplyESP, p)
             end
         end
@@ -1009,7 +1045,7 @@ task.spawn(function()
         task.wait(3)
         if S.AutoSave and CanSave then
             local ok, json = pcall(EncodeConfig)
-            if ok and json ~= lastSaved then
+            if ok and json \~= lastSaved then
                 pcall(function() writefile(CONFIG_FILE, json) end)
                 lastSaved = json
             end
@@ -1017,9 +1053,11 @@ task.spawn(function()
     end
 end)
 
--- ===== MOVEMENT =====
+-- ===== MOVEMENT + MOD =====
 local MoveState = {WS = nil, JP = nil}
 local Conns = _G.SkyHubProConns
+local AuraHL = nil
+local lagTick = 0
 
 local function GetHum()
     local c = LocalPlayer.Character
@@ -1042,7 +1080,6 @@ local function RestoreMovement()
     MoveState.JP = nil
 end
 
--- Nhảy vô hạn
 table.insert(Conns, UserInputService.JumpRequest:Connect(function()
     if S.InfJump then
         local hum = GetHum()
@@ -1050,20 +1087,21 @@ table.insert(Conns, UserInputService.JumpRequest:Connect(function()
     end
 end))
 
--- Tốc độ / sức mạnh nhảy / spin
 table.insert(Conns, RunService.Heartbeat:Connect(function(dt)
     local char = LocalPlayer.Character
     local hum = char and char:FindFirstChildOfClass("Humanoid")
     if not hum then return end
 
+    -- Speed
     if S.SpeedOn then
         if MoveState.WS == nil then MoveState.WS = hum.WalkSpeed end
         hum.WalkSpeed = S.Speed
-    elseif MoveState.WS ~= nil then
+    elseif MoveState.WS \~= nil then
         hum.WalkSpeed = MoveState.WS
         MoveState.WS = nil
     end
 
+    -- Jump
     if S.JumpOn then
         if MoveState.JP == nil then
             MoveState.JP = {UseJumpPower = hum.UseJumpPower, Power = hum.JumpPower, Height = hum.JumpHeight}
@@ -1073,7 +1111,7 @@ table.insert(Conns, RunService.Heartbeat:Connect(function(dt)
         else
             hum.JumpHeight = (S.JumpPower * S.JumpPower) / (2 * workspace.Gravity)
         end
-    elseif MoveState.JP ~= nil then
+    elseif MoveState.JP \~= nil then
         if MoveState.JP.UseJumpPower then
             hum.JumpPower = MoveState.JP.Power
         else
@@ -1082,6 +1120,7 @@ table.insert(Conns, RunService.Heartbeat:Connect(function(dt)
         MoveState.JP = nil
     end
 
+    -- Spin nhân vật
     if S.Spin then
         local root = char:FindFirstChild("HumanoidRootPart")
         if root then
@@ -1089,9 +1128,52 @@ table.insert(Conns, RunService.Heartbeat:Connect(function(dt)
             root.AssemblyAngularVelocity = Vector3.new(0, 0, 0)
         end
     end
+
+    -- Swim
+    if S.Swim then
+        hum:ChangeState(Enum.HumanoidStateType.Swimming)
+    end
+
+    -- Fake Lag
+    if S.FakeLag then
+        lagTick = lagTick + 1
+        if lagTick >= S.LagStrength then
+            lagTick = 0
+            local root = char:FindFirstChild("HumanoidRootPart")
+            if root then
+                root.CFrame = root.CFrame * CFrame.new(0, 0, -0.15)
+            end
+        end
+    end
+
+    -- Item Spin
+    if S.ItemSpin then
+        local tool = char:FindFirstChildOfClass("Tool")
+        if tool and tool:FindFirstChild("Handle") then
+            local handle = tool.Handle
+            handle.CFrame = handle.CFrame * CFrame.Angles(0, math.rad(S.ItemSpinSpeed * dt), 0)
+        end
+    end
+
+    -- Aura
+    if S.Aura then
+        if not AuraHL or AuraHL.Parent \~= char then
+            if AuraHL then AuraHL:Destroy() end
+            AuraHL = Instance.new("Highlight")
+            AuraHL.Name = "SkyAura"
+            AuraHL.FillTransparency = 0.7
+            AuraHL.OutlineTransparency = 0
+            AuraHL.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+            AuraHL.Parent = char
+        end
+        AuraHL.FillColor = S.AuraColor
+        AuraHL.OutlineColor = S.AuraColor
+    elseif AuraHL then
+        AuraHL:Destroy()
+        AuraHL = nil
+    end
 end))
 
--- Noclip
 table.insert(Conns, RunService.Stepped:Connect(function()
     if not S.Noclip then return end
     local char = LocalPlayer.Character
@@ -1103,7 +1185,6 @@ table.insert(Conns, RunService.Stepped:Connect(function()
     end
 end))
 
--- Nút đóng hẳn
 CloseBtn.MouseButton1Click:Connect(function()
     S.Aim = false
     S.InfJump = false
@@ -1111,7 +1192,11 @@ CloseBtn.MouseButton1Click:Connect(function()
     S.Spin = false
     S.SpeedOn = false
     S.JumpOn = false
+    S.FakeLag = false
+    S.ItemSpin = false
+    S.Aura = false
     RestoreMovement()
+    if AuraHL then AuraHL:Destroy() end
     for _, c in ipairs(Conns) do
         pcall(function() c:Disconnect() end)
     end

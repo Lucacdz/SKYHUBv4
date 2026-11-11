@@ -1038,25 +1038,36 @@ _G.SkyHubProConn = RunService.RenderStepped:Connect(function()
     end
 end)
 
--- Giả lập chuột phải
-local function SetRMB(down)
+-- Giả lập chuột
+local function SetMouse(button, down)
     local ok = pcall(function()
         local VIM = game:GetService("VirtualInputManager")
-        -- button 1 = right mouse
-        VIM:SendMouseButtonEvent(0, 0, 1, down, game, 0)
+        -- 0 = left, 1 = right
+        VIM:SendMouseButtonEvent(0, 0, button, down, game, 0)
     end)
     if not ok then
         pcall(function()
-            if down then
-                if mouse2press then mouse2press() end
+            if button == 0 then
+                if down then
+                    if mouse1press then mouse1press() end
+                else
+                    if mouse1release then mouse1release() end
+                end
             else
-                if mouse2release then mouse2release() end
+                if down then
+                    if mouse2press then mouse2press() end
+                else
+                    if mouse2release then mouse2release() end
+                end
             end
         end)
     end
 end
 
--- Auto Fire (giả lập đè chuột phải khi có mục tiêu)
+local function SetLMB(down) SetMouse(0, down) end
+local function SetRMB(down) SetMouse(1, down) end
+
+-- Auto Fire (giả lập đè chuột trái khi có mục tiêu)
 local lastFire = 0
 local autoHolding = false
 task.spawn(function()
@@ -1065,10 +1076,9 @@ task.spawn(function()
             local target = GetTarget()
             if target then
                 if not autoHolding then
-                    SetRMB(true)
+                    SetLMB(true)
                     autoHolding = true
                 end
-                -- vẫn gọi Activate thêm cho game hỗ trợ
                 local now = tick()
                 if now - lastFire >= (S.FireDelay / 1000) then
                     local char = LocalPlayer.Character
@@ -1080,20 +1090,20 @@ task.spawn(function()
                 end
             else
                 if autoHolding then
-                    SetRMB(false)
+                    SetLMB(false)
                     autoHolding = false
                 end
             end
         else
             if autoHolding then
-                SetRMB(false)
+                SetLMB(false)
                 autoHolding = false
             end
         end
         task.wait(0.05)
     end
     if autoHolding then
-        SetRMB(false)
+        SetLMB(false)
     end
 end)
 

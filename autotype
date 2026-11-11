@@ -4,6 +4,7 @@
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
+local HttpService = game:GetService("HttpService")
 
 local LocalPlayer = Players.LocalPlayer
 local Camera = workspace.CurrentCamera
@@ -76,6 +77,11 @@ local S = {
     ESPTeamColor = false,
     ESPDist = 1500,
     ESPTeam = false,
+    -- Chỉ số lựa chọn (để lưu cấu hình)
+    CircleIdx = 1,
+    ESPIdx = 4,
+    AimPartIdx = 1,
+    AutoSave = true,
     -- Movement
     InfJump = false,
     JumpOn = false,
@@ -86,6 +92,64 @@ local S = {
     Spin = false,
     SpinSpeed = 3000, -- độ/giây
 }
+
+-- ===== LƯU / TẢI CẤU HÌNH =====
+local CONFIG_FILE = "SkyHubPro.json"
+local CanSave = typeof(writefile) == "function" and typeof(readfile) == "function" and typeof(isfile) == "function"
+local lastSaved = ""
+
+local function EncodeConfig()
+    local data = {}
+    for k, v in pairs(S) do
+        local t = typeof(v)
+        if t == "boolean" or t == "number" or t == "string" then
+            data[k] = v
+        end
+    end
+    -- Không lưu trạng thái đang chạy của các chức năng nguy hiểm
+    data.Aim = false
+    data.Spin = false
+    data.Noclip = false
+    return HttpService:JSONEncode(data)
+end
+
+local function SaveConfig()
+    if not CanSave then return false, "Executor không hỗ trợ lưu file" end
+    local ok = pcall(function()
+        local json = EncodeConfig()
+        writefile(CONFIG_FILE, json)
+        lastSaved = json
+    end)
+    return ok, ok and "Đã lưu cấu hình" or "Lỗi khi lưu cấu hình"
+end
+
+local function LoadConfig()
+    if not CanSave then return false end
+    local ok = pcall(function()
+        if not isfile(CONFIG_FILE) then error("no file") end
+        local data = HttpService:JSONDecode(readfile(CONFIG_FILE))
+        for k, v in pairs(data) do
+            if S[k] ~= nil and typeof(S[k]) == typeof(v) then
+                S[k] = v
+            end
+        end
+    end)
+    if ok then
+        S.CircleIdx = math.clamp(math.floor(S.CircleIdx), 1, #PaletteColors)
+        S.ESPIdx = math.clamp(math.floor(S.ESPIdx), 1, #PaletteColors)
+        S.AimPartIdx = math.clamp(math.floor(S.AimPartIdx), 1, 2)
+        S.AimMode = math.clamp(math.floor(S.AimMode), 1, 4)
+        S.CircleColor = PaletteColors[S.CircleIdx]
+        S.ESPColor = PaletteColors[S.ESPIdx]
+        S.AimPart = (S.AimPartIdx == 1) and "Head" or "HumanoidRootPart"
+        S.Aim = false
+        S.Spin = false
+        S.Noclip = false
+    end
+    return ok
+end
+
+local ConfigLoaded = LoadConfig()
 
 -- ===== HÀM TIỆN ÍCH GUI =====
 local function New(class, props, parent)
@@ -259,7 +323,7 @@ local TabBar = New("Frame", {
 }, Main)
 
 local TabAim = New("TextButton", {
-    Size = UDim2.new(1 / 3, 0, 1, -3),
+    Size = UDim2.new(1 / 4, 0, 1, -3),
     BackgroundTransparency = 1,
     Text = "AIM",
     Font = Enum.Font.GothamBold,
@@ -268,8 +332,8 @@ local TabAim = New("TextButton", {
 }, TabBar)
 
 local TabESP = New("TextButton", {
-    Size = UDim2.new(1 / 3, 0, 1, -3),
-    Position = UDim2.new(1 / 3, 0, 0, 0),
+    Size = UDim2.new(1 / 4, 0, 1, -3),
+    Position = UDim2.new(1 / 4, 0, 0, 0),
     BackgroundTransparency = 1,
     Text = "ESP",
     Font = Enum.Font.GothamBold,
@@ -278,10 +342,20 @@ local TabESP = New("TextButton", {
 }, TabBar)
 
 local TabMove = New("TextButton", {
-    Size = UDim2.new(1 / 3, 0, 1, -3),
-    Position = UDim2.new(2 / 3, 0, 0, 0),
+    Size = UDim2.new(1 / 4, 0, 1, -3),
+    Position = UDim2.new(2 / 4, 0, 0, 0),
     BackgroundTransparency = 1,
     Text = "MOVE",
+    Font = Enum.Font.GothamBold,
+    TextSize = 14,
+    TextColor3 = T.Sub,
+}, TabBar)
+
+local TabCfg = New("TextButton", {
+    Size = UDim2.new(1 / 4, 0, 1, -3),
+    Position = UDim2.new(3 / 4, 0, 0, 0),
+    BackgroundTransparency = 1,
+    Text = "CFG",
     Font = Enum.Font.GothamBold,
     TextSize = 14,
     TextColor3 = T.Sub,
@@ -295,7 +369,7 @@ New("Frame", {
 }, TabBar)
 
 local Indicator = New("Frame", {
-    Size = UDim2.new(1 / 3, 0, 0, 3),
+    Size = UDim2.new(1 / 4, 0, 0, 3),
     Position = UDim2.new(0, 0, 1, -3),
     BackgroundColor3 = T.Accent,
     BorderSizePixel = 0,
@@ -327,26 +401,31 @@ end
 local AimPage = MakePage(true)
 local ESPPage = MakePage(false)
 local MovePage = MakePage(false)
+local CfgPage = MakePage(false)
 
 local function SetScroll(enabled)
     AimPage.ScrollingEnabled = enabled
     ESPPage.ScrollingEnabled = enabled
     MovePage.ScrollingEnabled = enabled
+    CfgPage.ScrollingEnabled = enabled
 end
 
 local function SwitchTab(name)
     AimPage.Visible = name == "Aim"
     ESPPage.Visible = name == "ESP"
     MovePage.Visible = name == "Move"
+    CfgPage.Visible = name == "Cfg"
     TabAim.TextColor3 = name == "Aim" and T.Text or T.Sub
     TabESP.TextColor3 = name == "ESP" and T.Text or T.Sub
     TabMove.TextColor3 = name == "Move" and T.Text or T.Sub
-    local idx = (name == "Aim" and 0) or (name == "ESP" and 1) or 2
-    Indicator.Position = UDim2.new(idx / 3, 0, 1, -3)
+    TabCfg.TextColor3 = name == "Cfg" and T.Text or T.Sub
+    local idx = (name == "Aim" and 0) or (name == "ESP" and 1) or (name == "Move" and 2) or 3
+    Indicator.Position = UDim2.new(idx / 4, 0, 1, -3)
 end
 TabAim.MouseButton1Click:Connect(function() SwitchTab("Aim") end)
 TabESP.MouseButton1Click:Connect(function() SwitchTab("ESP") end)
 TabMove.MouseButton1Click:Connect(function() SwitchTab("Move") end)
+TabCfg.MouseButton1Click:Connect(function() SwitchTab("Cfg") end)
 
 -- ===== THÀNH PHẦN GIAO DIỆN =====
 local orderCounter = 0
@@ -543,11 +622,11 @@ local function Palette(page, text, defIdx, cb)
         strokes[i] = New("UIStroke", {Thickness = 2, Color = Color3.new(1, 1, 1), Enabled = false}, b)
         b.MouseButton1Click:Connect(function()
             render(i)
-            cb(c)
+            cb(c, i)
         end)
     end
     render(defIdx)
-    cb(PaletteColors[defIdx])
+    cb(PaletteColors[defIdx], defIdx)
 end
 
 -- Lựa chọn nhiều nút
@@ -584,16 +663,34 @@ local function Choice(page, text, options, defIdx, cb)
     cb(defIdx, options[defIdx])
 end
 
+-- Nút bấm
+local function Button(page, text, color, cb)
+    local b = New("TextButton", {
+        Size = UDim2.new(1, 0, 0, 36),
+        BackgroundColor3 = color or T.Accent,
+        BorderSizePixel = 0,
+        Text = text,
+        TextColor3 = Color3.new(1, 1, 1),
+        Font = Enum.Font.GothamBold,
+        TextSize = 13,
+        LayoutOrder = NextOrder(),
+    }, page)
+    Round(b, 8)
+    b.MouseButton1Click:Connect(function() cb(b) end)
+    return b
+end
+
 -- ===== TAB AIM =====
 local AimSet
 
 Section(AimPage, "CHÍNH")
 AimSet = Toggle(AimPage, "Bật Aim", S.Aim, function(v) S.Aim = v end)
 Toggle(AimPage, "Tự tắt khi mục tiêu chết", S.AutoOff, function(v) S.AutoOff = v end)
-Choice(AimPage, "Vị trí nhắm", {"Đầu", "Thân"}, 1, function(_, opt)
+Choice(AimPage, "Vị trí nhắm", {"Đầu", "Thân"}, S.AimPartIdx, function(i, opt)
+    S.AimPartIdx = i
     S.AimPart = (opt == "Đầu") and "Head" or "HumanoidRootPart"
 end)
-Choice(AimPage, "Ưu tiên mục tiêu", {"Gần tâm", "Gần nhất", "Xa nhất", "Ít máu"}, 1, function(i)
+Choice(AimPage, "Ưu tiên mục tiêu", {"Gần tâm", "Gần nhất", "Xa nhất", "Ít máu"}, S.AimMode, function(i)
     S.AimMode = i
 end)
 
@@ -607,7 +704,8 @@ Slider(AimPage, "Độ dày viền", 1, 6, S.CircleThickness, 1, nil, function(v
     S.CircleThickness = v
     CircleStroke.Thickness = v
 end)
-Palette(AimPage, "Màu vòng tròn", 1, function(c)
+Palette(AimPage, "Màu vòng tròn", S.CircleIdx, function(c, i)
+    S.CircleIdx = i
     S.CircleColor = c
     CircleStroke.Color = c
 end)
@@ -637,7 +735,10 @@ Toggle(ESPPage, "Hiện máu", S.ShowHP, function(v) S.ShowHP = v end)
 Slider(ESPPage, "Cỡ chữ", 10, 22, S.TextSize, 1, nil, function(v) S.TextSize = v end)
 
 Section(ESPPage, "MÀU SẮC")
-Palette(ESPPage, "Màu ESP", 4, function(c) S.ESPColor = c end)
+Palette(ESPPage, "Màu ESP", S.ESPIdx, function(c, i)
+    S.ESPIdx = i
+    S.ESPColor = c
+end)
 Toggle(ESPPage, "Màu theo đội", S.ESPTeamColor, function(v) S.ESPTeamColor = v end)
 
 Section(ESPPage, "NÂNG CAO")
@@ -660,6 +761,52 @@ Toggle(MovePage, "Noclip (xuyên tường)", S.Noclip, function(v) S.Noclip = v 
 Section(MovePage, "SPIN")
 Toggle(MovePage, "Xoay tròn (Spin)", S.Spin, function(v) S.Spin = v end)
 Slider(MovePage, "Tốc độ xoay", 200, 20000, S.SpinSpeed, 200, function(v) return v .. "°/s" end, function(v) S.SpinSpeed = v end)
+
+-- ===== TAB CẤU HÌNH =====
+local StatusFrame = ItemFrame(CfgPage, 44)
+local StatusLbl = New("TextLabel", {
+    Size = UDim2.new(1, -20, 1, 0),
+    Position = UDim2.new(0, 10, 0, 0),
+    BackgroundTransparency = 1,
+    Text = "",
+    TextColor3 = T.Sub,
+    Font = Enum.Font.Gotham,
+    TextSize = 12,
+    TextWrapped = true,
+    TextXAlignment = Enum.TextXAlignment.Left,
+}, StatusFrame)
+
+local function SetStatus(msg)
+    StatusLbl.Text = msg
+end
+
+if not CanSave then
+    SetStatus("Executor không hỗ trợ lưu file (thiếu writefile/readfile).")
+elseif ConfigLoaded then
+    SetStatus("Đã tải cấu hình đã lưu từ file " .. CONFIG_FILE)
+else
+    SetStatus("Chưa có cấu hình đã lưu, đang dùng mặc định.")
+end
+
+Section(CfgPage, "LƯU / XÓA")
+local AutoSaveSet = Toggle(CfgPage, "Tự động lưu khi thay đổi", S.AutoSave, function(v) S.AutoSave = v end)
+
+Button(CfgPage, "Lưu cấu hình ngay", T.Accent, function()
+    local _, msg = SaveConfig()
+    SetStatus(msg)
+end)
+
+Button(CfgPage, "Xóa cấu hình (về mặc định)", Color3.fromRGB(200, 60, 70), function()
+    if not CanSave or typeof(delfile) ~= "function" then
+        SetStatus("Executor không hỗ trợ xóa file.")
+        return
+    end
+    pcall(function()
+        if isfile(CONFIG_FILE) then delfile(CONFIG_FILE) end
+    end)
+    AutoSaveSet(false)
+    SetStatus("Đã xóa cấu hình và tắt tự động lưu. Chạy lại script để dùng mặc định.")
+end)
 
 -- ===== LOGIC CHUNG =====
 local function IsAlive(char)
@@ -853,6 +1000,20 @@ task.spawn(function()
     end
     for _, p in ipairs(Players:GetPlayers()) do
         pcall(ClearESP, p.Character)
+    end
+end)
+
+-- ===== TỰ ĐỘNG LƯU =====
+task.spawn(function()
+    while Gui.Parent do
+        task.wait(3)
+        if S.AutoSave and CanSave then
+            local ok, json = pcall(EncodeConfig)
+            if ok and json ~= lastSaved then
+                pcall(function() writefile(CONFIG_FILE, json) end)
+                lastSaved = json
+            end
+        end
     end
 end)
 

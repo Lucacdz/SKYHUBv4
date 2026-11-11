@@ -9,6 +9,12 @@ local LocalPlayer = Players.LocalPlayer
 local Camera = workspace.CurrentCamera
 
 -- Dọn bản cũ nếu chạy lại
+if _G.SkyHubProConns then
+    for _, c in ipairs(_G.SkyHubProConns) do
+        pcall(function() c:Disconnect() end)
+    end
+end
+_G.SkyHubProConns = {}
 if _G.SkyHubProConn then
     pcall(function() _G.SkyHubProConn:Disconnect() end)
     _G.SkyHubProConn = nil
@@ -49,6 +55,7 @@ local S = {
     Aim = false,
     AutoOff = true,
     AimPart = "Head",
+    AimMode = 1, -- 1 gần tâm, 2 gần nhất, 3 xa nhất, 4 ít máu nhất
     ShowCircle = true,
     FOV = 150,
     CircleThickness = 2,
@@ -69,6 +76,15 @@ local S = {
     ESPTeamColor = false,
     ESPDist = 1500,
     ESPTeam = false,
+    -- Movement
+    InfJump = false,
+    JumpOn = false,
+    JumpPower = 100,
+    SpeedOn = false,
+    Speed = 50,
+    Noclip = false,
+    Spin = false,
+    SpinSpeed = 15,
 }
 
 -- ===== HÀM TIỆN ÍCH GUI =====
@@ -243,7 +259,7 @@ local TabBar = New("Frame", {
 }, Main)
 
 local TabAim = New("TextButton", {
-    Size = UDim2.new(0.5, 0, 1, -3),
+    Size = UDim2.new(1 / 3, 0, 1, -3),
     BackgroundTransparency = 1,
     Text = "AIM",
     Font = Enum.Font.GothamBold,
@@ -252,10 +268,20 @@ local TabAim = New("TextButton", {
 }, TabBar)
 
 local TabESP = New("TextButton", {
-    Size = UDim2.new(0.5, 0, 1, -3),
-    Position = UDim2.new(0.5, 0, 0, 0),
+    Size = UDim2.new(1 / 3, 0, 1, -3),
+    Position = UDim2.new(1 / 3, 0, 0, 0),
     BackgroundTransparency = 1,
     Text = "ESP",
+    Font = Enum.Font.GothamBold,
+    TextSize = 14,
+    TextColor3 = T.Sub,
+}, TabBar)
+
+local TabMove = New("TextButton", {
+    Size = UDim2.new(1 / 3, 0, 1, -3),
+    Position = UDim2.new(2 / 3, 0, 0, 0),
+    BackgroundTransparency = 1,
+    Text = "MOVE",
     Font = Enum.Font.GothamBold,
     TextSize = 14,
     TextColor3 = T.Sub,
@@ -269,7 +295,7 @@ New("Frame", {
 }, TabBar)
 
 local Indicator = New("Frame", {
-    Size = UDim2.new(0.5, 0, 0, 3),
+    Size = UDim2.new(1 / 3, 0, 0, 3),
     Position = UDim2.new(0, 0, 1, -3),
     BackgroundColor3 = T.Accent,
     BorderSizePixel = 0,
@@ -300,22 +326,27 @@ end
 
 local AimPage = MakePage(true)
 local ESPPage = MakePage(false)
+local MovePage = MakePage(false)
 
 local function SetScroll(enabled)
     AimPage.ScrollingEnabled = enabled
     ESPPage.ScrollingEnabled = enabled
+    MovePage.ScrollingEnabled = enabled
 end
 
 local function SwitchTab(name)
-    local aim = name == "Aim"
-    AimPage.Visible = aim
-    ESPPage.Visible = not aim
-    TabAim.TextColor3 = aim and T.Text or T.Sub
-    TabESP.TextColor3 = aim and T.Sub or T.Text
-    Indicator.Position = UDim2.new(aim and 0 or 0.5, 0, 1, -3)
+    AimPage.Visible = name == "Aim"
+    ESPPage.Visible = name == "ESP"
+    MovePage.Visible = name == "Move"
+    TabAim.TextColor3 = name == "Aim" and T.Text or T.Sub
+    TabESP.TextColor3 = name == "ESP" and T.Text or T.Sub
+    TabMove.TextColor3 = name == "Move" and T.Text or T.Sub
+    local idx = (name == "Aim" and 0) or (name == "ESP" and 1) or 2
+    Indicator.Position = UDim2.new(idx / 3, 0, 1, -3)
 end
 TabAim.MouseButton1Click:Connect(function() SwitchTab("Aim") end)
 TabESP.MouseButton1Click:Connect(function() SwitchTab("ESP") end)
+TabMove.MouseButton1Click:Connect(function() SwitchTab("Move") end)
 
 -- ===== THÀNH PHẦN GIAO DIỆN =====
 local orderCounter = 0
@@ -562,6 +593,9 @@ Toggle(AimPage, "Tự tắt khi mục tiêu chết", S.AutoOff, function(v) S.Au
 Choice(AimPage, "Vị trí nhắm", {"Đầu", "Thân"}, 1, function(_, opt)
     S.AimPart = (opt == "Đầu") and "Head" or "HumanoidRootPart"
 end)
+Choice(AimPage, "Ưu tiên mục tiêu", {"Gần tâm", "Gần nhất", "Xa nhất", "Ít máu"}, 1, function(i)
+    S.AimMode = i
+end)
 
 Section(AimPage, "VÒNG FOV")
 Toggle(AimPage, "Hiện vòng FOV", S.ShowCircle, function(v) S.ShowCircle = v end)
@@ -612,6 +646,21 @@ Slider(ESPPage, "Khoảng cách tối đa", 50, 3000, S.ESPDist, 50, function(v)
 end)
 Toggle(ESPPage, "Bỏ qua đồng đội", S.ESPTeam, function(v) S.ESPTeam = v end)
 
+-- ===== TAB MOVEMENT =====
+Section(MovePage, "NHẢY")
+Toggle(MovePage, "Nhảy vô hạn (Infinite Jump)", S.InfJump, function(v) S.InfJump = v end)
+Toggle(MovePage, "Chỉnh sức mạnh nhảy", S.JumpOn, function(v) S.JumpOn = v end)
+Slider(MovePage, "Sức mạnh nhảy", 50, 500, S.JumpPower, 10, nil, function(v) S.JumpPower = v end)
+
+Section(MovePage, "DI CHUYỂN")
+Toggle(MovePage, "Chỉnh tốc độ di chuyển", S.SpeedOn, function(v) S.SpeedOn = v end)
+Slider(MovePage, "Tốc độ", 16, 300, S.Speed, 2, nil, function(v) S.Speed = v end)
+Toggle(MovePage, "Noclip (xuyên tường)", S.Noclip, function(v) S.Noclip = v end)
+
+Section(MovePage, "SPIN")
+Toggle(MovePage, "Xoay tròn (Spin)", S.Spin, function(v) S.Spin = v end)
+Slider(MovePage, "Tốc độ xoay", 2, 40, S.SpinSpeed, 1, nil, function(v) S.SpinSpeed = v end)
+
 -- ===== LOGIC CHUNG =====
 local function IsAlive(char)
     local hum = char and char:FindFirstChildOfClass("Humanoid")
@@ -650,9 +699,20 @@ local function GetTarget()
                     if onScreen and pos.Z > 0 then
                         local d2 = (Vector2.new(pos.X, pos.Y) - center).Magnitude
                         local d3 = (part.Position - camPos).Magnitude
-                        if d2 <= S.FOV and d3 <= S.AimDist and d2 < bestDist then
-                            if not S.WallCheck or IsVisible(part) then
-                                bestDist = d2
+                        if d2 <= S.FOV and d3 <= S.AimDist then
+                            local score
+                            if S.AimMode == 2 then
+                                score = d3                -- gần nhất (theo khoảng cách thật)
+                            elseif S.AimMode == 3 then
+                                score = -d3               -- xa nhất
+                            elseif S.AimMode == 4 then
+                                local hum = p.Character:FindFirstChildOfClass("Humanoid")
+                                score = (hum and hum.Health or 100) + d2 / 10000 -- ít máu nhất
+                            else
+                                score = d2                -- gần tâm màn hình
+                            end
+                            if score < bestDist and (not S.WallCheck or IsVisible(part)) then
+                                bestDist = score
                                 best = part
                             end
                         end
@@ -796,9 +856,103 @@ task.spawn(function()
     end
 end)
 
+-- ===== MOVEMENT =====
+local MoveState = {WS = nil, JP = nil}
+local Conns = _G.SkyHubProConns
+
+local function GetHum()
+    local c = LocalPlayer.Character
+    return c and c:FindFirstChildOfClass("Humanoid")
+end
+
+local function RestoreMovement()
+    local hum = GetHum()
+    if hum then
+        if MoveState.WS then hum.WalkSpeed = MoveState.WS end
+        if MoveState.JP then
+            if MoveState.JP.UseJumpPower then
+                hum.JumpPower = MoveState.JP.Power
+            else
+                hum.JumpHeight = MoveState.JP.Height
+            end
+        end
+    end
+    MoveState.WS = nil
+    MoveState.JP = nil
+end
+
+-- Nhảy vô hạn
+table.insert(Conns, UserInputService.JumpRequest:Connect(function()
+    if S.InfJump then
+        local hum = GetHum()
+        if hum then hum:ChangeState(Enum.HumanoidStateType.Jumping) end
+    end
+end))
+
+-- Tốc độ / sức mạnh nhảy / spin
+table.insert(Conns, RunService.Heartbeat:Connect(function()
+    local char = LocalPlayer.Character
+    local hum = char and char:FindFirstChildOfClass("Humanoid")
+    if not hum then return end
+
+    if S.SpeedOn then
+        if MoveState.WS == nil then MoveState.WS = hum.WalkSpeed end
+        hum.WalkSpeed = S.Speed
+    elseif MoveState.WS ~= nil then
+        hum.WalkSpeed = MoveState.WS
+        MoveState.WS = nil
+    end
+
+    if S.JumpOn then
+        if MoveState.JP == nil then
+            MoveState.JP = {UseJumpPower = hum.UseJumpPower, Power = hum.JumpPower, Height = hum.JumpHeight}
+        end
+        if hum.UseJumpPower then
+            hum.JumpPower = S.JumpPower
+        else
+            hum.JumpHeight = (S.JumpPower * S.JumpPower) / (2 * workspace.Gravity)
+        end
+    elseif MoveState.JP ~= nil then
+        if MoveState.JP.UseJumpPower then
+            hum.JumpPower = MoveState.JP.Power
+        else
+            hum.JumpHeight = MoveState.JP.Height
+        end
+        MoveState.JP = nil
+    end
+
+    if S.Spin then
+        local root = char:FindFirstChild("HumanoidRootPart")
+        if root then
+            root.CFrame = root.CFrame * CFrame.Angles(0, math.rad(S.SpinSpeed), 0)
+        end
+    end
+end))
+
+-- Noclip
+table.insert(Conns, RunService.Stepped:Connect(function()
+    if not S.Noclip then return end
+    local char = LocalPlayer.Character
+    if not char then return end
+    for _, part in ipairs(char:GetDescendants()) do
+        if part:IsA("BasePart") and part.CanCollide then
+            part.CanCollide = false
+        end
+    end
+end))
+
 -- Nút đóng hẳn
 CloseBtn.MouseButton1Click:Connect(function()
     S.Aim = false
+    S.InfJump = false
+    S.Noclip = false
+    S.Spin = false
+    S.SpeedOn = false
+    S.JumpOn = false
+    RestoreMovement()
+    for _, c in ipairs(Conns) do
+        pcall(function() c:Disconnect() end)
+    end
     if _G.SkyHubProConn then
         pcall(function() _G.SkyHubProConn:Disconnect() end)
         _G.SkyHubProConn = nil

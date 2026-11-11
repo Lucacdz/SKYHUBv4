@@ -85,6 +85,9 @@ local S = {
     ESPTeamColor = false,
     ESPDist = 1500,
     ESPTeam = false,
+    -- Visual extras
+    Tracer = false,
+    BoxESP = false,
     -- Chỉ số lựa chọn (để lưu cấu hình)
     CircleIdx = 1,
     ESPIdx = 4,
@@ -823,6 +826,10 @@ Slider(ESPPage, "Khoảng cách tối đa", 50, 3000, S.ESPDist, 50, function(v)
 end)
 Toggle(ESPPage, "Bỏ qua đồng đội", S.ESPTeam, function(v) S.ESPTeam = v end)
 
+Section(ESPPage, "VISUAL (CSGO)")
+Toggle(ESPPage, "Tia từ trên màn hình", S.Tracer, function(v) S.Tracer = v end)
+Toggle(ESPPage, "Box ESP + HP + Tên", S.BoxESP, function(v) S.BoxESP = v end)
+
 -- ===== TAB MOVEMENT =====
 Section(MovePage, "NHẢY")
 Toggle(MovePage, "Nhảy vô hạn (Infinite Jump)", S.InfJump, function(v) S.InfJump = v end)
@@ -1227,6 +1234,180 @@ task.spawn(function()
     end
 end)
 
+-- Tracer + Box ESP (CSGO style)
+local Visuals = {}
+
+local function ClearVisuals()
+    for _, v in pairs(Visuals) do
+        if v.Tracer then v.Tracer:Destroy() end
+        if v.Box then v.Box:Destroy() end
+        if v.Health then v.Health:Destroy() end
+        if v.Name then v.Name:Destroy() end
+    end
+    Visuals = {}
+end
+
+local function UpdateVisuals()
+    if not (S.Tracer or S.BoxESP) then
+        ClearVisuals()
+        return
+    end
+
+    local vp = Camera.ViewportSize
+    local topCenter = Vector2.new(vp.X / 2, 10)
+    local bottomCenter = Vector2.new(vp.X / 2, vp.Y - 10)
+
+    for _, p in ipairs(Players:GetPlayers()) do
+        if p ~= LocalPlayer and p.Character and IsAlive(p.Character) then
+            if not (S.ESPTeam and IsTeammate(p)) then
+                local root = p.Character:FindFirstChild("HumanoidRootPart")
+                local head = p.Character:FindFirstChild("Head")
+                local hum = p.Character:FindFirstChildOfClass("Humanoid")
+                if root and head and hum then
+                    local rootPos, onScreen = Camera:WorldToViewportPoint(root.Position)
+                    local headPos = Camera:WorldToViewportPoint(head.Position + Vector3.new(0, 0.5, 0))
+                    local feetPos = Camera:WorldToViewportPoint(root.Position - Vector3.new(0, 3, 0))
+
+                    if onScreen and rootPos.Z > 0 then
+                        local color = S.ESPColor
+                        if S.ESPTeamColor and p.Team then color = p.TeamColor.Color end
+
+                        local vis = Visuals[p]
+                        if not vis then
+                            vis = {}
+                            Visuals[p] = vis
+                        end
+
+                        local boxH = math.abs(headPos.Y - feetPos.Y)
+                        local boxW = boxH * 0.55
+                        local boxX = rootPos.X - boxW / 2
+                        local boxY = headPos.Y
+
+                        -- Tracer (from top)
+                        if S.Tracer then
+                            if not vis.Tracer then
+                                vis.Tracer = New("Frame", {
+                                    BackgroundColor3 = color,
+                                    BorderSizePixel = 0,
+                                    AnchorPoint = Vector2.new(0.5, 0),
+                                    ZIndex = 5,
+                                    Parent = Gui,
+                                })
+                            end
+                            local t = vis.Tracer
+                            local start = topCenter
+                            local endp = Vector2.new(rootPos.X, boxY + boxH / 2)
+                            local dist = (endp - start).Magnitude
+                            local angle = math.atan2(endp.Y - start.Y, endp.X - start.X)
+                            t.Size = UDim2.new(0, dist, 0, 1.5)
+                            t.Position = UDim2.new(0, start.X, 0, start.Y)
+                            t.Rotation = math.deg(angle)
+                            t.BackgroundColor3 = color
+                            t.Visible = true
+                        elseif vis.Tracer then
+                            vis.Tracer.Visible = false
+                        end
+
+                        -- Box (CSGO style rectangle)
+                        if S.BoxESP then
+                            if not vis.Box then
+                                vis.Box = New("Frame", {
+                                    BackgroundTransparency = 1,
+                                    BorderSizePixel = 0,
+                                    ZIndex = 6,
+                                    Parent = Gui,
+                                })
+                                New("UIStroke", {Thickness = 1.8, Color = color, ApplyStrokeMode = Enum.ApplyStrokeMode.Border}, vis.Box)
+                            end
+                            local box = vis.Box
+                            box.Size = UDim2.new(0, boxW, 0, boxH)
+                            box.Position = UDim2.new(0, boxX, 0, boxY)
+                            local stroke = box:FindFirstChildOfClass("UIStroke")
+                            if stroke then stroke.Color = color end
+                            box.Visible = true
+
+                            -- Health bar (left side)
+                            if not vis.Health then
+                                local hb = New("Frame", {
+                                    BackgroundColor3 = Color3.fromRGB(40, 40, 40),
+                                    BorderSizePixel = 0,
+                                    ZIndex = 6,
+                                    Parent = Gui,
+                                })
+                                local fill = New("Frame", {
+                                    Name = "Fill",
+                                    BackgroundColor3 = Color3.fromRGB(0, 255, 80),
+                                    BorderSizePixel = 0,
+                                    AnchorPoint = Vector2.new(0, 1),
+                                    Position = UDim2.new(0, 0, 1, 0),
+                                    Size = UDim2.new(1, 0, 1, 0),
+                                    Parent = hb,
+                                })
+                                vis.Health = hb
+                                vis.HealthFill = fill
+                            end
+                            local hpPct = math.clamp(hum.Health / hum.MaxHealth, 0, 1)
+                            local hb = vis.Health
+                            hb.Size = UDim2.new(0, 3, 0, boxH)
+                            hb.Position = UDim2.new(0, boxX - 6, 0, boxY)
+                            vis.HealthFill.Size = UDim2.new(1, 0, hpPct, 0)
+                            vis.HealthFill.BackgroundColor3 = Color3.fromRGB(255 * (1 - hpPct), 255 * hpPct, 40)
+                            hb.Visible = true
+
+                            -- Name above box
+                            if not vis.Name then
+                                vis.Name = New("TextLabel", {
+                                    BackgroundTransparency = 1,
+                                    TextColor3 = color,
+                                    Font = Enum.Font.GothamBold,
+                                    TextSize = 13,
+                                    TextStrokeTransparency = 0.4,
+                                    TextXAlignment = Enum.TextXAlignment.Center,
+                                    ZIndex = 7,
+                                    Parent = Gui,
+                                })
+                            end
+                            local dist = math.floor((root.Position - (LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") and LocalPlayer.Character.HumanoidRootPart.Position or Camera.CFrame.Position)).Magnitude)
+                            vis.Name.Text = p.Name .. " [" .. dist .. "m]"
+                            vis.Name.Size = UDim2.new(0, boxW + 40, 0, 16)
+                            vis.Name.Position = UDim2.new(0, boxX - 20, 0, boxY - 18)
+                            vis.Name.TextColor3 = color
+                            vis.Name.Visible = true
+                        else
+                            if vis.Box then vis.Box.Visible = false end
+                            if vis.Health then vis.Health.Visible = false end
+                            if vis.Name then vis.Name.Visible = false end
+                        end
+                    else
+                        local vis = Visuals[p]
+                        if vis then
+                            if vis.Tracer then vis.Tracer.Visible = false end
+                            if vis.Box then vis.Box.Visible = false end
+                            if vis.Health then vis.Health.Visible = false end
+                            if vis.Name then vis.Name.Visible = false end
+                        end
+                    end
+                end
+            end
+        end
+    end
+
+    -- Cleanup
+    for plr, vis in pairs(Visuals) do
+        if not plr.Parent or not plr.Character or not IsAlive(plr.Character) then
+            if vis.Tracer then vis.Tracer:Destroy() end
+            if vis.Box then vis.Box:Destroy() end
+            if vis.Health then vis.Health:Destroy() end
+            if vis.Name then vis.Name:Destroy() end
+            Visuals[plr] = nil
+        end
+    end
+end
+
+table.insert(Conns, RunService.RenderStepped:Connect(function()
+    pcall(UpdateVisuals)
+end))
+
 -- ===== TỰ ĐỘNG LƯU =====
 task.spawn(function()
     while Gui.Parent do
@@ -1533,6 +1714,7 @@ CloseBtn.MouseButton1Click:Connect(function()
     S.HoldRMB = false
     RestoreMovement()
     ClearAura()
+    ClearVisuals()
     if oldMinZoom then
         LocalPlayer.CameraMinZoomDistance = oldMinZoom
         LocalPlayer.CameraMaxZoomDistance = oldMaxZoom

@@ -1,463 +1,422 @@
--- Sky Hub Universal | Aim + ESP (bản đã sửa lỗi)
+-- Sky Hub Mobile | Aim + ESP
+-- Viết lại từ đầu: KHÔNG dùng Drawing, chỉ dùng GUI/Highlight nên chạy được trên Delta điện thoại
 
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
-local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
 
 local LocalPlayer = Players.LocalPlayer
 local Camera = workspace.CurrentCamera
 
-print("Đang load Sky Hub...")
+-- Xóa bản cũ nếu chạy lại
+pcall(function()
+    local old = (gethui and gethui() or game:GetService("CoreGui")):FindFirstChild("SkyHubMobile")
+    if old then old:Destroy() end
+end)
+pcall(function()
+    local old = LocalPlayer.PlayerGui:FindFirstChild("SkyHubMobile")
+    if old then old:Destroy() end
+end)
 
 -- ===== CÀI ĐẶT =====
-local AimEnabled = false
-local ESPEnabled = true
-local FOVRadius = 150
-local AutoOffOnDeath = true
-local ShowDistance = true
-local ShowBox = true
-local ShowTracer = true
+local S = {
+    Aim = false,
+    ESP = true,
+    ShowInfo = true,
+    AutoOff = true,
+    FOV = 150,
+}
 
-local CircleColor = Color3.fromRGB(255, 50, 50)
-local ESPColor = Color3.fromRGB(0, 255, 120)
-local TracerColor = Color3.fromRGB(255, 255, 50)
+local colors = {
+    Color3.fromRGB(255, 60, 60),
+    Color3.fromRGB(255, 170, 0),
+    Color3.fromRGB(255, 255, 0),
+    Color3.fromRGB(0, 255, 120),
+    Color3.fromRGB(0, 200, 255),
+    Color3.fromRGB(190, 60, 255),
+}
+local fovColorIdx = 1
+local espColorIdx = 4
 
--- ===== DRAWING AN TOÀN =====
-local HasDrawing = (typeof(Drawing) == "table" or typeof(Drawing) == "userdata") and Drawing.new ~= nil
+-- ===== TẠO GUI =====
+local Gui = Instance.new("ScreenGui")
+Gui.Name = "SkyHubMobile"
+Gui.ResetOnSpawn = false
+Gui.IgnoreGuiInset = true
+Gui.DisplayOrder = 999999
+Gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 
-local function NewDrawing(kind)
-    if HasDrawing then
-        local ok, obj = pcall(function() return Drawing.new(kind) end)
-        if ok and obj then return obj end
+local function TryParent(getParent)
+    local ok, parent = pcall(getParent)
+    if ok and parent then
+        local ok2 = pcall(function() Gui.Parent = parent end)
+        if ok2 and Gui.Parent == parent then
+            return true
+        end
     end
-    -- đối tượng giả nếu executor không hỗ trợ Drawing
-    return setmetatable({Remove = function() end}, {__newindex = function() end})
+    return false
 end
-
-local FOVCircle = NewDrawing("Circle")
-FOVCircle.Thickness = 2
-FOVCircle.NumSides = 64
-FOVCircle.Filled = false
-FOVCircle.Transparency = 1
-FOVCircle.Color = CircleColor
-FOVCircle.Visible = false
-
-local ESPObjects = {}
-
--- ===== GUI =====
-local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "SkyHub"
-ScreenGui.ResetOnSpawn = false
-ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-ScreenGui.DisplayOrder = 1000
-ScreenGui.IgnoreGuiInset = true
 
 local parented = false
-pcall(function()
-    if gethui then
-        ScreenGui.Parent = gethui()
-        parented = ScreenGui.Parent ~= nil
-    end
-end)
+if gethui then parented = TryParent(function() return gethui() end) end
+if not parented then parented = TryParent(function() return game:GetService("CoreGui") end) end
+if not parented then parented = TryParent(function() return LocalPlayer:WaitForChild("PlayerGui", 10) end) end
+
 if not parented then
-    pcall(function()
-        ScreenGui.Parent = game:GetService("CoreGui")
-        parented = ScreenGui.Parent ~= nil
-    end)
-end
-if not parented then
-    ScreenGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
+    warn("Sky Hub: không gắn được GUI vào đâu cả")
+    return
 end
 
-local MainFrame = Instance.new("Frame")
-MainFrame.Size = UDim2.new(0, 280, 0, 300)
-MainFrame.Position = UDim2.new(0.03, 0, 0.3, 0)
-MainFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 25)
-MainFrame.BorderSizePixel = 0
-MainFrame.Active = true
-MainFrame.ClipsDescendants = true
-MainFrame.Parent = ScreenGui
-Instance.new("UICorner", MainFrame).CornerRadius = UDim.new(0, 10)
+-- Vòng tròn FOV (dùng Frame + UIStroke, không cần Drawing)
+local Circle = Instance.new("Frame")
+Circle.AnchorPoint = Vector2.new(0.5, 0.5)
+Circle.Position = UDim2.new(0.5, 0, 0.5, 0)
+Circle.Size = UDim2.new(0, S.FOV * 2, 0, S.FOV * 2)
+Circle.BackgroundTransparency = 1
+Circle.Visible = false
+Circle.Active = false
+Circle.Parent = Gui
+
+local CircleCorner = Instance.new("UICorner")
+CircleCorner.CornerRadius = UDim.new(1, 0)
+CircleCorner.Parent = Circle
+
+local CircleStroke = Instance.new("UIStroke")
+CircleStroke.Thickness = 2
+CircleStroke.Color = colors[fovColorIdx]
+CircleStroke.Parent = Circle
+
+-- Khung chính
+local Main = Instance.new("Frame")
+Main.Name = "Main"
+Main.Size = UDim2.new(0, 230, 0, 330)
+Main.Position = UDim2.new(0, 15, 0, 90)
+Main.BackgroundColor3 = Color3.fromRGB(22, 22, 28)
+Main.BorderSizePixel = 0
+Main.Active = true
+Main.Parent = Gui
+
+local MainCorner = Instance.new("UICorner")
+MainCorner.CornerRadius = UDim.new(0, 10)
+MainCorner.Parent = Main
 
 local Title = Instance.new("TextLabel")
-Title.Size = UDim2.new(1, 0, 0, 36)
-Title.BackgroundColor3 = Color3.fromRGB(35, 35, 45)
-Title.Text = "Sky Hub"
+Title.Size = UDim2.new(1, -44, 0, 34)
+Title.BackgroundColor3 = Color3.fromRGB(40, 40, 55)
+Title.BorderSizePixel = 0
+Title.Text = "  Sky Hub (keo de di chuyen)"
+Title.TextXAlignment = Enum.TextXAlignment.Left
 Title.TextColor3 = Color3.fromRGB(255, 255, 255)
 Title.Font = Enum.Font.GothamBold
-Title.TextSize = 16
+Title.TextSize = 13
 Title.Active = true
-Title.Parent = MainFrame
-Instance.new("UICorner", Title).CornerRadius = UDim.new(0, 10)
+Title.Parent = Main
 
-local CloseBtn = Instance.new("TextButton")
-CloseBtn.Size = UDim2.new(0, 26, 0, 26)
-CloseBtn.Position = UDim2.new(1, -32, 0.5, -13)
-CloseBtn.BackgroundColor3 = Color3.fromRGB(200, 60, 60)
-CloseBtn.Text = "-"
-CloseBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-CloseBtn.Font = Enum.Font.GothamBold
-CloseBtn.TextSize = 16
-CloseBtn.Parent = Title
-Instance.new("UICorner", CloseBtn).CornerRadius = UDim.new(0, 6)
+local MinBtn = Instance.new("TextButton")
+MinBtn.Size = UDim2.new(0, 44, 0, 34)
+MinBtn.Position = UDim2.new(1, -44, 0, 0)
+MinBtn.BackgroundColor3 = Color3.fromRGB(200, 60, 60)
+MinBtn.BorderSizePixel = 0
+MinBtn.Text = "-"
+MinBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+MinBtn.Font = Enum.Font.GothamBold
+MinBtn.TextSize = 20
+MinBtn.Parent = Main
 
-local MiniBox = Instance.new("TextButton")
-MiniBox.Size = UDim2.new(0, 48, 0, 48)
-MiniBox.Position = MainFrame.Position
-MiniBox.BackgroundColor3 = Color3.fromRGB(45, 45, 55)
-MiniBox.Text = "Sky"
-MiniBox.TextColor3 = Color3.fromRGB(255, 255, 255)
-MiniBox.Font = Enum.Font.GothamBold
-MiniBox.TextSize = 13
-MiniBox.Visible = false
-MiniBox.Parent = ScreenGui
-Instance.new("UICorner", MiniBox).CornerRadius = UDim.new(0, 8)
+local Body = Instance.new("ScrollingFrame")
+Body.Size = UDim2.new(1, 0, 1, -34)
+Body.Position = UDim2.new(0, 0, 0, 34)
+Body.BackgroundTransparency = 1
+Body.BorderSizePixel = 0
+Body.ScrollBarThickness = 4
+Body.CanvasSize = UDim2.new(0, 0, 0, 0)
+Body.AutomaticCanvasSize = Enum.AutomaticSize.Y
+Body.Parent = Main
 
--- Kéo GUI (chuột + cảm ứng)
+local Layout = Instance.new("UIListLayout")
+Layout.Padding = UDim.new(0, 6)
+Layout.SortOrder = Enum.SortOrder.LayoutOrder
+Layout.Parent = Body
+
+local Pad = Instance.new("UIPadding")
+Pad.PaddingTop = UDim.new(0, 8)
+Pad.PaddingLeft = UDim.new(0, 8)
+Pad.PaddingRight = UDim.new(0, 8)
+Pad.PaddingBottom = UDim.new(0, 8)
+Pad.Parent = Body
+
+-- Kéo GUI bằng cảm ứng / chuột
 do
-    local dragging, dragStart, startPos
+    local dragging, dragStart, startPos = false, nil, nil
     Title.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        if input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseButton1 then
             dragging = true
             dragStart = input.Position
-            startPos = MainFrame.Position
+            startPos = Main.Position
         end
     end)
     UserInputService.InputChanged:Connect(function(input)
-        if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+        if dragging and (input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseMovement) then
             local d = input.Position - dragStart
-            MainFrame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + d.X, startPos.Y.Scale, startPos.Y.Offset + d.Y)
+            Main.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + d.X, startPos.Y.Scale, startPos.Y.Offset + d.Y)
         end
     end)
     UserInputService.InputEnded:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        if input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseButton1 then
             dragging = false
         end
     end)
 end
 
-local isOpen = true
-local busy = false
-local function ToggleGUI()
-    if busy then return end
-    busy = true
-    isOpen = not isOpen
-    if isOpen then
-        MiniBox.Visible = false
-        MainFrame.Position = MiniBox.Position
-        MainFrame.Size = UDim2.new(0, 0, 0, 0)
-        MainFrame.Visible = true
-        local t = TweenService:Create(MainFrame, TweenInfo.new(0.3, Enum.EasingStyle.Back), {Size = UDim2.new(0, 280, 0, 300)})
-        t:Play()
-        t.Completed:Connect(function() busy = false end)
-    else
-        local t = TweenService:Create(MainFrame, TweenInfo.new(0.25, Enum.EasingStyle.Quad), {Size = UDim2.new(0, 0, 0, 0)})
-        t:Play()
-        t.Completed:Connect(function()
-            MainFrame.Visible = false
-            MiniBox.Position = MainFrame.Position
-            MiniBox.Visible = true
-            busy = false
-        end)
-    end
-end
-CloseBtn.MouseButton1Click:Connect(ToggleGUI)
-MiniBox.MouseButton1Click:Connect(ToggleGUI)
-
--- Tabs
-local function MakeTab(text, xScale, active)
-    local b = Instance.new("TextButton")
-    b.Size = UDim2.new(0.48, 0, 0, 30)
-    b.Position = UDim2.new(xScale, 0, 0, 42)
-    b.BackgroundColor3 = active and Color3.fromRGB(55, 55, 70) or Color3.fromRGB(40, 40, 50)
-    b.Text = text
-    b.TextColor3 = Color3.fromRGB(255, 255, 255)
-    b.Font = Enum.Font.Gotham
-    b.TextSize = 13
-    b.Parent = MainFrame
-    Instance.new("UICorner", b).CornerRadius = UDim.new(0, 6)
-    return b
-end
-
-local AimBtn = MakeTab("Aim", 0.02, true)
-local ESPBtn = MakeTab("ESP", 0.5, false)
-
-local function MakePage(visible)
-    local f = Instance.new("Frame")
-    f.Size = UDim2.new(1, 0, 1, -80)
-    f.Position = UDim2.new(0, 0, 0, 78)
-    f.BackgroundTransparency = 1
-    f.Visible = visible
-    f.Parent = MainFrame
-    return f
-end
-
-local AimPage = MakePage(true)
-local ESPPage = MakePage(false)
-
-local function SwitchTab(name)
-    AimPage.Visible = name == "Aim"
-    ESPPage.Visible = name == "ESP"
-    AimBtn.BackgroundColor3 = name == "Aim" and Color3.fromRGB(55, 55, 70) or Color3.fromRGB(40, 40, 50)
-    ESPBtn.BackgroundColor3 = name == "ESP" and Color3.fromRGB(55, 55, 70) or Color3.fromRGB(40, 40, 50)
-end
-AimBtn.MouseButton1Click:Connect(function() SwitchTab("Aim") end)
-ESPBtn.MouseButton1Click:Connect(function() SwitchTab("ESP") end)
-
--- Tạo nút nhanh
-local function Btn(parent, text, y, func)
-    local b = Instance.new("TextButton")
-    b.Size = UDim2.new(0.92, 0, 0, 30)
-    b.Position = UDim2.new(0.04, 0, 0, y)
-    b.BackgroundColor3 = Color3.fromRGB(50, 50, 65)
-    b.Text = text
-    b.TextColor3 = Color3.fromRGB(255, 255, 255)
-    b.Font = Enum.Font.Gotham
-    b.TextSize = 13
-    b.Parent = parent
-    Instance.new("UICorner", b).CornerRadius = UDim.new(0, 6)
-    b.MouseButton1Click:Connect(function() func(b) end)
-    return b
-end
-
-local function SetAim(state)
-    AimEnabled = state
-    -- aimToggle được gán bên dưới, nhưng hàm này chỉ chạy sau khi GUI dựng xong
-    if _G.__SkyAimToggle then
-        _G.__SkyAimToggle.Text = state and "AIM: BẬT" or "AIM: TẮT"
-        _G.__SkyAimToggle.BackgroundColor3 = state and Color3.fromRGB(40, 170, 70) or Color3.fromRGB(180, 50, 50)
-    end
-    FOVCircle.Visible = state
-end
-
--- ===== AIM PAGE =====
-local aimToggle = Btn(AimPage, "AIM: TẮT", 8, function()
-    SetAim(not AimEnabled)
+-- Thu nhỏ / mở rộng
+local minimized = false
+MinBtn.MouseButton1Click:Connect(function()
+    minimized = not minimized
+    Body.Visible = not minimized
+    Main.Size = minimized and UDim2.new(0, 230, 0, 34) or UDim2.new(0, 230, 0, 330)
+    MinBtn.Text = minimized and "+" or "-"
 end)
-aimToggle.BackgroundColor3 = Color3.fromRGB(180, 50, 50)
-_G.__SkyAimToggle = aimToggle
+
+-- Hàm tạo nút
+local order = 0
+local function MakeButton(text, callback)
+    order = order + 1
+    local b = Instance.new("TextButton")
+    b.Size = UDim2.new(1, 0, 0, 34)
+    b.BackgroundColor3 = Color3.fromRGB(55, 55, 75)
+    b.BorderSizePixel = 0
+    b.Text = text
+    b.TextColor3 = Color3.fromRGB(255, 255, 255)
+    b.Font = Enum.Font.Gotham
+    b.TextSize = 14
+    b.LayoutOrder = order
+    b.Parent = Body
+    local c = Instance.new("UICorner")
+    c.CornerRadius = UDim.new(0, 6)
+    c.Parent = b
+    b.MouseButton1Click:Connect(function()
+        callback(b)
+    end)
+    return b
+end
+
+local function SetState(btn, label, on)
+    btn.Text = label .. (on and ": BAT" or ": TAT")
+    btn.BackgroundColor3 = on and Color3.fromRGB(40, 150, 70) or Color3.fromRGB(160, 50, 50)
+end
+
+-- ===== NÚT =====
+local aimBtn
+aimBtn = MakeButton("", function()
+    S.Aim = not S.Aim
+    SetState(aimBtn, "AIM", S.Aim)
+    Circle.Visible = S.Aim
+end)
+SetState(aimBtn, "AIM", S.Aim)
 
 local fovLabel = Instance.new("TextLabel")
-fovLabel.Size = UDim2.new(0.92, 0, 0, 18)
-fovLabel.Position = UDim2.new(0.04, 0, 0, 44)
+fovLabel.Size = UDim2.new(1, 0, 0, 20)
 fovLabel.BackgroundTransparency = 1
-fovLabel.Text = "FOV: " .. FOVRadius
-fovLabel.TextColor3 = Color3.fromRGB(220, 220, 220)
+fovLabel.Text = "FOV: " .. S.FOV
+fovLabel.TextColor3 = Color3.fromRGB(230, 230, 230)
 fovLabel.Font = Enum.Font.Gotham
-fovLabel.TextSize = 13
-fovLabel.Parent = AimPage
+fovLabel.TextSize = 14
+order = order + 1
+fovLabel.LayoutOrder = order
+fovLabel.Parent = Body
 
-Btn(AimPage, "Giảm FOV", 66, function()
-    FOVRadius = math.max(40, FOVRadius - 20)
-    fovLabel.Text = "FOV: " .. FOVRadius
-end)
-
-Btn(AimPage, "Tăng FOV", 100, function()
-    FOVRadius = math.min(400, FOVRadius + 20)
-    fovLabel.Text = "FOV: " .. FOVRadius
-end)
-
-local colors = {
-    Color3.fromRGB(255, 50, 50), Color3.fromRGB(255, 180, 0), Color3.fromRGB(255, 255, 0),
-    Color3.fromRGB(0, 255, 100), Color3.fromRGB(0, 200, 255), Color3.fromRGB(180, 0, 255)
-}
-local circleIndex, espIndex = 1, 4
-
-Btn(AimPage, "Đổi màu vòng tròn", 134, function()
-    circleIndex = circleIndex % #colors + 1
-    CircleColor = colors[circleIndex]
-end)
-
-Btn(AimPage, "Tắt khi chết: BẬT", 168, function(b)
-    AutoOffOnDeath = not AutoOffOnDeath
-    b.Text = AutoOffOnDeath and "Tắt khi chết: BẬT" or "Tắt khi chết: TẮT"
-end)
-
--- ===== ESP PAGE =====
-Btn(ESPPage, "ESP: BẬT", 8, function(b)
-    ESPEnabled = not ESPEnabled
-    b.Text = ESPEnabled and "ESP: BẬT" or "ESP: TẮT"
-end)
-Btn(ESPPage, "Tracer: BẬT", 46, function(b)
-    ShowTracer = not ShowTracer
-    b.Text = ShowTracer and "Tracer: BẬT" or "Tracer: TẮT"
-end)
-Btn(ESPPage, "Box: BẬT", 84, function(b)
-    ShowBox = not ShowBox
-    b.Text = ShowBox and "Box: BẬT" or "Box: TẮT"
-end)
-Btn(ESPPage, "Distance: BẬT", 122, function(b)
-    ShowDistance = not ShowDistance
-    b.Text = ShowDistance and "Distance: BẬT" or "Distance: TẮT"
-end)
-Btn(ESPPage, "Đổi màu ESP", 160, function()
-    espIndex = espIndex % #colors + 1
-    ESPColor = colors[espIndex]
-    TracerColor = colors[espIndex]
-end)
-
--- ===== LOGIC =====
-local function GetCenter()
-    return Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2)
+local function UpdateFOV()
+    fovLabel.Text = "FOV: " .. S.FOV
+    Circle.Size = UDim2.new(0, S.FOV * 2, 0, S.FOV * 2)
 end
 
-local function IsInFOV(part)
-    local pos, onScreen = Camera:WorldToViewportPoint(part.Position)
-    if not onScreen then return false end
-    return (Vector2.new(pos.X, pos.Y) - GetCenter()).Magnitude <= FOVRadius
+MakeButton("Tang FOV (+20)", function()
+    S.FOV = math.min(400, S.FOV + 20)
+    UpdateFOV()
+end)
+
+MakeButton("Giam FOV (-20)", function()
+    S.FOV = math.max(40, S.FOV - 20)
+    UpdateFOV()
+end)
+
+MakeButton("Doi mau vong tron", function()
+    fovColorIdx = fovColorIdx % #colors + 1
+    CircleStroke.Color = colors[fovColorIdx]
+end)
+
+local autoBtn
+autoBtn = MakeButton("", function()
+    S.AutoOff = not S.AutoOff
+    SetState(autoBtn, "Tat Aim khi dich chet", S.AutoOff)
+end)
+SetState(autoBtn, "Tat Aim khi dich chet", S.AutoOff)
+
+local espBtn
+espBtn = MakeButton("", function()
+    S.ESP = not S.ESP
+    SetState(espBtn, "ESP", S.ESP)
+end)
+SetState(espBtn, "ESP", S.ESP)
+
+local infoBtn
+infoBtn = MakeButton("", function()
+    S.ShowInfo = not S.ShowInfo
+    SetState(infoBtn, "Ten + khoang cach", S.ShowInfo)
+end)
+SetState(infoBtn, "Ten + khoang cach", S.ShowInfo)
+
+MakeButton("Doi mau ESP", function()
+    espColorIdx = espColorIdx % #colors + 1
+end)
+
+-- ===== AIM =====
+local function IsAlive(char)
+    local hum = char and char:FindFirstChildOfClass("Humanoid")
+    return hum and hum.Health > 0
 end
 
 local function GetTarget()
-    local nearest, shortest = nil, math.huge
-    local myChar = LocalPlayer.Character
-    local myRoot = myChar and myChar:FindFirstChild("HumanoidRootPart")
-    if not myRoot then return nil end
+    local best, bestDist = nil, math.huge
+    local viewport = Camera.ViewportSize
+    local center = Vector2.new(viewport.X / 2, viewport.Y / 2)
 
     for _, p in ipairs(Players:GetPlayers()) do
-        if p ~= LocalPlayer and p.Character then
+        if p ~= LocalPlayer and p.Character and IsAlive(p.Character) then
             local head = p.Character:FindFirstChild("Head")
-            local hum = p.Character:FindFirstChildOfClass("Humanoid")
-            if head and hum and hum.Health > 0 and IsInFOV(head) then
-                local dist = (myRoot.Position - head.Position).Magnitude
-                if dist < shortest then
-                    shortest = dist
-                    nearest = head
+            if head then
+                local pos, onScreen = Camera:WorldToViewportPoint(head.Position)
+                if onScreen and pos.Z > 0 then
+                    local d = (Vector2.new(pos.X, pos.Y) - center).Magnitude
+                    if d <= S.FOV and d < bestDist then
+                        bestDist = d
+                        best = head
+                    end
                 end
             end
         end
     end
-    return nearest
+    return best
 end
 
-local function RemoveESP(plr)
-    local o = ESPObjects[plr]
-    if o then
-        pcall(function() o.Tracer:Remove() end)
-        pcall(function() o.Box:Remove() end)
-        pcall(function() o.Text:Remove() end)
-        ESPObjects[plr] = nil
-    end
-end
-
-local function HideESP(o)
-    o.Tracer.Visible = false
-    o.Box.Visible = false
-    o.Text.Visible = false
-end
-
-Players.PlayerRemoving:Connect(RemoveESP)
-
-local lockedTarget = nil
+local lastTarget = nil
 
 RunService.RenderStepped:Connect(function()
     Camera = workspace.CurrentCamera
-    if not Camera then return end
-
-    local center = GetCenter()
-    FOVCircle.Position = center
-    FOVCircle.Radius = FOVRadius
-    FOVCircle.Color = CircleColor
-    FOVCircle.Visible = AimEnabled
-
-    -- AIM
-    if AimEnabled then
-        -- tắt khi mục tiêu đang khóa chết
-        if AutoOffOnDeath and lockedTarget then
-            local hum = lockedTarget.Parent and lockedTarget.Parent:FindFirstChildOfClass("Humanoid")
-            if not hum or hum.Health <= 0 then
-                lockedTarget = nil
-                SetAim(false)
-            end
-        end
-        if AimEnabled then
-            local target = GetTarget()
-            lockedTarget = target
-            if target then
-                Camera.CFrame = CFrame.lookAt(Camera.CFrame.Position, target.Position)
-            end
-        end
-    else
-        lockedTarget = nil
-    end
-
-    -- ESP
-    if not ESPEnabled then
-        for plr in pairs(ESPObjects) do
-            RemoveESP(plr)
-        end
+    if not Camera or not S.Aim then
+        lastTarget = nil
         return
     end
 
-    local myRoot = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
-    local seen = {}
-
-    for _, player in ipairs(Players:GetPlayers()) do
-        if player ~= LocalPlayer and player.Character then
-            local char = player.Character
-            local head = char:FindFirstChild("Head")
-            local root = char:FindFirstChild("HumanoidRootPart")
-            local hum = char:FindFirstChildOfClass("Humanoid")
-
-            if head and root and hum and hum.Health > 0 then
-                seen[player] = true
-
-                if not ESPObjects[player] then
-                    local o = {
-                        Tracer = NewDrawing("Line"),
-                        Box = NewDrawing("Square"),
-                        Text = NewDrawing("Text"),
-                    }
-                    o.Tracer.Thickness = 1.5
-                    o.Box.Thickness = 1.5
-                    o.Box.Filled = false
-                    o.Text.Size = 13
-                    o.Text.Center = true
-                    o.Text.Outline = true
-                    ESPObjects[player] = o
-                end
-
-                local o = ESPObjects[player]
-                local pos, onScreen = Camera:WorldToViewportPoint(head.Position)
-
-                if onScreen then
-                    o.Tracer.Visible = ShowTracer
-                    o.Box.Visible = ShowBox
-                    o.Text.Visible = ShowDistance
-
-                    if ShowTracer then
-                        o.Tracer.From = Vector2.new(center.X, 0)
-                        o.Tracer.To = Vector2.new(pos.X, pos.Y)
-                        o.Tracer.Color = TracerColor
-                    end
-                    if ShowBox then
-                        local rootPos = Camera:WorldToViewportPoint(root.Position)
-                        local sz = (Vector2.new(rootPos.X, rootPos.Y) - Vector2.new(pos.X, pos.Y)).Magnitude * 2
-                        o.Box.Size = Vector2.new(sz * 0.65, sz)
-                        o.Box.Position = Vector2.new(pos.X - sz * 0.32, pos.Y - sz * 0.45)
-                        o.Box.Color = ESPColor
-                    end
-                    if ShowDistance then
-                        local d = myRoot and math.floor((myRoot.Position - root.Position).Magnitude) or 0
-                        o.Text.Text = player.Name .. " [" .. d .. "]"
-                        o.Text.Position = Vector2.new(pos.X, pos.Y - 28)
-                        o.Text.Color = ESPColor
-                    end
-                else
-                    HideESP(o)
-                end
-            end
-        end
+    -- Mục tiêu vừa chết thì tự tắt Aim
+    if S.AutoOff and lastTarget and lastTarget.Parent and not IsAlive(lastTarget.Parent) then
+        lastTarget = nil
+        S.Aim = false
+        SetState(aimBtn, "AIM", false)
+        Circle.Visible = false
+        return
     end
 
-    for plr in pairs(ESPObjects) do
-        if not seen[plr] then
-            RemoveESP(plr)
-        end
+    local target = GetTarget()
+    lastTarget = target
+    if target then
+        Camera.CFrame = CFrame.lookAt(Camera.CFrame.Position, target.Position)
     end
 end)
 
-print("Sky Hub Universal đã load!")
-if not HasDrawing then
-    warn("Executor không hỗ trợ Drawing: GUI vẫn chạy nhưng ESP/vòng FOV sẽ không hiện.")
+-- ===== ESP (Highlight + BillboardGui, không cần Drawing) =====
+local function ClearESP(char)
+    if not char then return end
+    local h = char:FindFirstChild("SkyESP")
+    if h then h:Destroy() end
+    local head = char:FindFirstChild("Head")
+    if head then
+        local t = head:FindFirstChild("SkyTag")
+        if t then t:Destroy() end
+    end
 end
+
+local function ApplyESP(player)
+    local char = player.Character
+    if not char or not IsAlive(char) then
+        ClearESP(char)
+        return
+    end
+    local head = char:FindFirstChild("Head")
+    local root = char:FindFirstChild("HumanoidRootPart")
+    if not head or not root then return end
+
+    local color = colors[espColorIdx]
+
+    local hl = char:FindFirstChild("SkyESP")
+    if not hl then
+        hl = Instance.new("Highlight")
+        hl.Name = "SkyESP"
+        hl.FillTransparency = 0.6
+        hl.OutlineTransparency = 0
+        hl.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+        hl.Parent = char
+    end
+    hl.FillColor = color
+    hl.OutlineColor = color
+
+    local tag = head:FindFirstChild("SkyTag")
+    if S.ShowInfo then
+        if not tag then
+            tag = Instance.new("BillboardGui")
+            tag.Name = "SkyTag"
+            tag.Size = UDim2.new(0, 140, 0, 28)
+            tag.StudsOffset = Vector3.new(0, 2.5, 0)
+            tag.AlwaysOnTop = true
+            tag.Adornee = head
+            local lbl = Instance.new("TextLabel")
+            lbl.Name = "Lbl"
+            lbl.Size = UDim2.new(1, 0, 1, 0)
+            lbl.BackgroundTransparency = 1
+            lbl.Font = Enum.Font.GothamBold
+            lbl.TextSize = 14
+            lbl.TextStrokeTransparency = 0
+            lbl.Parent = tag
+            tag.Parent = head
+        end
+        local lbl = tag:FindFirstChild("Lbl")
+        if lbl then
+            local myRoot = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+            local d = myRoot and math.floor((myRoot.Position - root.Position).Magnitude) or 0
+            lbl.Text = player.Name .. " [" .. d .. "m]"
+            lbl.TextColor3 = color
+        end
+    elseif tag then
+        tag:Destroy()
+    end
+end
+
+task.spawn(function()
+    while Gui.Parent do
+        for _, p in ipairs(Players:GetPlayers()) do
+            if p ~= LocalPlayer then
+                pcall(function()
+                    if S.ESP then
+                        ApplyESP(p)
+                    else
+                        ClearESP(p.Character)
+                    end
+                end)
+            end
+        end
+        task.wait(0.25)
+    end
+    -- dọn khi GUI bị xóa
+    for _, p in ipairs(Players:GetPlayers()) do
+        pcall(function() ClearESP(p.Character) end)
+    end
+end)
+
+print("Sky Hub Mobile da load xong!")
+pcall(function()
+    game:GetService("StarterGui"):SetCore("SendNotification", {
+        Title = "Sky Hub",
+        Text = "Da load xong! GUI o ben trai man hinh.",
+        Duration = 5,
+    })
+end)

@@ -1046,11 +1046,36 @@ _G.SkyHubProConn = RunService.RenderStepped:Connect(function()
 end)
 
 -- Giả lập chuột
-local function SetMouse(button, down)
+local function ClickMouse(button)
+    local vp = Camera and Camera.ViewportSize or Vector2.new(0, 0)
+    local cx, cy = vp.X / 2, vp.Y / 2
+
     local ok = pcall(function()
         local VIM = game:GetService("VirtualInputManager")
         -- 0 = left, 1 = right
-        VIM:SendMouseButtonEvent(0, 0, button, down, game, 0)
+        VIM:SendMouseButtonEvent(cx, cy, button, true, game, 0)
+        task.wait(0.02)
+        VIM:SendMouseButtonEvent(cx, cy, button, false, game, 0)
+    end)
+
+    if not ok then
+        pcall(function()
+            if button == 0 then
+                if mouse1click then mouse1click() end
+            else
+                if mouse2click then mouse2click() end
+            end
+        end)
+    end
+end
+
+local function SetMouse(button, down)
+    local vp = Camera and Camera.ViewportSize or Vector2.new(0, 0)
+    local cx, cy = vp.X / 2, vp.Y / 2
+
+    local ok = pcall(function()
+        local VIM = game:GetService("VirtualInputManager")
+        VIM:SendMouseButtonEvent(cx, cy, button, down, game, 0)
     end)
     if not ok then
         pcall(function()
@@ -1074,43 +1099,28 @@ end
 local function SetLMB(down) SetMouse(0, down) end
 local function SetRMB(down) SetMouse(1, down) end
 
--- Auto Fire (giả lập đè chuột trái khi có mục tiêu)
+-- Auto Fire
 local lastFire = 0
-local autoHolding = false
 task.spawn(function()
     while Gui.Parent do
         if S.AutoFire then
             local target = GetTarget()
             if target then
-                if not autoHolding then
-                    SetLMB(true)
-                    autoHolding = true
-                end
                 local now = tick()
                 if now - lastFire >= (S.FireDelay / 1000) then
+                    -- Ưu tiên Activate tool (ổn định hơn)
                     local char = LocalPlayer.Character
                     local tool = char and char:FindFirstChildOfClass("Tool")
                     if tool then
                         pcall(function() tool:Activate() end)
                     end
+                    -- Giả lập click chuột trái tại tâm màn hình
+                    ClickMouse(0)
                     lastFire = now
                 end
-            else
-                if autoHolding then
-                    SetLMB(false)
-                    autoHolding = false
-                end
-            end
-        else
-            if autoHolding then
-                SetLMB(false)
-                autoHolding = false
             end
         end
-        task.wait(0.05)
-    end
-    if autoHolding then
-        SetLMB(false)
+        task.wait(0.03)
     end
 end)
 
@@ -1458,15 +1468,23 @@ table.insert(Conns, RunService.Heartbeat:Connect(function(dt)
     local char = LocalPlayer.Character
     local hum = char and char:FindFirstChildOfClass("Humanoid")
     if not hum then return end
+    local root = char:FindFirstChild("HumanoidRootPart")
 
+    -- Speed (cả WalkSpeed + velocity để chống game reset)
     if S.SpeedOn then
         if MoveState.WS == nil then MoveState.WS = hum.WalkSpeed end
         hum.WalkSpeed = S.Speed
+        if root and hum.MoveDirection.Magnitude > 0.1 then
+            local vel = root.AssemblyLinearVelocity
+            local dir = hum.MoveDirection
+            root.AssemblyLinearVelocity = Vector3.new(dir.X * S.Speed, vel.Y, dir.Z * S.Speed)
+        end
     elseif MoveState.WS ~= nil then
         hum.WalkSpeed = MoveState.WS
         MoveState.WS = nil
     end
 
+    -- Jump
     if S.JumpOn then
         if MoveState.JP == nil then
             MoveState.JP = {UseJumpPower = hum.UseJumpPower, Power = hum.JumpPower, Height = hum.JumpHeight}
@@ -1485,24 +1503,35 @@ table.insert(Conns, RunService.Heartbeat:Connect(function(dt)
         MoveState.JP = nil
     end
 
-    if S.Spin then
-        local root = char:FindFirstChild("HumanoidRootPart")
-        if root then
-            root.CFrame = root.CFrame * CFrame.Angles(0, math.rad(S.SpinSpeed * dt), 0)
-            root.AssemblyAngularVelocity = Vector3.new(0, 0, 0)
-        end
+    -- Spin (mạnh hơn)
+    if S.Spin and root then
+        root.CFrame = root.CFrame * CFrame.Angles(0, math.rad(S.SpinSpeed * dt), 0)
+        root.AssemblyAngularVelocity = Vector3.zero
+        root.AssemblyLinearVelocity = Vector3.new(root.AssemblyLinearVelocity.X, root.AssemblyLinearVelocity.Y, root.AssemblyLinearVelocity.Z)
     end
 
+    -- Swim
     if S.Swim then
         hum:ChangeState(Enum.HumanoidStateType.Swimming)
     end
 
+    -- Tool Spin
     if S.ToolSpin then
         local tool = char:FindFirstChildOfClass("Tool")
         if tool and tool:FindFirstChild("Handle") then
             local handle = tool.Handle
             handle.CFrame = handle.CFrame * CFrame.Angles(0, math.rad(S.ToolSpinSpeed * dt), 0)
         end
+    end
+end))
+
+-- Thêm Stepped để chống game override speed
+table.insert(Conns, RunService.Stepped:Connect(function()
+    if not S.SpeedOn then return end
+    local char = LocalPlayer.Character
+    local hum = char and char:FindFirstChildOfClass("Humanoid")
+    if hum then
+        hum.WalkSpeed = S.Speed
     end
 end))
 

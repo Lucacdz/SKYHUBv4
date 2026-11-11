@@ -1181,7 +1181,8 @@ local function ClearESP2D(p)
 end
 
 local function UpdateESP2D()
-    if not S.ESP then
+    Camera = workspace.CurrentCamera
+    if not Camera or not S.ESP then
         for p, _ in pairs(ESP2D) do ClearESP2D(p) end
         return
     end
@@ -1262,11 +1263,13 @@ local function UpdateESP2D()
             if S.ShowTracer then
                 local head2d = Vector2.new(headVP.X, headVP.Y)
                 local delta = head2d - topCenter
-                local length = delta.Magnitude
+                local length = math.max(delta.Magnitude, 1)
+                local mid = (topCenter + head2d) / 2
                 local angle = math.deg(math.atan2(delta.Y, delta.X))
 
                 obj.Tracer.Visible = true
-                obj.Tracer.Position = UDim2.new(0, topCenter.X, 0, topCenter.Y)
+                obj.Tracer.AnchorPoint = Vector2.new(0.5, 0.5)
+                obj.Tracer.Position = UDim2.new(0, mid.X, 0, mid.Y)
                 obj.Tracer.Size = UDim2.new(0, length, 0, 2)
                 obj.Tracer.Rotation = angle
                 obj.Tracer.BackgroundColor3 = color

@@ -1296,7 +1296,7 @@ local function UpdateVisuals()
                             end
                             local t = vis.Tracer
                             local start = topCenter
-                            local endp = Vector2.new(rootPos.X, boxY + boxH / 2)
+                            local endp = Vector2.new(headPos.X, headPos.Y)
                             local dist = (endp - start).Magnitude
                             local angle = math.atan2(endp.Y - start.Y, endp.X - start.X)
                             t.Size = UDim2.new(0, dist, 0, 1.5)

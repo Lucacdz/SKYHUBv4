@@ -100,6 +100,9 @@ local S = {
     ToolSpinSpeed = 800, -- độ/giây
     Aura = false,
     AuraType = 1,
+    -- Camera
+    ThirdPerson = false,
+    ThirdZoom = 12,
 }
 
 -- ===== LƯU / TẢI CẤU HÌNH =====
@@ -123,6 +126,7 @@ local function EncodeConfig()
     data.ToolSpin = false
     data.Aura = false
     data.Swim = false
+    data.ThirdPerson = false
     return HttpService:JSONEncode(data)
 end
 
@@ -163,6 +167,7 @@ local function LoadConfig()
         S.ToolSpin = false
         S.Aura = false
         S.Swim = false
+        S.ThirdPerson = false
     end
     return ok
 end
@@ -828,6 +833,10 @@ Choice(ModPage, "Kiểu Aura", {"Particle", "Ring", "Glow", "Fire", "Sparkle", "
     S.AuraType = i
 end)
 
+Section(ModPage, "CAMERA")
+Toggle(ModPage, "Góc nhìn thứ 3", S.ThirdPerson, function(v) S.ThirdPerson = v end)
+Slider(ModPage, "Khoảng cách zoom", 5, 50, S.ThirdZoom, 1, function(v) return v .. " studs" end, function(v) S.ThirdZoom = v end)
+
 -- ===== TAB CẤU HÌNH =====
 local StatusFrame = ItemFrame(CfgPage, 44)
 local StatusLbl = New("TextLabel", {
@@ -1257,7 +1266,7 @@ local function CreateAura(root)
         e.Parent = root
         table.insert(AuraObjects, e)
 
-    elseif typ == 2 then -- Ring
+    elseif typ == 2 then -- Ring (client only)
         local ring = Instance.new("Part")
         ring.Name = "SkyAuraRing"
         ring.Size = Vector3.new(8, 0.2, 8)
@@ -1267,8 +1276,9 @@ local function CreateAura(root)
         ring.Transparency = 0.4
         ring.CanCollide = false
         ring.Anchored = true
+        ring.Massless = true
         ring.CFrame = root.CFrame * CFrame.new(0, -2.5, 0) * CFrame.Angles(0, 0, math.rad(90))
-        ring.Parent = workspace
+        ring.Parent = root
         table.insert(AuraObjects, ring)
 
     elseif typ == 3 then -- Glow
@@ -1355,10 +1365,13 @@ task.spawn(function()
     ClearAura()
 end)
 
--- Cập nhật FPS & Ping cho tab INFO
+-- Cập nhật FPS & Ping + Third Person cho tab INFO / MOD
 local fpsFrames = 0
 local lastFpsTime = tick()
+local oldMinZoom, oldMaxZoom = nil, nil
+
 table.insert(Conns, RunService.RenderStepped:Connect(function()
+    -- FPS
     fpsFrames = fpsFrames + 1
     local now = tick()
     if now - lastFpsTime >= 1 then
@@ -1367,6 +1380,25 @@ table.insert(Conns, RunService.RenderStepped:Connect(function()
         end
         fpsFrames = 0
         lastFpsTime = now
+    end
+
+    -- Third Person
+    if S.ThirdPerson then
+        LocalPlayer.CameraMode = Enum.CameraMode.Classic
+        if Camera then
+            Camera.CameraType = Enum.CameraType.Custom
+        end
+        if oldMinZoom == nil then
+            oldMinZoom = LocalPlayer.CameraMinZoomDistance
+            oldMaxZoom = LocalPlayer.CameraMaxZoomDistance
+        end
+        LocalPlayer.CameraMinZoomDistance = 0.5
+        LocalPlayer.CameraMaxZoomDistance = S.ThirdZoom
+    elseif oldMinZoom ~= nil then
+        LocalPlayer.CameraMinZoomDistance = oldMinZoom
+        LocalPlayer.CameraMaxZoomDistance = oldMaxZoom
+        oldMinZoom = nil
+        oldMaxZoom = nil
     end
 end))
 
@@ -1398,8 +1430,13 @@ CloseBtn.MouseButton1Click:Connect(function()
     S.Swim = false
     S.ToolSpin = false
     S.Aura = false
+    S.ThirdPerson = false
     RestoreMovement()
     ClearAura()
+    if oldMinZoom then
+        LocalPlayer.CameraMinZoomDistance = oldMinZoom
+        LocalPlayer.CameraMaxZoomDistance = oldMaxZoom
+    end
     for _, c in ipairs(Conns) do
         pcall(function() c:Disconnect() end)
     end

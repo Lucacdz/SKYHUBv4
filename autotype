@@ -52,66 +52,20 @@ local PaletteColors = {
 
 -- ===== CÀI ĐẶT =====
 local S = {
-    -- Aim
-    Aim = false,
-    AutoOff = true,
-    AimPart = "Head",
-    AimMode = 1,
-    AimFull = false,
-    ShowCircle = true,
-    FOV = 150,
-    CircleThickness = 2,
-    CircleColor = PaletteColors[1],
-    Smooth = 0,
-    AimDist = 1000,
-    AimTeam = false,
-    WallCheck = false,
-    -- ESP
-    ESP = true,
-    Chams = true,
-    ChamsFill = 0.6,
-    ShowName = true,
-    ShowDist = true,
-    ShowHP = false,
-    ShowBox = true,
-    ShowHealthBar = true,
-    ShowTracer = true,
-    TextSize = 14,
-    ESPColor = PaletteColors[4],
-    ESPTeamColor = false,
-    ESPDist = 1500,
-    ESPTeam = false,
-    -- Chỉ số lựa chọn
-    CircleIdx = 1,
-    ESPIdx = 4,
-    AimPartIdx = 1,
-    AutoSave = true,
-    -- Settings
-    FixLag = false,
-    HideName = false,
-    -- Movement
-    InfJump = false,
-    JumpOn = false,
-    JumpPower = 100,
-    SpeedOn = false,
-    Speed = 50,
-    Noclip = false,
-    Spin = false,
-    SpinSpeed = 3000,
-    -- Fake Lag & Swim
-    FakeLag = false,
-    FakeLagDelay = 150,
-    Swim = false,
-    -- Mod
-    ToolSpin = false,
-    ToolSpinSpeed = 800,
-    Aura = false,
-    AuraType = 1,
-    -- Camera
-    ThirdPerson = false,
-    ThirdZoom = 12,
-    FOVEnabled = false,
-    CameraFOV = 70,
+    Aim = false, AutoOff = true, AimPart = "Head", AimMode = 1, AimFull = false,
+    ShowCircle = true, FOV = 150, CircleThickness = 2, CircleColor = PaletteColors[1],
+    Smooth = 0, AimDist = 1000, AimTeam = false, WallCheck = false,
+    ESP = true, Chams = true, ChamsFill = 0.6, ShowName = true, ShowDist = true,
+    ShowHP = false, ShowBox = true, ShowHealthBar = true, ShowTracer = true,
+    TextSize = 14, ESPColor = PaletteColors[4], ESPTeamColor = false,
+    ESPDist = 1500, ESPTeam = false,
+    CircleIdx = 1, ESPIdx = 4, AimPartIdx = 1, AutoSave = true,
+    FixLag = false, HideName = false,
+    InfJump = false, JumpOn = false, JumpPower = 100,
+    SpeedOn = false, Speed = 50, Noclip = false, Spin = false, SpinSpeed = 3000,
+    FakeLag = false, FakeLagDelay = 150, Swim = false,
+    ToolSpin = false, ToolSpinSpeed = 800, Aura = false, AuraType = 1,
+    ThirdPerson = false, ThirdZoom = 12, FOVEnabled = false, CameraFOV = 70,
 }
 
 -- ===== NGÔN NGỮ =====
@@ -119,81 +73,39 @@ S.Lang = S.Lang or "vi"
 
 local Lang = {
     vi = {
-        main = "CHÍNH",
-        aim_on = "Bật Aim",
-        auto_off = "Tự tắt khi mục tiêu chết",
-        aim_part = "Vị trí nhắm",
-        head = "Đầu", body = "Thân",
-        priority = "Ưu tiên mục tiêu",
-        near_center = "Gần tâm", nearest = "Gần nhất", farthest = "Xa nhất", low_hp = "Ít máu",
+        main = "CHÍNH", aim_on = "Bật Aim", auto_off = "Tự tắt khi mục tiêu chết",
+        aim_part = "Vị trí nhắm", head = "Đầu", body = "Thân",
+        priority = "Ưu tiên mục tiêu", near_center = "Gần tâm", nearest = "Gần nhất",
+        farthest = "Xa nhất", low_hp = "Ít máu",
         aim_full = "Aim full (ngoài cả vòng FOV)",
-        fov_circle = "VÒNG FOV",
-        show_circle = "Hiện vòng FOV",
-        fov_radius = "Bán kính FOV",
-        thickness = "Độ dày viền",
-        circle_color = "Màu vòng tròn",
-        advanced = "NÂNG CAO",
-        smooth = "Độ mượt",
-        max_dist = "Khoảng cách tối đa",
-        ignore_team = "Bỏ qua đồng đội",
-        wall_check = "Kiểm tra vật cản (wall check)",
-        esp_on = "Bật ESP",
-        chams = "Viền sáng (Highlight)",
-        fill_trans = "Độ trong suốt phần tô",
-        info_section = "THÔNG TIN",
-        show_name = "Hiện tên",
-        show_dist = "Hiện khoảng cách",
-        show_hp = "Hiện máu",
-        text_size = "Cỡ chữ",
-        box_esp = "BOX ESP (CS:GO style)",
-        show_box = "Hiện Box Hitbox",
-        show_hpbar = "Hiện thanh máu",
+        fov_circle = "VÒNG FOV", show_circle = "Hiện vòng FOV",
+        fov_radius = "Bán kính FOV", thickness = "Độ dày viền", circle_color = "Màu vòng tròn",
+        advanced = "NÂNG CAO", smooth = "Độ mượt", max_dist = "Khoảng cách tối đa",
+        ignore_team = "Bỏ qua đồng đội", wall_check = "Kiểm tra vật cản (wall check)",
+        esp_on = "Bật ESP", chams = "Viền sáng (Highlight)", fill_trans = "Độ trong suốt phần tô",
+        info_section = "THÔNG TIN", show_name = "Hiện tên", show_dist = "Hiện khoảng cách",
+        show_hp = "Hiện máu", text_size = "Cỡ chữ", box_esp = "BOX ESP (CS:GO style)",
+        show_box = "Hiện Box Hitbox", show_hpbar = "Hiện thanh máu",
         show_tracer = "Hiện tia (từ trên màn hình)",
-        color_section = "MÀU SẮC",
-        esp_color = "Màu ESP",
-        team_color = "Màu theo đội",
-        move_jump = "NHẢY",
-        inf_jump = "Nhảy vô hạn (Infinite Jump)",
-        jump_power_on = "Chỉnh sức mạnh nhảy",
-        jump_power = "Sức mạnh nhảy",
-        move_section = "DI CHUYỂN",
-        speed_on = "Chỉnh tốc độ di chuyển",
-        speed = "Tốc độ",
-        noclip = "Noclip (xuyên tường)",
-        spin_section = "SPIN",
-        spin_on = "Xoay tròn (Spin)",
-        spin_speed = "Tốc độ xoay",
-        fake_lag = "FAKE LAG",
-        fake_lag_on = "Fake High Ping / Lag",
-        lag_delay = "Độ trễ (ms)",
-        swim = "BƠI",
-        swim_on = "Bơi (Swim)",
-        tool_section = "VẬT PHẨM",
-        tool_spin = "Xoay vật phẩm cầm tay (client)",
+        color_section = "MÀU SẮC", esp_color = "Màu ESP", team_color = "Màu theo đội",
+        move_jump = "NHẢY", inf_jump = "Nhảy vô hạn (Infinite Jump)",
+        jump_power_on = "Chỉnh sức mạnh nhảy", jump_power = "Sức mạnh nhảy",
+        move_section = "DI CHUYỂN", speed_on = "Chỉnh tốc độ di chuyển",
+        speed = "Tốc độ", noclip = "Noclip (xuyên tường)",
+        spin_section = "SPIN", spin_on = "Xoay tròn (Spin)", spin_speed = "Tốc độ xoay",
+        fake_lag = "FAKE LAG", fake_lag_on = "Fake High Ping / Lag", lag_delay = "Độ trễ (ms)",
+        swim = "BƠI", swim_on = "Bơi (Swim)",
+        tool_section = "VẬT PHẨM", tool_spin = "Xoay vật phẩm cầm tay (client)",
         tool_spin_speed = "Tốc độ xoay vật phẩm",
-        aura_section = "AURA",
-        aura_on = "Bật Aura",
-        aura_type = "Kiểu Aura",
-        camera_section = "CAMERA",
-        third_person = "Góc nhìn thứ 3",
-        zoom_dist = "Khoảng cách zoom",
-        fov_on = "Bật chỉnh FOV",
-        camera_fov = "FOV Camera",
-        save_section = "LƯU / XÓA",
-        auto_save = "Tự động lưu khi thay đổi",
-        save_now = "Lưu cấu hình ngay",
-        delete_cfg = "Xóa cấu hình (về mặc định)",
-        perf_section = "HIỆU NĂNG",
-        fix_lag = "Fix Lag (giảm lag)",
-        hide_name_section = "ẨN TÊN",
-        hide_name = "Ẩn tên người chơi (đổi thành Lucacdz)",
-        note_section = "GHI CHÚ",
-        note = "Fix Lag: tắt bóng, giảm chất lượng đồ họa.\nẨn tên: mọi chỗ hiện tên người khác sẽ thành Lucacdz.",
-        lang_section = "NGÔN NGỮ",
-        language = "Ngôn ngữ",
-        info_title = "THÔNG TIN",
-        loading = "Đang tải...",
-        no_server = "Không có",
+        aura_section = "AURA", aura_on = "Bật Aura", aura_type = "Kiểu Aura",
+        camera_section = "CAMERA", third_person = "Góc nhìn thứ 3",
+        zoom_dist = "Khoảng cách zoom", fov_on = "Bật chỉnh FOV", camera_fov = "FOV Camera",
+        save_section = "LƯU / XÓA", auto_save = "Tự động lưu khi thay đổi",
+        save_now = "Lưu cấu hình ngay", delete_cfg = "Xóa cấu hình (về mặc định)",
+        perf_section = "HIỆU NĂNG", fix_lag = "Fix Lag (giảm lag)",
+        hide_name_section = "ẨN TÊN", hide_name = "Ẩn tên người chơi (đổi thành Lucacdz)",
+        lang_section = "NGÔN NGỮ", language = "Ngôn ngữ",
+        info_title = "THÔNG TIN", loading = "Đang tải...", no_server = "Không có",
         user = "Người dùng",
         no_file_support = "Executor không hỗ trợ lưu file (thiếu writefile/readfile).",
         loaded_cfg = "Đã tải cấu hình đã lưu từ file ",
@@ -202,81 +114,39 @@ local Lang = {
         deleted = "Đã xóa cấu hình và tắt tự động lưu. Chạy lại script để dùng mặc định.",
     },
     en = {
-        main = "MAIN",
-        aim_on = "Enable Aim",
-        auto_off = "Auto off when target dies",
-        aim_part = "Aim Part",
-        head = "Head", body = "Body",
-        priority = "Target Priority",
-        near_center = "Near Center", nearest = "Nearest", farthest = "Farthest", low_hp = "Lowest HP",
+        main = "MAIN", aim_on = "Enable Aim", auto_off = "Auto off when target dies",
+        aim_part = "Aim Part", head = "Head", body = "Body",
+        priority = "Target Priority", near_center = "Near Center", nearest = "Nearest",
+        farthest = "Farthest", low_hp = "Lowest HP",
         aim_full = "Aim full (outside FOV too)",
-        fov_circle = "FOV CIRCLE",
-        show_circle = "Show FOV Circle",
-        fov_radius = "FOV Radius",
-        thickness = "Thickness",
-        circle_color = "Circle Color",
-        advanced = "ADVANCED",
-        smooth = "Smoothness",
-        max_dist = "Max Distance",
-        ignore_team = "Ignore Team",
-        wall_check = "Wall Check",
-        esp_on = "Enable ESP",
-        chams = "Highlight (Chams)",
-        fill_trans = "Fill Transparency",
-        info_section = "INFO",
-        show_name = "Show Name",
-        show_dist = "Show Distance",
-        show_hp = "Show HP",
-        text_size = "Text Size",
-        box_esp = "BOX ESP (CS:GO style)",
-        show_box = "Show Box",
-        show_hpbar = "Show Health Bar",
+        fov_circle = "FOV CIRCLE", show_circle = "Show FOV Circle",
+        fov_radius = "FOV Radius", thickness = "Thickness", circle_color = "Circle Color",
+        advanced = "ADVANCED", smooth = "Smoothness", max_dist = "Max Distance",
+        ignore_team = "Ignore Team", wall_check = "Wall Check",
+        esp_on = "Enable ESP", chams = "Highlight (Chams)", fill_trans = "Fill Transparency",
+        info_section = "INFO", show_name = "Show Name", show_dist = "Show Distance",
+        show_hp = "Show HP", text_size = "Text Size", box_esp = "BOX ESP (CS:GO style)",
+        show_box = "Show Box", show_hpbar = "Show Health Bar",
         show_tracer = "Show Tracer (from top)",
-        color_section = "COLOR",
-        esp_color = "ESP Color",
-        team_color = "Team Color",
-        move_jump = "JUMP",
-        inf_jump = "Infinite Jump",
-        jump_power_on = "Custom Jump Power",
-        jump_power = "Jump Power",
-        move_section = "MOVEMENT",
-        speed_on = "Custom Speed",
-        speed = "Speed",
-        noclip = "Noclip",
-        spin_section = "SPIN",
-        spin_on = "Spin",
-        spin_speed = "Spin Speed",
-        fake_lag = "FAKE LAG",
-        fake_lag_on = "Fake High Ping / Lag",
-        lag_delay = "Delay (ms)",
-        swim = "SWIM",
-        swim_on = "Swim",
-        tool_section = "TOOLS",
-        tool_spin = "Spin Held Tool (client)",
+        color_section = "COLOR", esp_color = "ESP Color", team_color = "Team Color",
+        move_jump = "JUMP", inf_jump = "Infinite Jump",
+        jump_power_on = "Custom Jump Power", jump_power = "Jump Power",
+        move_section = "MOVEMENT", speed_on = "Custom Speed",
+        speed = "Speed", noclip = "Noclip",
+        spin_section = "SPIN", spin_on = "Spin", spin_speed = "Spin Speed",
+        fake_lag = "FAKE LAG", fake_lag_on = "Fake High Ping / Lag", lag_delay = "Delay (ms)",
+        swim = "SWIM", swim_on = "Swim",
+        tool_section = "TOOLS", tool_spin = "Spin Held Tool (client)",
         tool_spin_speed = "Tool Spin Speed",
-        aura_section = "AURA",
-        aura_on = "Enable Aura",
-        aura_type = "Aura Type",
-        camera_section = "CAMERA",
-        third_person = "Third Person",
-        zoom_dist = "Zoom Distance",
-        fov_on = "Enable FOV Override",
-        camera_fov = "Camera FOV",
-        save_section = "SAVE / DELETE",
-        auto_save = "Auto save on change",
-        save_now = "Save config now",
-        delete_cfg = "Delete config (reset)",
-        perf_section = "PERFORMANCE",
-        fix_lag = "Fix Lag",
-        hide_name_section = "HIDE NAME",
-        hide_name = "Hide player names (to Lucacdz)",
-        note_section = "NOTE",
-        note = "Fix Lag: disables shadows, lowers graphics quality.\nHide Name: all other player names become Lucacdz.",
-        lang_section = "LANGUAGE",
-        language = "Language",
-        info_title = "INFO",
-        loading = "Loading...",
-        no_server = "None",
+        aura_section = "AURA", aura_on = "Enable Aura", aura_type = "Aura Type",
+        camera_section = "CAMERA", third_person = "Third Person",
+        zoom_dist = "Zoom Distance", fov_on = "Enable FOV Override", camera_fov = "Camera FOV",
+        save_section = "SAVE / DELETE", auto_save = "Auto save on change",
+        save_now = "Save config now", delete_cfg = "Delete config (reset)",
+        perf_section = "PERFORMANCE", fix_lag = "Fix Lag",
+        hide_name_section = "HIDE NAME", hide_name = "Hide player names (to Lucacdz)",
+        lang_section = "LANGUAGE", language = "Language",
+        info_title = "INFO", loading = "Loading...", no_server = "None",
         user = "User",
         no_file_support = "Executor does not support file saving (missing writefile/readfile).",
         loaded_cfg = "Loaded saved config from ",
@@ -304,16 +174,9 @@ local function EncodeConfig()
             data[k] = v
         end
     end
-    data.Aim = false
-    data.AimFull = false
-    data.Spin = false
-    data.Noclip = false
-    data.FakeLag = false
-    data.ToolSpin = false
-    data.Aura = false
-    data.Swim = false
-    data.ThirdPerson = false
-    data.FOVEnabled = false
+    data.Aim = false; data.AimFull = false; data.Spin = false; data.Noclip = false
+    data.FakeLag = false; data.ToolSpin = false; data.Aura = false; data.Swim = false
+    data.ThirdPerson = false; data.FOVEnabled = false
     return HttpService:JSONEncode(data)
 end
 
@@ -347,16 +210,9 @@ local function LoadConfig()
         S.CircleColor = PaletteColors[S.CircleIdx]
         S.ESPColor = PaletteColors[S.ESPIdx]
         S.AimPart = (S.AimPartIdx == 1) and "Head" or "HumanoidRootPart"
-        S.Aim = false
-        S.AimFull = false
-        S.Spin = false
-        S.Noclip = false
-        S.FakeLag = false
-        S.ToolSpin = false
-        S.Aura = false
-        S.Swim = false
-        S.ThirdPerson = false
-        S.FOVEnabled = false
+        S.Aim = false; S.AimFull = false; S.Spin = false; S.Noclip = false
+        S.FakeLag = false; S.ToolSpin = false; S.Aura = false; S.Swim = false
+        S.ThirdPerson = false; S.FOVEnabled = false
     end
     return ok
 end
@@ -620,108 +476,35 @@ local TabBar = New("Frame", {
     BackgroundTransparency = 1,
 }, Main)
 
-local TabAim = New("TextButton", {
-    Size = UDim2.new(1 / 7, 0, 1, -3),
-    BackgroundTransparency = 1,
-    Text = "AIM",
-    Font = Enum.Font.GothamBold,
-    TextSize = 11,
-    TextColor3 = T.Text,
-}, TabBar)
+local TabAim = New("TextButton", {Size = UDim2.new(1/7,0,1,-3), BackgroundTransparency = 1, Text = "AIM", Font = Enum.Font.GothamBold, TextSize = 11, TextColor3 = T.Text}, TabBar)
+local TabESP = New("TextButton", {Size = UDim2.new(1/7,0,1,-3), Position = UDim2.new(1/7,0,0,0), BackgroundTransparency = 1, Text = "ESP", Font = Enum.Font.GothamBold, TextSize = 11, TextColor3 = T.Sub}, TabBar)
+local TabMove = New("TextButton", {Size = UDim2.new(1/7,0,1,-3), Position = UDim2.new(2/7,0,0,0), BackgroundTransparency = 1, Text = "MOVE", Font = Enum.Font.GothamBold, TextSize = 11, TextColor3 = T.Sub}, TabBar)
+local TabMod = New("TextButton", {Size = UDim2.new(1/7,0,1,-3), Position = UDim2.new(3/7,0,0,0), BackgroundTransparency = 1, Text = "MOD", Font = Enum.Font.GothamBold, TextSize = 11, TextColor3 = T.Sub}, TabBar)
+local TabInfo = New("TextButton", {Size = UDim2.new(1/7,0,1,-3), Position = UDim2.new(4/7,0,0,0), BackgroundTransparency = 1, Text = "INFO", Font = Enum.Font.GothamBold, TextSize = 11, TextColor3 = T.Sub}, TabBar)
+local TabCfg = New("TextButton", {Size = UDim2.new(1/7,0,1,-3), Position = UDim2.new(5/7,0,0,0), BackgroundTransparency = 1, Text = "CFG", Font = Enum.Font.GothamBold, TextSize = 11, TextColor3 = T.Sub}, TabBar)
+local TabSet = New("TextButton", {Size = UDim2.new(1/7,0,1,-3), Position = UDim2.new(6/7,0,0,0), BackgroundTransparency = 1, Text = "SET", Font = Enum.Font.GothamBold, TextSize = 11, TextColor3 = T.Sub}, TabBar)
 
-local TabESP = New("TextButton", {
-    Size = UDim2.new(1 / 7, 0, 1, -3),
-    Position = UDim2.new(1 / 7, 0, 0, 0),
-    BackgroundTransparency = 1,
-    Text = "ESP",
-    Font = Enum.Font.GothamBold,
-    TextSize = 11,
-    TextColor3 = T.Sub,
-}, TabBar)
-
-local TabMove = New("TextButton", {
-    Size = UDim2.new(1 / 7, 0, 1, -3),
-    Position = UDim2.new(2 / 7, 0, 0, 0),
-    BackgroundTransparency = 1,
-    Text = "MOVE",
-    Font = Enum.Font.GothamBold,
-    TextSize = 11,
-    TextColor3 = T.Sub,
-}, TabBar)
-
-local TabMod = New("TextButton", {
-    Size = UDim2.new(1 / 7, 0, 1, -3),
-    Position = UDim2.new(3 / 7, 0, 0, 0),
-    BackgroundTransparency = 1,
-    Text = "MOD",
-    Font = Enum.Font.GothamBold,
-    TextSize = 11,
-    TextColor3 = T.Sub,
-}, TabBar)
-
-local TabInfo = New("TextButton", {
-    Size = UDim2.new(1 / 7, 0, 1, -3),
-    Position = UDim2.new(4 / 7, 0, 0, 0),
-    BackgroundTransparency = 1,
-    Text = "INFO",
-    Font = Enum.Font.GothamBold,
-    TextSize = 11,
-    TextColor3 = T.Sub,
-}, TabBar)
-
-local TabCfg = New("TextButton", {
-    Size = UDim2.new(1 / 7, 0, 1, -3),
-    Position = UDim2.new(5 / 7, 0, 0, 0),
-    BackgroundTransparency = 1,
-    Text = "CFG",
-    Font = Enum.Font.GothamBold,
-    TextSize = 11,
-    TextColor3 = T.Sub,
-}, TabBar)
-
-local TabSet = New("TextButton", {
-    Size = UDim2.new(1 / 7, 0, 1, -3),
-    Position = UDim2.new(6 / 7, 0, 0, 0),
-    BackgroundTransparency = 1,
-    Text = "SET",
-    Font = Enum.Font.GothamBold,
-    TextSize = 11,
-    TextColor3 = T.Sub,
-}, TabBar)
-
-New("Frame", {
-    Size = UDim2.new(1, 0, 0, 1),
-    Position = UDim2.new(0, 0, 1, -1),
-    BackgroundColor3 = Color3.fromRGB(55, 55, 75),
-    BorderSizePixel = 0,
-}, TabBar)
+New("Frame", {Size = UDim2.new(1,0,0,1), Position = UDim2.new(0,0,1,-1), BackgroundColor3 = Color3.fromRGB(55,55,75), BorderSizePixel = 0}, TabBar)
 
 local Indicator = New("Frame", {
-    Size = UDim2.new(1 / 7, 0, 0, 3),
-    Position = UDim2.new(0, 0, 1, -3),
-    BackgroundColor3 = T.Accent,
-    BorderSizePixel = 0,
+    Size = UDim2.new(1/7,0,0,3), Position = UDim2.new(0,0,1,-3),
+    BackgroundColor3 = T.Accent, BorderSizePixel = 0,
 }, TabBar)
 Round(Indicator, 2)
 
 local function MakePage(visible)
     local p = New("ScrollingFrame", {
-        Size = UDim2.new(1, 0, 1, -84),
-        Position = UDim2.new(0, 0, 0, 80),
-        BackgroundTransparency = 1,
-        BorderSizePixel = 0,
-        ScrollBarThickness = 3,
-        ScrollBarImageColor3 = T.Accent,
-        CanvasSize = UDim2.new(0, 0, 0, 0),
+        Size = UDim2.new(1,0,1,-84), Position = UDim2.new(0,0,0,80),
+        BackgroundTransparency = 1, BorderSizePixel = 0,
+        ScrollBarThickness = 3, ScrollBarImageColor3 = T.Accent,
+        CanvasSize = UDim2.new(0,0,0,0),
         AutomaticCanvasSize = Enum.AutomaticSize.Y,
         Visible = visible,
     }, Main)
-    New("UIListLayout", {Padding = UDim.new(0, 6), SortOrder = Enum.SortOrder.LayoutOrder}, p)
+    New("UIListLayout", {Padding = UDim.new(0,6), SortOrder = Enum.SortOrder.LayoutOrder}, p)
     New("UIPadding", {
-        PaddingTop = UDim.new(0, 6),
-        PaddingLeft = UDim.new(0, 10),
-        PaddingRight = UDim.new(0, 12),
-        PaddingBottom = UDim.new(0, 10),
+        PaddingTop = UDim.new(0,6), PaddingLeft = UDim.new(0,10),
+        PaddingRight = UDim.new(0,12), PaddingBottom = UDim.new(0,10),
     }, p)
     return p
 end
@@ -735,13 +518,9 @@ local CfgPage = MakePage(false)
 local SetPage = MakePage(false)
 
 local function SetScroll(enabled)
-    AimPage.ScrollingEnabled = enabled
-    ESPPage.ScrollingEnabled = enabled
-    MovePage.ScrollingEnabled = enabled
-    ModPage.ScrollingEnabled = enabled
-    InfoPage.ScrollingEnabled = enabled
-    CfgPage.ScrollingEnabled = enabled
-    SetPage.ScrollingEnabled = enabled
+    for _, p in ipairs({AimPage, ESPPage, MovePage, ModPage, InfoPage, CfgPage, SetPage}) do
+        p.ScrollingEnabled = enabled
+    end
 end
 
 local function SwitchTab(name)
@@ -777,16 +556,11 @@ local function NextOrder()
     return orderCounter
 end
 
--- ⭐ Section có hỗ trợ textKey để reload ngôn ngữ
 local function Section(page, text, textKey)
     local lbl = New("TextLabel", {
-        Size = UDim2.new(1, 0, 0, 20),
-        BackgroundTransparency = 1,
-        Text = text,
-        TextColor3 = T.Sub,
-        Font = Enum.Font.GothamBold,
-        TextSize = 11,
-        TextXAlignment = Enum.TextXAlignment.Left,
+        Size = UDim2.new(1,0,0,20), BackgroundTransparency = 1,
+        Text = text, TextColor3 = T.Sub, Font = Enum.Font.GothamBold,
+        TextSize = 11, TextXAlignment = Enum.TextXAlignment.Left,
         LayoutOrder = NextOrder(),
     }, page)
     if textKey then
@@ -798,9 +572,8 @@ end
 
 local function ItemFrame(page, height)
     local f = New("Frame", {
-        Size = UDim2.new(1, 0, 0, height),
-        BackgroundColor3 = T.Item,
-        BorderSizePixel = 0,
+        Size = UDim2.new(1,0,0,height),
+        BackgroundColor3 = T.Item, BorderSizePixel = 0,
         LayoutOrder = NextOrder(),
     }, page)
     Round(f, 8)
@@ -809,13 +582,9 @@ end
 
 local function ItemLabel(parent, text, y, textKey)
     local lbl = New("TextLabel", {
-        Size = UDim2.new(0.65, 0, 0, 22),
-        Position = UDim2.new(0, 10, 0, y or 0),
-        BackgroundTransparency = 1,
-        Text = text,
-        TextColor3 = T.Text,
-        Font = Enum.Font.Gotham,
-        TextSize = 13,
+        Size = UDim2.new(0.65,0,0,22), Position = UDim2.new(0,10,0,y or 0),
+        BackgroundTransparency = 1, Text = text, TextColor3 = T.Text,
+        Font = Enum.Font.Gotham, TextSize = 13,
         TextXAlignment = Enum.TextXAlignment.Left,
     }, parent)
     if textKey then
@@ -825,17 +594,12 @@ local function ItemLabel(parent, text, y, textKey)
     return lbl
 end
 
--- Công tắc (có textKey)
 local function Toggle(page, text, def, cb, textKey)
     local f = ItemFrame(page, 36)
     local lbl = New("TextLabel", {
-        Size = UDim2.new(1, -70, 1, 0),
-        Position = UDim2.new(0, 10, 0, 0),
-        BackgroundTransparency = 1,
-        Text = text,
-        TextColor3 = T.Text,
-        Font = Enum.Font.Gotham,
-        TextSize = 13,
+        Size = UDim2.new(1,-70,1,0), Position = UDim2.new(0,10,0,0),
+        BackgroundTransparency = 1, Text = text, TextColor3 = T.Text,
+        Font = Enum.Font.Gotham, TextSize = 13,
         TextXAlignment = Enum.TextXAlignment.Left,
     }, f)
     if textKey then
@@ -844,15 +608,12 @@ local function Toggle(page, text, def, cb, textKey)
     end
 
     local sw = New("Frame", {
-        Size = UDim2.new(0, 40, 0, 20),
-        Position = UDim2.new(1, -50, 0.5, -10),
-        BackgroundColor3 = T.Off,
-        BorderSizePixel = 0,
+        Size = UDim2.new(0,40,0,20), Position = UDim2.new(1,-50,0.5,-10),
+        BackgroundColor3 = T.Off, BorderSizePixel = 0,
     }, f)
     Round(sw, 10)
     local knob = New("Frame", {
-        Size = UDim2.new(0, 16, 0, 16),
-        BackgroundColor3 = Color3.new(1, 1, 1),
+        Size = UDim2.new(0,16,0,16), BackgroundColor3 = Color3.new(1,1,1),
         BorderSizePixel = 0,
     }, sw)
     Round(knob, 8)
@@ -860,10 +621,10 @@ local function Toggle(page, text, def, cb, textKey)
     local state = def
     local function render()
         sw.BackgroundColor3 = state and T.Accent or T.Off
-        knob.Position = state and UDim2.new(1, -18, 0.5, -8) or UDim2.new(0, 2, 0.5, -8)
+        knob.Position = state and UDim2.new(1,-18,0.5,-8) or UDim2.new(0,2,0.5,-8)
     end
 
-    local hit = New("TextButton", {Size = UDim2.new(1, 0, 1, 0), BackgroundTransparency = 1, Text = ""}, f)
+    local hit = New("TextButton", {Size = UDim2.new(1,0,1,0), BackgroundTransparency = 1, Text = ""}, f)
     hit.MouseButton1Click:Connect(function()
         state = not state
         render()
@@ -880,43 +641,34 @@ local function Toggle(page, text, def, cb, textKey)
     end
 end
 
--- Thanh trượt (có textKey cho label)
 local function Slider(page, text, min, max, def, step, fmt, cb, textKey)
     local f = ItemFrame(page, 50)
     ItemLabel(f, text, 4, textKey)
     local val = New("TextLabel", {
-        Size = UDim2.new(0.35, 0, 0, 22),
-        Position = UDim2.new(0.65, -10, 0, 4),
-        BackgroundTransparency = 1,
-        Text = "",
-        TextColor3 = T.Accent,
-        Font = Enum.Font.GothamBold,
-        TextSize = 13,
+        Size = UDim2.new(0.35,0,0,22), Position = UDim2.new(0.65,-10,0,4),
+        BackgroundTransparency = 1, Text = "", TextColor3 = T.Accent,
+        Font = Enum.Font.GothamBold, TextSize = 13,
         TextXAlignment = Enum.TextXAlignment.Right,
     }, f)
 
     local track = New("Frame", {
-        Size = UDim2.new(1, -20, 0, 6),
-        Position = UDim2.new(0, 10, 0, 34),
-        BackgroundColor3 = T.Off,
-        BorderSizePixel = 0,
+        Size = UDim2.new(1,-20,0,6), Position = UDim2.new(0,10,0,34),
+        BackgroundColor3 = T.Off, BorderSizePixel = 0,
     }, f)
     Round(track, 3)
-    local fill = New("Frame", {Size = UDim2.new(0, 0, 1, 0), BackgroundColor3 = T.Accent, BorderSizePixel = 0}, track)
+    local fill = New("Frame", {Size = UDim2.new(0,0,1,0), BackgroundColor3 = T.Accent, BorderSizePixel = 0}, track)
     Round(fill, 3)
     local knob = New("Frame", {
-        Size = UDim2.new(0, 16, 0, 16),
-        AnchorPoint = Vector2.new(0.5, 0.5),
-        Position = UDim2.new(0, 0, 0.5, 0),
-        BackgroundColor3 = Color3.new(1, 1, 1),
+        Size = UDim2.new(0,16,0,16), AnchorPoint = Vector2.new(0.5,0.5),
+        Position = UDim2.new(0,0,0.5,0), BackgroundColor3 = Color3.new(1,1,1),
         BorderSizePixel = 0,
     }, track)
     Round(knob, 8)
 
     local function set(v)
         local a = (v - min) / (max - min)
-        fill.Size = UDim2.new(a, 0, 1, 0)
-        knob.Position = UDim2.new(a, 0, 0.5, 0)
+        fill.Size = UDim2.new(a,0,1,0)
+        knob.Position = UDim2.new(a,0,0.5,0)
         val.Text = fmt and fmt(v) or tostring(v)
         cb(v)
     end
@@ -930,10 +682,8 @@ local function Slider(page, text, min, max, def, step, fmt, cb, textKey)
     end
 
     local hit = New("TextButton", {
-        Size = UDim2.new(1, 0, 0, 30),
-        Position = UDim2.new(0, 0, 0, 20),
-        BackgroundTransparency = 1,
-        Text = "",
+        Size = UDim2.new(1,0,0,30), Position = UDim2.new(0,0,0,20),
+        BackgroundTransparency = 1, Text = "",
     }, f)
 
     local dragging = false
@@ -959,7 +709,6 @@ local function Slider(page, text, min, max, def, step, fmt, cb, textKey)
     set(def)
 end
 
--- Bảng màu
 local function Palette(page, text, defIdx, cb, textKey)
     local f = ItemFrame(page, 62)
     ItemLabel(f, text, 4, textKey)
@@ -969,15 +718,13 @@ local function Palette(page, text, defIdx, cb, textKey)
     end
     for i, c in ipairs(PaletteColors) do
         local b = New("TextButton", {
-            Size = UDim2.new(0, 28, 0, 22),
-            Position = UDim2.new(0, 10 + (i - 1) * 36, 0, 32),
-            BackgroundColor3 = c,
-            BorderSizePixel = 0,
-            Text = "",
-            AutoButtonColor = false,
+            Size = UDim2.new(0,28,0,22),
+            Position = UDim2.new(0, 10 + (i-1)*36, 0, 32),
+            BackgroundColor3 = c, BorderSizePixel = 0,
+            Text = "", AutoButtonColor = false,
         }, f)
         Round(b, 6)
-        strokes[i] = New("UIStroke", {Thickness = 2, Color = Color3.new(1, 1, 1), Enabled = false}, b)
+        strokes[i] = New("UIStroke", {Thickness = 2, Color = Color3.new(1,1,1), Enabled = false}, b)
         b.MouseButton1Click:Connect(function()
             render(i)
             cb(c, i)
@@ -987,50 +734,49 @@ local function Palette(page, text, defIdx, cb, textKey)
     cb(PaletteColors[defIdx], defIdx)
 end
 
--- Lựa chọn nhiều nút
-local function Choice(page, text, options, defIdx, cb, textKey)
+-- ⭐ Choice: label lấy từ Txt() mỗi lần build, đổi ngôn ngữ sẽ dịch được
+local function Choice(page, text, opts, defIdx, cb, textKey)
     local f = ItemFrame(page, 62)
     ItemLabel(f, text, 4, textKey)
     local buttons = {}
-    local n = #options
+    local n = #opts
     local function render(idx)
         for i, b in ipairs(buttons) do
             b.BackgroundColor3 = (i == idx) and T.Accent or T.Off
         end
     end
-    for i, opt in ipairs(options) do
+    for i, opt in ipairs(opts) do
+        local label = opt.key and Txt(opt.key) or (opt.label or "")
         local b = New("TextButton", {
-            Size = UDim2.new(1 / n, -8, 0, 26),
-            Position = UDim2.new((i - 1) / n, 6, 0, 30),
-            BackgroundColor3 = T.Off,
-            BorderSizePixel = 0,
-            Text = opt,
-            TextColor3 = T.Text,
-            Font = Enum.Font.Gotham,
-            TextSize = 13,
+            Size = UDim2.new(1/n,-8,0,26),
+            Position = UDim2.new((i-1)/n, 6, 0, 30),
+            BackgroundColor3 = T.Off, BorderSizePixel = 0,
+            Text = label, TextColor3 = T.Text,
+            Font = Enum.Font.Gotham, TextSize = 13,
             AutoButtonColor = false,
         }, f)
         Round(b, 6)
+        if opt.key then
+            b:SetAttribute("StaticLabel", true)
+            b:SetAttribute("TextKey", opt.key)
+        end
         buttons[i] = b
         b.MouseButton1Click:Connect(function()
             render(i)
-            cb(i, opt)
+            cb(i, opt.key)
         end)
     end
     render(defIdx)
-    cb(defIdx, options[defIdx])
+    cb(defIdx, opts[defIdx].key)
 end
 
--- Nút bấm (có textKey)
 local function Button(page, text, color, cb, textKey)
     local b = New("TextButton", {
-        Size = UDim2.new(1, 0, 0, 36),
+        Size = UDim2.new(1,0,0,36),
         BackgroundColor3 = color or T.Accent,
-        BorderSizePixel = 0,
-        Text = text,
-        TextColor3 = Color3.new(1, 1, 1),
-        Font = Enum.Font.GothamBold,
-        TextSize = 13,
+        BorderSizePixel = 0, Text = text,
+        TextColor3 = Color3.new(1,1,1),
+        Font = Enum.Font.GothamBold, TextSize = 13,
         LayoutOrder = NextOrder(),
     }, page)
     Round(b, 8)
@@ -1048,13 +794,24 @@ local AimSet
 Section(AimPage, "CHÍNH", "main")
 AimSet = Toggle(AimPage, "Bật Aim", S.Aim, function(v) S.Aim = v end, "aim_on")
 Toggle(AimPage, "Tự tắt khi mục tiêu chết", S.AutoOff, function(v) S.AutoOff = v end, "auto_off")
-Choice(AimPage, "Vị trí nhắm", {"Đầu", "Thân"}, S.AimPartIdx, function(i, opt)
+
+Choice(AimPage, "Vị trí nhắm", {
+    {key = "head"},
+    {key = "body"},
+}, S.AimPartIdx, function(i, key)
     S.AimPartIdx = i
-    S.AimPart = (opt == "Đầu") and "Head" or "HumanoidRootPart"
+    S.AimPart = (i == 1) and "Head" or "HumanoidRootPart"
 end, "aim_part")
-Choice(AimPage, "Ưu tiên mục tiêu", {"Gần tâm", "Gần nhất", "Xa nhất", "Ít máu"}, S.AimMode, function(i)
+
+Choice(AimPage, "Ưu tiên mục tiêu", {
+    {key = "near_center"},
+    {key = "nearest"},
+    {key = "farthest"},
+    {key = "low_hp"},
+}, S.AimMode, function(i)
     S.AimMode = i
 end, "priority")
+
 Toggle(AimPage, "Aim full (ngoài cả vòng FOV)", S.AimFull, function(v) S.AimFull = v end, "aim_full")
 
 Section(AimPage, "VÒNG FOV", "fov_circle")
@@ -1144,7 +901,14 @@ Slider(ModPage, "Tốc độ xoay vật phẩm", 200, 5000, S.ToolSpinSpeed, 100
 
 Section(ModPage, "AURA", "aura_section")
 Toggle(ModPage, "Bật Aura", S.Aura, function(v) S.Aura = v end, "aura_on")
-Choice(ModPage, "Kiểu Aura", {"Particle", "Ring", "Glow", "Fire", "Sparkle", "Rainbow"}, S.AuraType, function(i)
+Choice(ModPage, "Kiểu Aura", {
+    {label = "Particle"},
+    {label = "Ring"},
+    {label = "Glow"},
+    {label = "Fire"},
+    {label = "Sparkle"},
+    {label = "Rainbow"},
+}, S.AuraType, function(i)
     S.AuraType = i
 end, "aura_type")
 
@@ -1157,15 +921,10 @@ Slider(ModPage, "FOV Camera", 10, 120, S.CameraFOV, 1, function(v) return tostri
 -- ===== TAB CẤU HÌNH =====
 local StatusFrame = ItemFrame(CfgPage, 44)
 local StatusLbl = New("TextLabel", {
-    Size = UDim2.new(1, -20, 1, 0),
-    Position = UDim2.new(0, 10, 0, 0),
-    BackgroundTransparency = 1,
-    Text = "",
-    TextColor3 = T.Sub,
-    Font = Enum.Font.Gotham,
-    TextSize = 12,
-    TextWrapped = true,
-    TextXAlignment = Enum.TextXAlignment.Left,
+    Size = UDim2.new(1,-20,1,0), Position = UDim2.new(0,10,0,0),
+    BackgroundTransparency = 1, Text = "", TextColor3 = T.Sub,
+    Font = Enum.Font.Gotham, TextSize = 12,
+    TextWrapped = true, TextXAlignment = Enum.TextXAlignment.Left,
 }, StatusFrame)
 
 local function SetStatus(msg)
@@ -1221,47 +980,37 @@ end, "fix_lag")
 Section(SetPage, Txt("hide_name_section"), "hide_name_section")
 Toggle(SetPage, Txt("hide_name"), S.HideName, function(v) S.HideName = v end, "hide_name")
 
-Section(SetPage, Txt("note_section"), "note_section")
-local NoteFrame = ItemFrame(SetPage, 50)
-New("TextLabel", {
-    Size = UDim2.new(1, -20, 1, 0),
-    Position = UDim2.new(0, 10, 0, 0),
-    BackgroundTransparency = 1,
-    Text = "Fix Lag: tắt bóng, giảm chất lượng đồ họa.\nẨn tên: mọi chỗ hiện tên người khác sẽ thành Lucacdz.",
-    TextColor3 = T.Sub,
-    Font = Enum.Font.Gotham,
-    TextSize = 12,
-    TextWrapped = true,
-    TextXAlignment = Enum.TextXAlignment.Left,
-}, NoteFrame)
-
--- ⭐ CHỌN NGÔN NGỮ (TAB SET)
+-- ===== CHỌN NGÔN NGỮ (TAB SET) =====
 Section(SetPage, Txt("lang_section"), "lang_section")
 
 local LangOptions = {"Tiếng Việt", "English"}
 local LangCodes = {"vi", "en"}
 
--- Hàm reload text toàn bộ UI theo ngôn ngữ hiện tại
+-- ⭐ ReloadText: cập nhật mọi label có StaticLabel
 local function ReloadText()
-    local function refreshPage(page)
-        for _, child in ipairs(page:GetDescendants()) do
-            if child:IsA("TextLabel") or child:IsA("TextButton") then
-                if child:GetAttribute("StaticLabel") then
-                    local key = child:GetAttribute("TextKey")
-                    if key then
-                        child.Text = Txt(key)
-                    end
-                end
+    local function refreshObj(child)
+        if not (child:IsA("TextLabel") or child:IsA("TextButton") or child:IsA("TextBox")) then
+            return
+        end
+        if child:GetAttribute("StaticLabel") then
+            local key = child:GetAttribute("TextKey")
+            if key and Lang[S.Lang] and Lang[S.Lang][key] then
+                child.Text = Lang[S.Lang][key]
             end
         end
     end
     for _, pg in ipairs({AimPage, ESPPage, MovePage, ModPage, InfoPage, CfgPage, SetPage}) do
-        pcall(refreshPage, pg)
+        pcall(function()
+            for _, child in ipairs(pg:GetDescendants()) do
+                refreshObj(child)
+            end
+        end)
     end
 end
 
 local function ApplyLang(code)
     S.Lang = code
+    ReloadText()
     if CanSave then
         pcall(function()
             local json = EncodeConfig()
@@ -1269,7 +1018,6 @@ local function ApplyLang(code)
             lastSaved = json
         end)
     end
-    ReloadText()
 end
 
 local LangCurrent = (S.Lang == "en") and 2 or 1
@@ -1284,14 +1032,11 @@ local LangFrame = ItemFrame(SetPage, 62)
 ItemLabel(LangFrame, Txt("language"), 4, "language")
 for i, opt in ipairs(LangOptions) do
     local b = New("TextButton", {
-        Size = UDim2.new(0.5, -8, 0, 26),
-        Position = UDim2.new((i - 1) * 0.5, 6, 0, 30),
-        BackgroundColor3 = T.Off,
-        BorderSizePixel = 0,
-        Text = opt,
-        TextColor3 = T.Text,
-        Font = Enum.Font.Gotham,
-        TextSize = 13,
+        Size = UDim2.new(0.5,-8,0,26),
+        Position = UDim2.new((i-1)*0.5, 6, 0, 30),
+        BackgroundColor3 = T.Off, BorderSizePixel = 0,
+        Text = opt, TextColor3 = T.Text,
+        Font = Enum.Font.Gotham, TextSize = 13,
         AutoButtonColor = false,
     }, LangFrame)
     Round(b, 6)
@@ -1309,23 +1054,15 @@ local PingVal, FpsVal
 local function InfoRow(page, labelText, valueText)
     local f = ItemFrame(page, 36)
     New("TextLabel", {
-        Size = UDim2.new(0.42, 0, 1, 0),
-        Position = UDim2.new(0, 10, 0, 0),
-        BackgroundTransparency = 1,
-        Text = labelText,
-        TextColor3 = T.Sub,
-        Font = Enum.Font.Gotham,
-        TextSize = 13,
+        Size = UDim2.new(0.42,0,1,0), Position = UDim2.new(0,10,0,0),
+        BackgroundTransparency = 1, Text = labelText,
+        TextColor3 = T.Sub, Font = Enum.Font.Gotham, TextSize = 13,
         TextXAlignment = Enum.TextXAlignment.Left,
     }, f)
     local val = New("TextLabel", {
-        Size = UDim2.new(0.55, -12, 1, 0),
-        Position = UDim2.new(0.43, 0, 0, 0),
-        BackgroundTransparency = 1,
-        Text = valueText,
-        TextColor3 = T.Text,
-        Font = Enum.Font.GothamBold,
-        TextSize = 13,
+        Size = UDim2.new(0.55,-12,1,0), Position = UDim2.new(0.43,0,0,0),
+        BackgroundTransparency = 1, Text = valueText,
+        TextColor3 = T.Text, Font = Enum.Font.GothamBold, TextSize = 13,
         TextXAlignment = Enum.TextXAlignment.Right,
         TextTruncate = Enum.TextTruncate.AtEnd,
     }, f)
@@ -1500,7 +1237,7 @@ local function ApplyESP(p)
             })
             New("TextLabel", {
                 Name = "Lbl",
-                Size = UDim2.new(1, 0, 1, 0),
+                Size = UDim2.new(1,0,1,0),
                 BackgroundTransparency = 1,
                 Font = Enum.Font.GothamBold,
                 TextStrokeTransparency = 0,
@@ -1533,36 +1270,16 @@ task.spawn(function()
     end
 end)
 
--- ===== ESP 2D BOX / HEALTH / TRACER =====
+-- ===== ESP 2D =====
 local ESP2D = {}
 
 local function GetOrCreateESP2D(p)
     if ESP2D[p] then return ESP2D[p] end
-    local box = New("Frame", {
-        BackgroundTransparency = 1,
-        BorderSizePixel = 0,
-        Visible = false,
-    }, ESPContainer)
+    local box = New("Frame", {BackgroundTransparency = 1, BorderSizePixel = 0, Visible = false}, ESPContainer)
     local boxStroke = New("UIStroke", {Thickness = 2, Color = Color3.new(1,1,1)}, box)
-
-    local healthBg = New("Frame", {
-        BackgroundColor3 = Color3.fromRGB(40, 40, 40),
-        BorderSizePixel = 0,
-        Visible = false,
-    }, ESPContainer)
-    local healthFill = New("Frame", {
-        Size = UDim2.new(1, 0, 1, 0),
-        BackgroundColor3 = Color3.fromRGB(0, 255, 0),
-        BorderSizePixel = 0,
-    }, healthBg)
-
-    local tracer = New("Frame", {
-        BackgroundColor3 = Color3.new(1,1,1),
-        BorderSizePixel = 0,
-        Visible = false,
-        AnchorPoint = Vector2.new(0, 0.5),
-    }, ESPContainer)
-
+    local healthBg = New("Frame", {BackgroundColor3 = Color3.fromRGB(40,40,40), BorderSizePixel = 0, Visible = false}, ESPContainer)
+    local healthFill = New("Frame", {Size = UDim2.new(1,0,1,0), BackgroundColor3 = Color3.fromRGB(0,255,0), BorderSizePixel = 0}, healthBg)
+    local tracer = New("Frame", {BackgroundColor3 = Color3.new(1,1,1), BorderSizePixel = 0, Visible = false, AnchorPoint = Vector2.new(0,0.5)}, ESPContainer)
     ESP2D[p] = {Box = box, BoxStroke = boxStroke, HealthBg = healthBg, HealthFill = healthFill, Tracer = tracer}
     return ESP2D[p]
 end
@@ -1637,18 +1354,13 @@ local function UpdateESP2D()
             if S.ShowHealthBar then
                 local hpRatio = math.clamp(hum.Health / math.max(hum.MaxHealth, 1), 0, 1)
                 local barWidth = 5
-                local barHeight = height
                 local barX = centerX - width/2 - barWidth - 3
-                local barY = topY
-
                 obj.HealthBg.Visible = true
-                obj.HealthBg.Position = UDim2.new(0, barX, 0, barY)
-                obj.HealthBg.Size = UDim2.new(0, barWidth, 0, barHeight)
-
+                obj.HealthBg.Position = UDim2.new(0, barX, 0, topY)
+                obj.HealthBg.Size = UDim2.new(0, barWidth, 0, height)
                 obj.HealthFill.Size = UDim2.new(1, 0, hpRatio, 0)
                 obj.HealthFill.Position = UDim2.new(0, 0, 1 - hpRatio, 0)
-                local h = hpRatio * 0.33
-                obj.HealthFill.BackgroundColor3 = Color3.fromHSV(h, 1, 1)
+                obj.HealthFill.BackgroundColor3 = Color3.fromHSV(hpRatio * 0.33, 1, 1)
             else
                 obj.HealthBg.Visible = false
             end
@@ -1659,7 +1371,6 @@ local function UpdateESP2D()
                 local length = math.max(delta.Magnitude, 1)
                 local mid = (topCenter + head2d) / 2
                 local angle = math.deg(math.atan2(delta.Y, delta.X))
-
                 obj.Tracer.Visible = true
                 obj.Tracer.AnchorPoint = Vector2.new(0.5, 0.5)
                 obj.Tracer.Position = UDim2.new(0, mid.X, 0, mid.Y)
@@ -1683,7 +1394,7 @@ local function UpdateESP2D()
     end
 end
 
--- ===== ẨN TÊN TOÀN GAME (FIXED) =====
+-- ===== ẨN TÊN TOÀN GAME =====
 local function TrySpoofText(text, realName, display)
     if not text or text == "" then return text end
     local n = text
@@ -1847,6 +1558,19 @@ table.insert(Conns, UserInputService.JumpRequest:Connect(function()
     end
 end))
 
+-- ⭐ Stepped: bắt tool equip ngay frame đầu, lưu grip gốc
+table.insert(Conns, RunService.Stepped:Connect(function()
+    if not S.ToolSpin then return end
+    local char = LocalPlayer.Character
+    if not char then return end
+    local tool = char:FindFirstChildOfClass("Tool")
+    if not tool then return end
+    if ToolSpinState.tool ~= tool then
+        ToolSpinState.tool = tool
+        ToolSpinState.originalGrip = tool.Grip
+    end
+end))
+
 table.insert(Conns, RunService.Heartbeat:Connect(function(dt)
     local char = LocalPlayer.Character
     local hum = char and char:FindFirstChildOfClass("Humanoid")
@@ -1890,31 +1614,33 @@ table.insert(Conns, RunService.Heartbeat:Connect(function(dt)
         hum:ChangeState(Enum.HumanoidStateType.Swimming)
     end
 
-    -- ⭐ Tool Spin (FIXED)
+    -- ⭐ Tool Spin (FIXED v2: luôn xoay liên tục, giữ angle, tự phục hồi khi reset)
     if S.ToolSpin then
         local tool = char:FindFirstChildOfClass("Tool")
-        if tool then
+        if tool and tool:FindFirstChild("Handle") then
             if ToolSpinState.tool ~= tool then
                 if ToolSpinState.tool and ToolSpinState.tool.Parent and ToolSpinState.originalGrip then
                     pcall(function() ToolSpinState.tool.Grip = ToolSpinState.originalGrip end)
                 end
                 ToolSpinState.tool = tool
                 ToolSpinState.originalGrip = tool.Grip
-                ToolSpinState.angle = 0
             end
 
             ToolSpinState.angle = (ToolSpinState.angle + math.rad(S.ToolSpinSpeed * dt)) % (2 * math.pi)
+            local desiredGrip = ToolSpinState.originalGrip * CFrame.Angles(0, ToolSpinState.angle, 0)
 
             pcall(function()
-                tool.Grip = ToolSpinState.originalGrip * CFrame.Angles(0, ToolSpinState.angle, 0)
+                tool.Grip = desiredGrip
             end)
         else
+            if ToolSpinState.tool and ToolSpinState.originalGrip and ToolSpinState.tool.Parent then
+                pcall(function() ToolSpinState.tool.Grip = ToolSpinState.originalGrip end)
+            end
             ToolSpinState.tool = nil
             ToolSpinState.originalGrip = nil
-            ToolSpinState.angle = 0
         end
     elseif ToolSpinState.tool then
-        if ToolSpinState.originalGrip then
+        if ToolSpinState.originalGrip and ToolSpinState.tool.Parent then
             pcall(function() ToolSpinState.tool.Grip = ToolSpinState.originalGrip end)
         end
         ToolSpinState.tool = nil
@@ -1970,7 +1696,6 @@ local function CreateAura(root)
         e.SpreadAngle = Vector2.new(180, 180)
         e.Parent = root
         table.insert(AuraObjects, e)
-
     elseif typ == 2 then
         local ring = Instance.new("Part")
         ring.Name = "SkyAuraRing"
@@ -1985,7 +1710,6 @@ local function CreateAura(root)
         ring.CFrame = root.CFrame * CFrame.new(0, -2.5, 0) * CFrame.Angles(0, 0, math.rad(90))
         ring.Parent = root
         table.insert(AuraObjects, ring)
-
     elseif typ == 3 then
         local hl = Instance.new("Highlight")
         hl.Name = "SkyAuraGlow"
@@ -1996,7 +1720,6 @@ local function CreateAura(root)
         hl.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
         hl.Parent = root.Parent
         table.insert(AuraObjects, hl)
-
     elseif typ == 4 then
         local fire = Instance.new("Fire")
         fire.Name = "SkyAuraFire"
@@ -2006,14 +1729,12 @@ local function CreateAura(root)
         fire.SecondaryColor = Color3.fromRGB(255, 180, 0)
         fire.Parent = root
         table.insert(AuraObjects, fire)
-
     elseif typ == 5 then
         local spark = Instance.new("Sparkles")
         spark.Name = "SkyAuraSpark"
         spark.SparkleColor = T.Accent
         spark.Parent = root
         table.insert(AuraObjects, spark)
-
     elseif typ == 6 then
         local e = Instance.new("ParticleEmitter")
         e.Name = "SkyAuraRainbow"
@@ -2079,18 +1800,14 @@ table.insert(Conns, RunService.RenderStepped:Connect(function()
     fpsFrames = fpsFrames + 1
     local now = tick()
     if now - lastFpsTime >= 1 then
-        if FpsVal then
-            FpsVal.Text = tostring(fpsFrames)
-        end
+        if FpsVal then FpsVal.Text = tostring(fpsFrames) end
         fpsFrames = 0
         lastFpsTime = now
     end
 
     if S.ThirdPerson then
         LocalPlayer.CameraMode = Enum.CameraMode.Classic
-        if Camera then
-            Camera.CameraType = Enum.CameraType.Custom
-        end
+        if Camera then Camera.CameraType = Enum.CameraType.Custom end
         if oldMinZoom == nil then
             oldMinZoom = LocalPlayer.CameraMinZoomDistance
             oldMaxZoom = LocalPlayer.CameraMaxZoomDistance
@@ -2105,9 +1822,7 @@ table.insert(Conns, RunService.RenderStepped:Connect(function()
     end
 
     if S.FOVEnabled and Camera then
-        if oldFOV == nil then
-            oldFOV = Camera.FieldOfView
-        end
+        if oldFOV == nil then oldFOV = Camera.FieldOfView end
         Camera.FieldOfView = S.CameraFOV
     elseif oldFOV ~= nil and Camera then
         Camera.FieldOfView = oldFOV
@@ -2133,19 +1848,10 @@ end)
 
 -- Nút đóng hẳn
 CloseBtn.MouseButton1Click:Connect(function()
-    S.Aim = false
-    S.AimFull = false
-    S.InfJump = false
-    S.Noclip = false
-    S.Spin = false
-    S.SpeedOn = false
-    S.JumpOn = false
-    S.FakeLag = false
-    S.Swim = false
-    S.ToolSpin = false
-    S.Aura = false
-    S.ThirdPerson = false
-    S.FOVEnabled = false
+    S.Aim = false; S.AimFull = false; S.InfJump = false; S.Noclip = false
+    S.Spin = false; S.SpeedOn = false; S.JumpOn = false; S.FakeLag = false
+    S.Swim = false; S.ToolSpin = false; S.Aura = false
+    S.ThirdPerson = false; S.FOVEnabled = false
 
     if ToolSpinState.tool and ToolSpinState.originalGrip then
         pcall(function() ToolSpinState.tool.Grip = ToolSpinState.originalGrip end)
@@ -2156,16 +1862,12 @@ CloseBtn.MouseButton1Click:Connect(function()
 
     RestoreMovement()
     ClearAura()
-    for p, _ in pairs(ESP2D) do
-        ClearESP2D(p)
-    end
+    for p, _ in pairs(ESP2D) do ClearESP2D(p) end
     if oldMinZoom then
         LocalPlayer.CameraMinZoomDistance = oldMinZoom
         LocalPlayer.CameraMaxZoomDistance = oldMaxZoom
     end
-    if oldFOV and Camera then
-        Camera.FieldOfView = oldFOV
-    end
+    if oldFOV and Camera then Camera.FieldOfView = oldFOV end
     for _, c in ipairs(Conns) do
         pcall(function() c:Disconnect() end)
     end

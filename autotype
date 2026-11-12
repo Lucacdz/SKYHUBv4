@@ -235,6 +235,80 @@ if not parented then
     return
 end
 
+-- ===== CHỌN NGÔN NGỮ LẦN ĐẦU =====
+local NeedLangSelect = not ConfigLoaded or S.Lang == nil
+if NeedLangSelect then
+    local LangGui = New("Frame", {
+        Size = UDim2.new(0, 280, 0, 160),
+        Position = UDim2.new(0.5, -140, 0.5, -80),
+        BackgroundColor3 = T.Bg,
+        BorderSizePixel = 0,
+        Active = true,
+    }, Gui)
+    Round(LangGui, 12)
+    New("UIStroke", {Thickness = 1, Color = Color3.fromRGB(55, 55, 75)}, LangGui)
+
+    New("TextLabel", {
+        Size = UDim2.new(1, -20, 0, 40),
+        Position = UDim2.new(0, 10, 0, 10),
+        BackgroundTransparency = 1,
+        Text = "Chọn ngôn ngữ / Choose Language",
+        TextColor3 = T.Text,
+        Font = Enum.Font.GothamBold,
+        TextSize = 15,
+        TextWrapped = true,
+    }, LangGui)
+
+    local viBtn = New("TextButton", {
+        Size = UDim2.new(0.8, 0, 0, 36),
+        Position = UDim2.new(0.1, 0, 0, 60),
+        BackgroundColor3 = T.Accent,
+        BorderSizePixel = 0,
+        Text = "Tiếng Việt",
+        TextColor3 = Color3.new(1,1,1),
+        Font = Enum.Font.GothamBold,
+        TextSize = 14,
+    }, LangGui)
+    Round(viBtn, 8)
+
+    local enBtn = New("TextButton", {
+        Size = UDim2.new(0.8, 0, 0, 36),
+        Position = UDim2.new(0.1, 0, 0, 104),
+        BackgroundColor3 = T.Item,
+        BorderSizePixel = 0,
+        Text = "English",
+        TextColor3 = T.Text,
+        Font = Enum.Font.GothamBold,
+        TextSize = 14,
+    }, LangGui)
+    Round(enBtn, 8)
+
+    local chosen = false
+    local function ChooseLang(lang)
+        if chosen then return end
+        chosen = true
+        S.Lang = lang
+        -- Lưu ngay để lần sau không hỏi lại
+        if CanSave then
+            pcall(function()
+                local json = EncodeConfig()
+                writefile(CONFIG_FILE, json)
+                lastSaved = json
+            end)
+        end
+        LangGui:Destroy()
+    end
+
+    viBtn.MouseButton1Click:Connect(function() ChooseLang("vi") end)
+    enBtn.MouseButton1Click:Connect(function() ChooseLang("en") end)
+
+    -- Chờ người dùng chọn
+    while not chosen and Gui.Parent do
+        task.wait(0.1)
+    end
+    if not Gui.Parent then return end
+end
+
 -- Vòng tròn FOV
 local Circle = New("Frame", {
     AnchorPoint = Vector2.new(0.5, 0.5),
@@ -329,9 +403,9 @@ local MiniBtn = New("ImageButton", {
     Position = Main.Position,
     BackgroundColor3 = T.Accent,
     BorderSizePixel = 0,
-    Image = "rbxassetid://6031280882", -- simple icon
+    Image = "rbxassetid://10709752996", -- alert-circle icon (khác)
     ImageColor3 = Color3.new(1, 1, 1),
-    ScaleType = Enum.ScaleType.Stretch,
+    ScaleType = Enum.ScaleType.Fit,
     Visible = false,
 }, Gui)
 Round(MiniBtn, 23)
@@ -957,6 +1031,21 @@ end)
 
 Section(SetPage, "ẨN TÊN")
 Toggle(SetPage, "Ẩn tên người chơi (đổi thành Lucacdz)", S.HideName, function(v) S.HideName = v end)
+
+Section(SetPage, "NGÔN NGỮ")
+Choice(SetPage, "Ngôn ngữ / Language", {"Tiếng Việt", "English"}, (S.Lang == "en") and 2 or 1, function(i)
+    local newLang = (i == 2) and "en" or "vi"
+    if newLang ~= S.Lang then
+        S.Lang = newLang
+        if CanSave and S.AutoSave then
+            pcall(function()
+                local json = EncodeConfig()
+                writefile(CONFIG_FILE, json)
+                lastSaved = json
+            end)
+        end
+    end
+end)
 
 Section(SetPage, "GHI CHÚ")
 local NoteFrame = ItemFrame(SetPage, 50)

@@ -56,8 +56,8 @@ local S = {
     Aim = false,
     AutoOff = true,
     AimPart = "Head",
-    AimMode = 1, -- 1 gần tâm, 2 gần nhất, 3 xa nhất, 4 ít máu nhất
-    AimFull = false, -- aim ngoài cả vòng FOV
+    AimMode = 1,
+    AimFull = false,
     ShowCircle = true,
     FOV = 150,
     CircleThickness = 2,
@@ -81,15 +81,12 @@ local S = {
     ESPTeamColor = false,
     ESPDist = 1500,
     ESPTeam = false,
-    -- Chỉ số lựa chọn (để lưu cấu hình)
     CircleIdx = 1,
     ESPIdx = 4,
     AimPartIdx = 1,
     AutoSave = true,
-    -- Settings
     FixLag = false,
     HideName = false,
-    -- Movement
     InfJump = false,
     JumpOn = false,
     JumpPower = 100,
@@ -97,24 +94,20 @@ local S = {
     Speed = 50,
     Noclip = false,
     Spin = false,
-    SpinSpeed = 3000, -- độ/giây
-    -- Fake Lag & Swim
+    SpinSpeed = 3000,
     FakeLag = false,
-    FakeLagDelay = 150, -- ms
+    FakeLagDelay = 150,
     Swim = false,
-    -- Mod
     ToolSpin = false,
-    ToolSpinSpeed = 800, -- độ/giây
+    ToolSpinSpeed = 800,
     Aura = false,
     AuraType = 1,
-    -- Camera
     ThirdPerson = false,
     ThirdZoom = 12,
     FOVEnabled = false,
     CameraFOV = 70,
 }
 
--- ===== NGÔN NGỮ =====
 S.Lang = S.Lang or "vi"
 
 local Lang = {
@@ -191,6 +184,15 @@ local Lang = {
         note = "Fix Lag: tắt bóng, giảm chất lượng đồ họa.\nẨn tên: mọi chỗ hiện tên người khác sẽ thành Lucacdz.",
         lang_section = "NGÔN NGỮ",
         language = "Ngôn ngữ",
+        info_title = "THÔNG TIN",
+        loading = "Đang tải...",
+        no_server = "Không có",
+        user = "Người dùng",
+        no_file_support = "Executor không hỗ trợ lưu file (thiếu writefile/readfile).",
+        loaded_cfg = "Đã tải cấu hình đã lưu từ file ",
+        no_saved = "Chưa có cấu hình đã lưu, đang dùng mặc định.",
+        no_delete = "Executor không hỗ trợ xóa file.",
+        deleted = "Đã xóa cấu hình và tắt tự động lưu. Chạy lại script để dùng mặc định.",
     },
     en = {
         main = "MAIN",
@@ -265,6 +267,15 @@ local Lang = {
         note = "Fix Lag: disables shadows, lowers graphics quality.\nHide Name: all other player names become Lucacdz.",
         lang_section = "LANGUAGE",
         language = "Language",
+        info_title = "INFO",
+        loading = "Loading...",
+        no_server = "None",
+        user = "User",
+        no_file_support = "Executor does not support file saving (missing writefile/readfile).",
+        loaded_cfg = "Loaded saved config from ",
+        no_saved = "No saved config, using defaults.",
+        no_delete = "Executor does not support file deletion.",
+        deleted = "Config deleted and auto-save disabled. Restart script to use defaults.",
     }
 }
 
@@ -286,7 +297,6 @@ local function EncodeConfig()
             data[k] = v
         end
     end
-    -- Không lưu trạng thái đang chạy của các chức năng nguy hiểm
     data.Aim = false
     data.AimFull = false
     data.Spin = false
@@ -520,12 +530,11 @@ New("TextLabel", {
     TextXAlignment = Enum.TextXAlignment.Left,
 }, Header)
 
--- Logo icon (dùng asset có sẵn)
 local Logo = New("ImageLabel", {
     Size = UDim2.new(0, 32, 0, 32),
     Position = UDim2.new(0, 10, 0.5, -16),
     BackgroundTransparency = 1,
-    Image = "rbxassetid://10709761813", -- aperture icon (public Lucide)
+    Image = "rbxassetid://10709761813",
     ImageColor3 = T.Accent,
     ScaleType = Enum.ScaleType.Fit,
 }, Header)
@@ -554,20 +563,18 @@ local CloseBtn = New("TextButton", {
 }, Header)
 Round(CloseBtn, 8)
 
--- Nút nhỏ khi thu gọn
 local MiniBtn = New("ImageButton", {
     Size = UDim2.new(0, 46, 0, 46),
     Position = Main.Position,
     BackgroundColor3 = T.Accent,
     BorderSizePixel = 0,
-    Image = "rbxassetid://10709752996", -- alert-circle icon (khác)
+    Image = "rbxassetid://10709752996",
     ImageColor3 = Color3.new(1, 1, 1),
     ScaleType = Enum.ScaleType.Fit,
     Visible = false,
 }, Gui)
 Round(MiniBtn, 23)
 
--- Kéo khung bằng thanh tiêu đề
 do
     local dragging, dragStart, startPos = false, nil, nil
     Header.InputBegan:Connect(function(input)
@@ -800,7 +807,6 @@ local function ItemLabel(parent, text, y)
     }, parent)
 end
 
--- Công tắc
 local function Toggle(page, text, def, cb)
     local f = ItemFrame(page, 36)
     New("TextLabel", {
@@ -851,7 +857,6 @@ local function Toggle(page, text, def, cb)
     end
 end
 
--- Thanh trượt
 local function Slider(page, text, min, max, def, step, fmt, cb)
     local f = ItemFrame(page, 50)
     ItemLabel(f, text, 4)
@@ -930,7 +935,6 @@ local function Slider(page, text, min, max, def, step, fmt, cb)
     set(def)
 end
 
--- Bảng màu
 local function Palette(page, text, defIdx, cb)
     local f = ItemFrame(page, 62)
     ItemLabel(f, text, 4)
@@ -958,7 +962,6 @@ local function Palette(page, text, defIdx, cb)
     cb(PaletteColors[defIdx], defIdx)
 end
 
--- Lựa chọn nhiều nút
 local function Choice(page, text, options, defIdx, cb)
     local f = ItemFrame(page, 62)
     ItemLabel(f, text, 4)
@@ -992,7 +995,6 @@ local function Choice(page, text, options, defIdx, cb)
     cb(defIdx, options[defIdx])
 end
 
--- Nút bấm
 local function Button(page, text, color, cb)
     local b = New("TextButton", {
         Size = UDim2.new(1, 0, 0, 36),
@@ -1012,20 +1014,20 @@ end
 -- ===== TAB AIM =====
 local AimSet
 
-Section(AimPage, Txt("main"))
-AimSet = Toggle(AimPage, Txt("aim_on"), S.Aim, function(v) S.Aim = v end)
-Toggle(AimPage, Txt("auto_off"), S.AutoOff, function(v) S.AutoOff = v end)
-Choice(AimPage, Txt("aim_part"), {Txt("head"), Txt("body")}, S.AimPartIdx, function(i, opt)
+Section(AimPage, "CHÍNH")
+AimSet = Toggle(AimPage, "Bật Aim", S.Aim, function(v) S.Aim = v end)
+Toggle(AimPage, "Tự tắt khi mục tiêu chết", S.AutoOff, function(v) S.AutoOff = v end)
+Choice(AimPage, "Vị trí nhắm", {"Đầu", "Thân"}, S.AimPartIdx, function(i, opt)
     S.AimPartIdx = i
-    S.AimPart = (opt == Txt("head")) and "Head" or "HumanoidRootPart"
+    S.AimPart = (opt == "Đầu") and "Head" or "HumanoidRootPart"
 end)
-Choice(AimPage, Txt("priority"), {Txt("near_center"), Txt("nearest"), Txt("farthest"), Txt("low_hp")}, S.AimMode, function(i)
+Choice(AimPage, "Ưu tiên mục tiêu", {"Gần tâm", "Gần nhất", "Xa nhất", "Ít máu"}, S.AimMode, function(i)
     S.AimMode = i
 end)
-Toggle(AimPage, Txt("aim_full"), S.AimFull, function(v) S.AimFull = v end)
+Toggle(AimPage, "Aim full (ngoài cả vòng FOV)", S.AimFull, function(v) S.AimFull = v end)
 
-Section(AimPage, Txt("fov_circle"))
-Toggle(AimPage, Txt("show_circle"), S.ShowCircle, function(v) S.ShowCircle = v end)
+Section(AimPage, "VÒNG FOV")
+Toggle(AimPage, "Hiện vòng FOV", S.ShowCircle, function(v) S.ShowCircle = v end)
 Slider(AimPage, "Bán kính FOV", 40, 400, S.FOV, 5, nil, function(v)
     S.FOV = v
     Circle.Size = UDim2.new(0, v * 2, 0, v * 2)
@@ -1040,85 +1042,85 @@ Palette(AimPage, "Màu vòng tròn", S.CircleIdx, function(c, i)
     CircleStroke.Color = c
 end)
 
-Section(AimPage, Txt("advanced"))
+Section(AimPage, "NÂNG CAO")
 Slider(AimPage, "Độ mượt", 0, 95, S.Smooth, 5, function(v) return v .. "%" end, function(v)
     S.Smooth = v
 end)
 Slider(AimPage, "Khoảng cách tối đa", 50, 2000, S.AimDist, 50, function(v) return v .. "m" end, function(v)
     S.AimDist = v
 end)
-Toggle(AimPage, Txt("ignore_team"), S.AimTeam, function(v) S.AimTeam = v end)
-Toggle(AimPage, Txt("wall_check"), S.WallCheck, function(v) S.WallCheck = v end)
+Toggle(AimPage, "Bỏ qua đồng đội", S.AimTeam, function(v) S.AimTeam = v end)
+Toggle(AimPage, "Kiểm tra vật cản (wall check)", S.WallCheck, function(v) S.WallCheck = v end)
 
 -- ===== TAB ESP =====
-Section(ESPPage, Txt("main"))
-Toggle(ESPPage, Txt("esp_on"), S.ESP, function(v) S.ESP = v end)
-Toggle(ESPPage, Txt("chams"), S.Chams, function(v) S.Chams = v end)
+Section(ESPPage, "CHÍNH")
+Toggle(ESPPage, "Bật ESP", S.ESP, function(v) S.ESP = v end)
+Toggle(ESPPage, "Viền sáng (Highlight)", S.Chams, function(v) S.Chams = v end)
 Slider(ESPPage, "Độ trong suốt phần tô", 0, 1, S.ChamsFill, 0.1, function(v)
     return string.format("%.1f", v)
 end, function(v) S.ChamsFill = v end)
 
-Section(ESPPage, Txt("info_section"))
-Toggle(ESPPage, Txt("show_name"), S.ShowName, function(v) S.ShowName = v end)
-Toggle(ESPPage, Txt("show_dist"), S.ShowDist, function(v) S.ShowDist = v end)
-Toggle(ESPPage, Txt("show_hp"), S.ShowHP, function(v) S.ShowHP = v end)
+Section(ESPPage, "THÔNG TIN")
+Toggle(ESPPage, "Hiện tên", S.ShowName, function(v) S.ShowName = v end)
+Toggle(ESPPage, "Hiện khoảng cách", S.ShowDist, function(v) S.ShowDist = v end)
+Toggle(ESPPage, "Hiện máu", S.ShowHP, function(v) S.ShowHP = v end)
 Slider(ESPPage, "Cỡ chữ", 10, 22, S.TextSize, 1, nil, function(v) S.TextSize = v end)
 
-Section(ESPPage, Txt("box_esp"))
-Toggle(ESPPage, Txt("show_box"), S.ShowBox, function(v) S.ShowBox = v end)
-Toggle(ESPPage, Txt("show_hpbar"), S.ShowHealthBar, function(v) S.ShowHealthBar = v end)
-Toggle(ESPPage, Txt("show_tracer"), S.ShowTracer, function(v) S.ShowTracer = v end)
+Section(ESPPage, "BOX ESP (CS:GO style)")
+Toggle(ESPPage, "Hiện Box Hitbox", S.ShowBox, function(v) S.ShowBox = v end)
+Toggle(ESPPage, "Hiện thanh máu", S.ShowHealthBar, function(v) S.ShowHealthBar = v end)
+Toggle(ESPPage, "Hiện tia (từ trên màn hình)", S.ShowTracer, function(v) S.ShowTracer = v end)
 
-Section(ESPPage, Txt("color_section"))
+Section(ESPPage, "MÀU SẮC")
 Palette(ESPPage, "Màu ESP", S.ESPIdx, function(c, i)
     S.ESPIdx = i
     S.ESPColor = c
 end)
-Toggle(ESPPage, Txt("team_color"), S.ESPTeamColor, function(v) S.ESPTeamColor = v end)
+Toggle(ESPPage, "Màu theo đội", S.ESPTeamColor, function(v) S.ESPTeamColor = v end)
 
-Section(ESPPage, Txt("advanced"))
+Section(ESPPage, "NÂNG CAO")
 Slider(ESPPage, "Khoảng cách tối đa", 50, 3000, S.ESPDist, 50, function(v) return v .. "m" end, function(v)
     S.ESPDist = v
 end)
-Toggle(ESPPage, Txt("ignore_team"), S.ESPTeam, function(v) S.ESPTeam = v end)
+Toggle(ESPPage, "Bỏ qua đồng đội", S.ESPTeam, function(v) S.ESPTeam = v end)
 
 -- ===== TAB MOVEMENT =====
-Section(MovePage, Txt("move_jump"))
-Toggle(MovePage, Txt("inf_jump"), S.InfJump, function(v) S.InfJump = v end)
-Toggle(MovePage, Txt("jump_power_on"), S.JumpOn, function(v) S.JumpOn = v end)
+Section(MovePage, "NHẢY")
+Toggle(MovePage, "Nhảy vô hạn (Infinite Jump)", S.InfJump, function(v) S.InfJump = v end)
+Toggle(MovePage, "Chỉnh sức mạnh nhảy", S.JumpOn, function(v) S.JumpOn = v end)
 Slider(MovePage, "Sức mạnh nhảy", 50, 500, S.JumpPower, 10, nil, function(v) S.JumpPower = v end)
 
-Section(MovePage, Txt("move_section"))
-Toggle(MovePage, Txt("speed_on"), S.SpeedOn, function(v) S.SpeedOn = v end)
+Section(MovePage, "DI CHUYỂN")
+Toggle(MovePage, "Chỉnh tốc độ di chuyển", S.SpeedOn, function(v) S.SpeedOn = v end)
 Slider(MovePage, "Tốc độ", 16, 300, S.Speed, 2, nil, function(v) S.Speed = v end)
-Toggle(MovePage, Txt("noclip"), S.Noclip, function(v) S.Noclip = v end)
+Toggle(MovePage, "Noclip (xuyên tường)", S.Noclip, function(v) S.Noclip = v end)
 
-Section(MovePage, Txt("spin_section"))
-Toggle(MovePage, Txt("spin_on"), S.Spin, function(v) S.Spin = v end)
+Section(MovePage, "SPIN")
+Toggle(MovePage, "Xoay tròn (Spin)", S.Spin, function(v) S.Spin = v end)
 Slider(MovePage, "Tốc độ xoay", 200, 20000, S.SpinSpeed, 200, function(v) return v .. "°/s" end, function(v) S.SpinSpeed = v end)
 
-Section(MovePage, Txt("fake_lag"))
-Toggle(MovePage, Txt("fake_lag_on"), S.FakeLag, function(v) S.FakeLag = v end)
+Section(MovePage, "FAKE LAG")
+Toggle(MovePage, "Fake High Ping / Lag", S.FakeLag, function(v) S.FakeLag = v end)
 Slider(MovePage, "Độ trễ (ms)", 50, 500, S.FakeLagDelay, 10, function(v) return v .. " ms" end, function(v) S.FakeLagDelay = v end)
 
-Section(MovePage, Txt("swim"))
-Toggle(MovePage, Txt("swim_on"), S.Swim, function(v) S.Swim = v end)
+Section(MovePage, "BƠI")
+Toggle(MovePage, "Bơi (Swim)", S.Swim, function(v) S.Swim = v end)
 
 -- ===== TAB MOD =====
-Section(ModPage, Txt("tool_section"))
-Toggle(ModPage, Txt("tool_spin"), S.ToolSpin, function(v) S.ToolSpin = v end)
+Section(ModPage, "VẬT PHẨM")
+Toggle(ModPage, "Xoay vật phẩm cầm tay (client)", S.ToolSpin, function(v) S.ToolSpin = v end)
 Slider(ModPage, "Tốc độ xoay vật phẩm", 200, 5000, S.ToolSpinSpeed, 100, function(v) return v .. "°/s" end, function(v) S.ToolSpinSpeed = v end)
 
-Section(ModPage, Txt("aura_section"))
-Toggle(ModPage, Txt("aura_on"), S.Aura, function(v) S.Aura = v end)
+Section(ModPage, "AURA")
+Toggle(ModPage, "Bật Aura", S.Aura, function(v) S.Aura = v end)
 Choice(ModPage, "Kiểu Aura", {"Particle", "Ring", "Glow", "Fire", "Sparkle", "Rainbow"}, S.AuraType, function(i)
     S.AuraType = i
 end)
 
-Section(ModPage, Txt("camera_section"))
-Toggle(ModPage, Txt("third_person"), S.ThirdPerson, function(v) S.ThirdPerson = v end)
+Section(ModPage, "CAMERA")
+Toggle(ModPage, "Góc nhìn thứ 3", S.ThirdPerson, function(v) S.ThirdPerson = v end)
 Slider(ModPage, "Khoảng cách zoom", 5, 50, S.ThirdZoom, 1, function(v) return v .. " studs" end, function(v) S.ThirdZoom = v end)
-Toggle(ModPage, Txt("fov_on"), S.FOVEnabled, function(v) S.FOVEnabled = v end)
+Toggle(ModPage, "Bật chỉnh FOV", S.FOVEnabled, function(v) S.FOVEnabled = v end)
 Slider(ModPage, "FOV Camera", 10, 120, S.CameraFOV, 1, function(v) return tostring(v) .. "°" end, function(v) S.CameraFOV = v end)
 
 -- ===== TAB CẤU HÌNH =====
@@ -1140,11 +1142,11 @@ local function SetStatus(msg)
 end
 
 if not CanSave then
-    SetStatus("Executor không hỗ trợ lưu file (thiếu writefile/readfile).")
+    SetStatus(Txt("no_file_support"))
 elseif ConfigLoaded then
-    SetStatus("Đã tải cấu hình đã lưu từ file " .. CONFIG_FILE)
+    SetStatus(Txt("loaded_cfg") .. CONFIG_FILE)
 else
-    SetStatus("Chưa có cấu hình đã lưu, đang dùng mặc định.")
+    SetStatus(Txt("no_saved"))
 end
 
 Section(CfgPage, Txt("save_section"))
@@ -1157,26 +1159,25 @@ end)
 
 Button(CfgPage, Txt("delete_cfg"), Color3.fromRGB(200, 60, 70), function()
     if not CanSave or typeof(delfile) ~= "function" then
-        SetStatus("Executor không hỗ trợ xóa file.")
+        SetStatus(Txt("no_delete"))
         return
     end
     pcall(function()
         if isfile(CONFIG_FILE) then delfile(CONFIG_FILE) end
     end)
     AutoSaveSet(false)
-    SetStatus("Đã xóa cấu hình và tắt tự động lưu. Chạy lại script để dùng mặc định.")
+    SetStatus(Txt("deleted"))
 end)
 
 -- ===== TAB SETTINGS =====
-Section(SetPage, Txt("perf_section"))
-Toggle(SetPage, Txt("fix_lag"), S.FixLag, function(v)
+Section(SetPage, "HIỆU NĂNG")
+Toggle(SetPage, "Fix Lag (giảm lag)", S.FixLag, function(v)
     S.FixLag = v
     if v then
         pcall(function()
             game.Lighting.GlobalShadows = false
             game.Lighting.FogEnd = 9e9
             settings().Rendering.QualityLevel = Enum.QualityLevel.Level01
-            -- Thêm các tối ưu khác nếu cần
         end)
     else
         pcall(function()
@@ -1186,31 +1187,16 @@ Toggle(SetPage, Txt("fix_lag"), S.FixLag, function(v)
     end
 end)
 
-Section(SetPage, Txt("hide_name_section"))
-Toggle(SetPage, Txt("hide_name"), S.HideName, function(v) S.HideName = v end)
+Section(SetPage, "ẨN TÊN")
+Toggle(SetPage, "Ẩn tên người chơi (đổi thành Lucacdz)", S.HideName, function(v) S.HideName = v end)
 
-Section(SetPage, Txt("lang_section"))
-Choice(SetPage, Txt("language"), {"Tiếng Việt", "English"}, (S.Lang == "en") and 2 or 1, function(i)
-    local newLang = (i == 2) and "en" or "vi"
-    if newLang ~= S.Lang then
-        S.Lang = newLang
-        if CanSave then
-            pcall(function()
-                local json = EncodeConfig()
-                writefile(CONFIG_FILE, json)
-                lastSaved = json
-            end)
-        end
-    end
-end)
-
-Section(SetPage, Txt("note_section"))
+Section(SetPage, "GHI CHÚ")
 local NoteFrame = ItemFrame(SetPage, 50)
 New("TextLabel", {
     Size = UDim2.new(1, -20, 1, 0),
     Position = UDim2.new(0, 10, 0, 0),
     BackgroundTransparency = 1,
-    Text = Txt("note"),
+    Text = "Fix Lag: tắt bóng, giảm chất lượng đồ họa.\nẨn tên: mọi chỗ hiện tên người khác sẽ thành Lucacdz.",
     TextColor3 = T.Sub,
     Font = Enum.Font.Gotham,
     TextSize = 12,
@@ -1247,11 +1233,11 @@ local function InfoRow(page, labelText, valueText)
     return val
 end
 
-Section(InfoPage, "THÔNG TIN")
-PingVal = InfoRow(InfoPage, "Ping", "Đang tải...")
-FpsVal = InfoRow(InfoPage, "FPS", "Đang tải...")
-InfoRow(InfoPage, "Server ID", game.JobId ~= "" and game.JobId or "Không có")
-InfoRow(InfoPage, "Người dùng", LocalPlayer.Name)
+Section(InfoPage, Txt("info_title"))
+PingVal = InfoRow(InfoPage, "Ping", Txt("loading"))
+FpsVal = InfoRow(InfoPage, "FPS", Txt("loading"))
+InfoRow(InfoPage, "Server ID", game.JobId ~= "" and game.JobId or Txt("no_server"))
+InfoRow(InfoPage, Txt("user"), LocalPlayer.Name)
 InfoRow(InfoPage, "Owner", "Nguyễn Duy Anh (Lucac)")
 
 -- ===== LOGIC CHUNG =====
@@ -1296,14 +1282,14 @@ local function GetTarget()
                         if inFov and d3 <= S.AimDist then
                             local score
                             if S.AimMode == 2 then
-                                score = d3                -- gần nhất (theo khoảng cách thật)
+                                score = d3
                             elseif S.AimMode == 3 then
-                                score = -d3               -- xa nhất
+                                score = -d3
                             elseif S.AimMode == 4 then
                                 local hum = p.Character:FindFirstChildOfClass("Humanoid")
-                                score = (hum and hum.Health or 100) + d2 / 10000 -- ít máu nhất
+                                score = (hum and hum.Health or 100) + d2 / 10000
                             else
-                                score = d2                -- gần tâm màn hình
+                                score = d2
                             end
                             if score < bestDist and (not S.WallCheck or IsVisible(part)) then
                                 bestDist = score
@@ -1381,7 +1367,6 @@ local function ApplyESP(p)
     local color = S.ESPColor
     if S.ESPTeamColor and p.Team then color = p.TeamColor.Color end
 
-    -- Highlight
     local hl = char:FindFirstChild("SkyESP")
     if S.Chams then
         if not hl then
@@ -1398,7 +1383,6 @@ local function ApplyESP(p)
         hl:Destroy()
     end
 
-    -- Tag tên / khoảng cách / máu
     local tag = head:FindFirstChild("SkyTag")
     if S.ShowName or S.ShowDist or S.ShowHP then
         local lines = {}
@@ -1450,7 +1434,7 @@ task.spawn(function()
     end
 end)
 
--- ===== ESP 2D BOX / HEALTH / TRACER (CS:GO style) =====
+-- ===== ESP 2D BOX / HEALTH / TRACER =====
 local ESP2D = {}
 
 local function GetOrCreateESP2D(p)
@@ -1542,7 +1526,6 @@ local function UpdateESP2D()
             local centerX = (headVP.X + footVP.X) / 2
             local topY = math.min(headVP.Y, footVP.Y)
 
-            -- Box
             if S.ShowBox then
                 obj.Box.Visible = true
                 obj.Box.Position = UDim2.new(0, centerX - width/2, 0, topY)
@@ -1552,7 +1535,6 @@ local function UpdateESP2D()
                 obj.Box.Visible = false
             end
 
-            -- Health bar (left of box)
             if S.ShowHealthBar then
                 local hpRatio = math.clamp(hum.Health / math.max(hum.MaxHealth, 1), 0, 1)
                 local barWidth = 5
@@ -1566,14 +1548,12 @@ local function UpdateESP2D()
 
                 obj.HealthFill.Size = UDim2.new(1, 0, hpRatio, 0)
                 obj.HealthFill.Position = UDim2.new(0, 0, 1 - hpRatio, 0)
-                -- Green to Red
                 local h = hpRatio * 0.33
                 obj.HealthFill.BackgroundColor3 = Color3.fromHSV(h, 1, 1)
             else
                 obj.HealthBg.Visible = false
             end
 
-            -- Tracer from top center to head
             if S.ShowTracer then
                 local head2d = Vector2.new(headVP.X, headVP.Y)
                 local delta = head2d - topCenter
@@ -1597,7 +1577,6 @@ local function UpdateESP2D()
         end
     end
 
-    -- Clean players who left
     for p, _ in pairs(ESP2D) do
         if not p.Parent or not Players:FindFirstChild(p.Name) then
             ClearESP2D(p)
@@ -1605,28 +1584,42 @@ local function UpdateESP2D()
     end
 end
 
--- ===== ẨN TÊN TOÀN GAME =====
-local function SpoofNames()
-    if not S.HideName then return end
+-- ===== ẨN TÊN TOÀN GAME (FIXED) =====
+local function EscapePattern(s)
+    return (s:gsub("[%^%$%(%)%%%.%[%]%*%+%-%?]", "%%%1"))
+end
+
+local function SpoofText(obj)
+    if not obj or not obj.Text then return end
     for _, p in ipairs(Players:GetPlayers()) do
-        if p ~= LocalPlayer then
-            local realName = p.Name
-            local display = p.DisplayName
-            -- Scan PlayerGui and other GUIs for texts containing the name
-            local function scan(obj)
-                if obj:IsA("TextLabel") or obj:IsA("TextButton") or obj:IsA("TextBox") then
-                    if obj.Text and (obj.Text:find(realName, 1, true) or (display ~= realName and obj.Text:find(display, 1, true))) then
-                        obj.Text = obj.Text:gsub(realName, "Lucacdz"):gsub(display, "Lucacdz")
-                    end
-                end
-                for _, child in ipairs(obj:GetChildren()) do
-                    pcall(scan, child)
-                end
-            end
-            pcall(function() scan(LocalPlayer.PlayerGui) end)
-            pcall(function() scan(game:GetService("CoreGui")) end)
+        local realName = p.Name
+        local display = p.DisplayName
+        if realName and realName ~= "" and obj.Text:find(realName, 1, true) then
+            obj.Text = obj.Text:gsub(EscapePattern(realName), "Lucacdz")
+        end
+        if display and display ~= "" and display ~= realName and obj.Text:find(display, 1, true) then
+            obj.Text = obj.Text:gsub(EscapePattern(display), "Lucacdz")
         end
     end
+end
+
+local function ScanForNames(root)
+    if not root then return end
+    pcall(function()
+        for _, d in ipairs(root:GetDescendants()) do
+            if d:IsA("TextLabel") or d:IsA("TextButton") or d:IsA("TextBox") then
+                SpoofText(d)
+            end
+        end
+    end)
+end
+
+local function SpoofNames()
+    if not S.HideName then return end
+    ScanForNames(workspace)
+    ScanForNames(LocalPlayer.PlayerGui)
+    pcall(function() ScanForNames(game:GetService("CoreGui")) end)
+    pcall(function() ScanForNames(game:GetService("ReplicatedStorage")) end)
 end
 
 task.spawn(function()
@@ -1651,10 +1644,9 @@ task.spawn(function()
 end)
 
 -- ===== MOVEMENT =====
-local MoveState = {WS = nil, JP = nil}
+local MoveState = {WS = nil, JP = nil, ToolRef = nil, ToolBaseGrip = nil, ToolStartTime = 0}
 local Conns = _G.SkyHubProConns
 
--- ESP 2D update
 table.insert(Conns, RunService.RenderStepped:Connect(function()
     pcall(UpdateESP2D)
 end))
@@ -1676,11 +1668,17 @@ local function RestoreMovement()
             end
         end
     end
+    -- Restore tool grip nếu đang xoay
+    if MoveState.ToolRef and MoveState.ToolBaseGrip then
+        pcall(function() MoveState.ToolRef.Grip = MoveState.ToolBaseGrip end)
+    end
     MoveState.WS = nil
     MoveState.JP = nil
+    MoveState.ToolRef = nil
+    MoveState.ToolBaseGrip = nil
+    MoveState.ToolStartTime = 0
 end
 
--- Nhảy vô hạn
 table.insert(Conns, UserInputService.JumpRequest:Connect(function()
     if S.InfJump then
         local hum = GetHum()
@@ -1688,7 +1686,6 @@ table.insert(Conns, UserInputService.JumpRequest:Connect(function()
     end
 end))
 
--- Tốc độ / sức mạnh nhảy / spin
 table.insert(Conns, RunService.Heartbeat:Connect(function(dt)
     local char = LocalPlayer.Character
     local hum = char and char:FindFirstChildOfClass("Humanoid")
@@ -1728,21 +1725,38 @@ table.insert(Conns, RunService.Heartbeat:Connect(function(dt)
         end
     end
 
-    -- Swim
     if S.Swim then
         hum:ChangeState(Enum.HumanoidStateType.Swimming)
     end
 
-    -- Tool Spin (chỉ xoay vật phẩm, không ảnh hưởng nhân vật)
+    -- Tool Spin (FIXED): xoay đúng 360 độ lặp lại, không cộng dồn vô hạn
     if S.ToolSpin then
         local tool = char:FindFirstChildOfClass("Tool")
         if tool then
-            tool.Grip = tool.Grip * CFrame.Angles(0, math.rad(S.ToolSpinSpeed * dt), 0)
+            if MoveState.ToolRef ~= tool or not MoveState.ToolBaseGrip then
+                MoveState.ToolRef = tool
+                MoveState.ToolBaseGrip = tool.Grip
+                MoveState.ToolStartTime = tick()
+            end
+            local elapsed = tick() - MoveState.ToolStartTime
+            local angle = math.rad(S.ToolSpinSpeed * elapsed) % (math.pi * 2)
+            tool.Grip = MoveState.ToolBaseGrip * CFrame.Angles(0, angle, 0)
+        else
+            if MoveState.ToolRef then
+                pcall(function() MoveState.ToolRef.Grip = MoveState.ToolBaseGrip end)
+            end
+            MoveState.ToolRef = nil
+            MoveState.ToolBaseGrip = nil
+            MoveState.ToolStartTime = 0
         end
+    elseif MoveState.ToolRef then
+        pcall(function() MoveState.ToolRef.Grip = MoveState.ToolBaseGrip end)
+        MoveState.ToolRef = nil
+        MoveState.ToolBaseGrip = nil
+        MoveState.ToolStartTime = 0
     end
 end))
 
--- Noclip
 table.insert(Conns, RunService.Stepped:Connect(function()
     if not S.Noclip then return end
     local char = LocalPlayer.Character
@@ -1754,7 +1768,6 @@ table.insert(Conns, RunService.Stepped:Connect(function()
     end
 end))
 
--- Fake Lag
 task.spawn(function()
     while Gui.Parent do
         if S.FakeLag then
@@ -1779,7 +1792,7 @@ local function CreateAura(root)
     ClearAura()
     local typ = S.AuraType
 
-    if typ == 1 then -- Particle
+    if typ == 1 then
         local e = Instance.new("ParticleEmitter")
         e.Name = "SkyAura"
         e.Rate = 50
@@ -1791,8 +1804,7 @@ local function CreateAura(root)
         e.SpreadAngle = Vector2.new(180, 180)
         e.Parent = root
         table.insert(AuraObjects, e)
-
-    elseif typ == 2 then -- Ring (client only)
+    elseif typ == 2 then
         local ring = Instance.new("Part")
         ring.Name = "SkyAuraRing"
         ring.Size = Vector3.new(8, 0.2, 8)
@@ -1806,8 +1818,7 @@ local function CreateAura(root)
         ring.CFrame = root.CFrame * CFrame.new(0, -2.5, 0) * CFrame.Angles(0, 0, math.rad(90))
         ring.Parent = root
         table.insert(AuraObjects, ring)
-
-    elseif typ == 3 then -- Glow
+    elseif typ == 3 then
         local hl = Instance.new("Highlight")
         hl.Name = "SkyAuraGlow"
         hl.FillTransparency = 0.7
@@ -1817,8 +1828,7 @@ local function CreateAura(root)
         hl.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
         hl.Parent = root.Parent
         table.insert(AuraObjects, hl)
-
-    elseif typ == 4 then -- Fire
+    elseif typ == 4 then
         local fire = Instance.new("Fire")
         fire.Name = "SkyAuraFire"
         fire.Size = 6
@@ -1827,15 +1837,13 @@ local function CreateAura(root)
         fire.SecondaryColor = Color3.fromRGB(255, 180, 0)
         fire.Parent = root
         table.insert(AuraObjects, fire)
-
-    elseif typ == 5 then -- Sparkle
+    elseif typ == 5 then
         local spark = Instance.new("Sparkles")
         spark.Name = "SkyAuraSpark"
         spark.SparkleColor = T.Accent
         spark.Parent = root
         table.insert(AuraObjects, spark)
-
-    elseif typ == 6 then -- Rainbow
+    elseif typ == 6 then
         local e = Instance.new("ParticleEmitter")
         e.Name = "SkyAuraRainbow"
         e.Rate = 60
@@ -1873,7 +1881,6 @@ local function UpdateAura()
         if needRecreate then
             CreateAura(root)
         else
-            -- Update ring position if exists
             if S.AuraType == 2 and AuraObjects[1] and AuraObjects[1]:IsA("BasePart") then
                 AuraObjects[1].CFrame = root.CFrame * CFrame.new(0, -2.5, 0) * CFrame.Angles(0, 0, math.rad(90))
             end
@@ -1891,14 +1898,13 @@ task.spawn(function()
     ClearAura()
 end)
 
--- Cập nhật FPS & Ping + Third Person cho tab INFO / MOD
+-- FPS / Ping / Third Person / FOV
 local fpsFrames = 0
 local lastFpsTime = tick()
 local oldMinZoom, oldMaxZoom = nil, nil
 local oldFOV = nil
 
 table.insert(Conns, RunService.RenderStepped:Connect(function()
-    -- FPS
     fpsFrames = fpsFrames + 1
     local now = tick()
     if now - lastFpsTime >= 1 then
@@ -1909,7 +1915,6 @@ table.insert(Conns, RunService.RenderStepped:Connect(function()
         lastFpsTime = now
     end
 
-    -- Third Person
     if S.ThirdPerson then
         LocalPlayer.CameraMode = Enum.CameraMode.Classic
         if Camera then
@@ -1928,7 +1933,6 @@ table.insert(Conns, RunService.RenderStepped:Connect(function()
         oldMaxZoom = nil
     end
 
-    -- Camera FOV
     if S.FOVEnabled and Camera then
         if oldFOV == nil then
             oldFOV = Camera.FieldOfView

@@ -329,7 +329,7 @@ local MiniBtn = New("ImageButton", {
     Position = Main.Position,
     BackgroundColor3 = T.Accent,
     BorderSizePixel = 0,
-    Image = "rbxassetid://6403436082",
+    Image = "rbxthumb://type=Asset&id=6403436082&w=420&h=420", -- Rickroll "Help me rickroll all of Roblox"
     ImageColor3 = Color3.new(1, 1, 1),
     ScaleType = Enum.ScaleType.Fit,
     Visible = false,
@@ -1366,20 +1366,23 @@ local function UpdateESP2D()
     end
 end
 
--- ===== ẨN TÊN TOÀN GAME (tối ưu lag + thay cả tên người dùng script) =====
+-- ===== ẨN TÊN TOÀN GAME (quét ngầm + hook ngay + bắt tên mới) =====
 local NameSpoofConns = {}
+local NameSpoofRunning = false
 
 local function SpoofText(obj)
     if not obj or not (obj:IsA("TextLabel") or obj:IsA("TextButton") or obj:IsA("TextBox")) then return end
     local txt = obj.Text
     if not txt or txt == "" then return end
 
-    -- Thay tên của tất cả người chơi (kể cả LocalPlayer)
     for _, p in ipairs(Players:GetPlayers()) do
         local realName = p.Name
         local display = p.DisplayName
         if txt:find(realName, 1, true) or (display ~= realName and txt:find(display, 1, true)) then
-            obj.Text = txt:gsub(realName, "Lucacdz"):gsub(display, "Lucacdz")
+            local newTxt = txt:gsub(realName, "Lucacdz"):gsub(display, "Lucacdz")
+            if newTxt ~= txt then
+                obj.Text = newTxt
+            end
             break
         end
     end
@@ -1403,8 +1406,8 @@ local function EnableNameSpoof()
         pcall(function() c:Disconnect() end)
     end
     NameSpoofConns = {}
+    NameSpoofRunning = true
 
-    -- Quét trước một lần ngay lập tức
     FullScan()
 
     local function onDescendant(obj)
@@ -1417,20 +1420,26 @@ local function EnableNameSpoof()
     if pg then
         table.insert(NameSpoofConns, pg.DescendantAdded:Connect(onDescendant))
     end
-
     table.insert(NameSpoofConns, game:GetService("CoreGui").DescendantAdded:Connect(onDescendant))
 
-    table.insert(NameSpoofConns, LocalPlayer.ChildAdded:Connect(function(child)
-        if child.Name == "PlayerGui" and S.HideName then
-            task.defer(function()
-                ScanContainer(child)
-                table.insert(NameSpoofConns, child.DescendantAdded:Connect(onDescendant))
-            end)
+    table.insert(NameSpoofConns, Players.PlayerAdded:Connect(function()
+        if S.HideName then
+            task.defer(FullScan)
         end
     end))
+
+    task.spawn(function()
+        while NameSpoofRunning and Gui.Parent do
+            if S.HideName then
+                pcall(FullScan)
+            end
+            task.wait(1.2)
+        end
+    end)
 end
 
 local function DisableNameSpoof()
+    NameSpoofRunning = false
     for _, c in ipairs(NameSpoofConns) do
         pcall(function() c:Disconnect() end)
     end

@@ -329,9 +329,9 @@ local MiniBtn = New("ImageButton", {
     Position = Main.Position,
     BackgroundColor3 = T.Accent,
     BorderSizePixel = 0,
-    Image = "rbxthumb://type=Asset&id=6403436082&w=420&h=420", -- Rickroll "Help me rickroll all of Roblox"
+    Image = "rbxassetid://6031280882", -- simple icon
     ImageColor3 = Color3.new(1, 1, 1),
-    ScaleType = Enum.ScaleType.Fit,
+    ScaleType = Enum.ScaleType.Stretch,
     Visible = false,
 }, Gui)
 Round(MiniBtn, 23)
@@ -956,14 +956,7 @@ Toggle(SetPage, "Fix Lag (giảm lag)", S.FixLag, function(v)
 end)
 
 Section(SetPage, "ẨN TÊN")
-Toggle(SetPage, "Ẩn tên người chơi (đổi thành Lucacdz)", S.HideName, function(v)
-    S.HideName = v
-    if v then
-        if _G.SkyHubEnableNameSpoof then _G.SkyHubEnableNameSpoof() end
-    else
-        if _G.SkyHubDisableNameSpoof then _G.SkyHubDisableNameSpoof() end
-    end
-end)
+Toggle(SetPage, "Ẩn tên người chơi (đổi thành Lucacdz)", S.HideName, function(v) S.HideName = v end)
 
 Section(SetPage, "GHI CHÚ")
 local NoteFrame = ItemFrame(SetPage, 50)
@@ -1366,92 +1359,36 @@ local function UpdateESP2D()
     end
 end
 
--- ===== ẨN TÊN TOÀN GAME (quét ngầm + hook ngay + bắt tên mới) =====
-local NameSpoofConns = {}
-local NameSpoofRunning = false
-
-local function SpoofText(obj)
-    if not obj or not (obj:IsA("TextLabel") or obj:IsA("TextButton") or obj:IsA("TextBox")) then return end
-    local txt = obj.Text
-    if not txt or txt == "" then return end
-
-    for _, p in ipairs(Players:GetPlayers()) do
-        local realName = p.Name
-        local display = p.DisplayName
-        if txt:find(realName, 1, true) or (display ~= realName and txt:find(display, 1, true)) then
-            local newTxt = txt:gsub(realName, "Lucacdz"):gsub(display, "Lucacdz")
-            if newTxt ~= txt then
-                obj.Text = newTxt
-            end
-            break
-        end
-    end
-end
-
-local function ScanContainer(container)
-    if not container then return end
-    for _, obj in ipairs(container:GetDescendants()) do
-        pcall(SpoofText, obj)
-    end
-end
-
-local function FullScan()
+-- ===== ẨN TÊN TOÀN GAME =====
+local function SpoofNames()
     if not S.HideName then return end
-    pcall(function() ScanContainer(LocalPlayer:FindFirstChild("PlayerGui")) end)
-    pcall(function() ScanContainer(game:GetService("CoreGui")) end)
-end
-
-local function EnableNameSpoof()
-    for _, c in ipairs(NameSpoofConns) do
-        pcall(function() c:Disconnect() end)
-    end
-    NameSpoofConns = {}
-    NameSpoofRunning = true
-
-    FullScan()
-
-    local function onDescendant(obj)
-        if S.HideName then
-            pcall(SpoofText, obj)
-        end
-    end
-
-    local pg = LocalPlayer:FindFirstChild("PlayerGui")
-    if pg then
-        table.insert(NameSpoofConns, pg.DescendantAdded:Connect(onDescendant))
-    end
-    table.insert(NameSpoofConns, game:GetService("CoreGui").DescendantAdded:Connect(onDescendant))
-
-    table.insert(NameSpoofConns, Players.PlayerAdded:Connect(function()
-        if S.HideName then
-            task.defer(FullScan)
-        end
-    end))
-
-    task.spawn(function()
-        while NameSpoofRunning and Gui.Parent do
-            if S.HideName then
-                pcall(FullScan)
+    for _, p in ipairs(Players:GetPlayers()) do
+        if p ~= LocalPlayer then
+            local realName = p.Name
+            local display = p.DisplayName
+            -- Scan PlayerGui and other GUIs for texts containing the name
+            local function scan(obj)
+                if obj:IsA("TextLabel") or obj:IsA("TextButton") or obj:IsA("TextBox") then
+                    if obj.Text and (obj.Text:find(realName, 1, true) or (display ~= realName and obj.Text:find(display, 1, true))) then
+                        obj.Text = obj.Text:gsub(realName, "Lucacdz"):gsub(display, "Lucacdz")
+                    end
+                end
+                for _, child in ipairs(obj:GetChildren()) do
+                    pcall(scan, child)
+                end
             end
-            task.wait(1.2)
+            pcall(function() scan(LocalPlayer.PlayerGui) end)
+            pcall(function() scan(game:GetService("CoreGui")) end)
         end
-    end)
-end
-
-local function DisableNameSpoof()
-    NameSpoofRunning = false
-    for _, c in ipairs(NameSpoofConns) do
-        pcall(function() c:Disconnect() end)
     end
-    NameSpoofConns = {}
 end
 
-_G.SkyHubEnableNameSpoof = EnableNameSpoof
-_G.SkyHubDisableNameSpoof = DisableNameSpoof
-
-if S.HideName then
-    task.defer(EnableNameSpoof)
-end
+task.spawn(function()
+    while Gui.Parent do
+        pcall(SpoofNames)
+        task.wait(0.5)
+    end
+end)
 
 -- ===== TỰ ĐỘNG LƯU =====
 task.spawn(function()

@@ -56,8 +56,8 @@ local S = {
     Aim = false,
     AutoOff = true,
     AimPart = "Head",
-    AimMode = 1,
-    AimFull = false,
+    AimMode = 1, -- 1 gần tâm, 2 gần nhất, 3 xa nhất, 4 ít máu nhất
+    AimFull = false, -- aim ngoài cả vòng FOV
     ShowCircle = true,
     FOV = 150,
     CircleThickness = 2,
@@ -81,12 +81,15 @@ local S = {
     ESPTeamColor = false,
     ESPDist = 1500,
     ESPTeam = false,
+    -- Chỉ số lựa chọn (để lưu cấu hình)
     CircleIdx = 1,
     ESPIdx = 4,
     AimPartIdx = 1,
     AutoSave = true,
+    -- Settings
     FixLag = false,
     HideName = false,
+    -- Movement
     InfJump = false,
     JumpOn = false,
     JumpPower = 100,
@@ -94,20 +97,24 @@ local S = {
     Speed = 50,
     Noclip = false,
     Spin = false,
-    SpinSpeed = 3000,
+    SpinSpeed = 3000, -- độ/giây
+    -- Fake Lag & Swim
     FakeLag = false,
-    FakeLagDelay = 150,
+    FakeLagDelay = 150, -- ms
     Swim = false,
+    -- Mod
     ToolSpin = false,
-    ToolSpinSpeed = 800,
+    ToolSpinSpeed = 800, -- độ/giây
     Aura = false,
     AuraType = 1,
+    -- Camera
     ThirdPerson = false,
     ThirdZoom = 12,
     FOVEnabled = false,
     CameraFOV = 70,
 }
 
+-- ===== NGÔN NGỮ =====
 S.Lang = S.Lang or "vi"
 
 local Lang = {
@@ -297,6 +304,7 @@ local function EncodeConfig()
             data[k] = v
         end
     end
+    -- Không lưu trạng thái đang chạy của các chức năng nguy hiểm
     data.Aim = false
     data.AimFull = false
     data.Spin = false
@@ -530,11 +538,12 @@ New("TextLabel", {
     TextXAlignment = Enum.TextXAlignment.Left,
 }, Header)
 
+-- Logo icon (dùng asset có sẵn)
 local Logo = New("ImageLabel", {
     Size = UDim2.new(0, 32, 0, 32),
     Position = UDim2.new(0, 10, 0.5, -16),
     BackgroundTransparency = 1,
-    Image = "rbxassetid://10709761813",
+    Image = "rbxassetid://10709761813", -- aperture icon (public Lucide)
     ImageColor3 = T.Accent,
     ScaleType = Enum.ScaleType.Fit,
 }, Header)
@@ -563,18 +572,20 @@ local CloseBtn = New("TextButton", {
 }, Header)
 Round(CloseBtn, 8)
 
+-- Nút nhỏ khi thu gọn
 local MiniBtn = New("ImageButton", {
     Size = UDim2.new(0, 46, 0, 46),
     Position = Main.Position,
     BackgroundColor3 = T.Accent,
     BorderSizePixel = 0,
-    Image = "rbxassetid://10709752996",
+    Image = "rbxassetid://10709752996", -- alert-circle icon (khác)
     ImageColor3 = Color3.new(1, 1, 1),
     ScaleType = Enum.ScaleType.Fit,
     Visible = false,
 }, Gui)
 Round(MiniBtn, 23)
 
+-- Kéo khung bằng thanh tiêu đề
 do
     local dragging, dragStart, startPos = false, nil, nil
     Header.InputBegan:Connect(function(input)
@@ -807,6 +818,7 @@ local function ItemLabel(parent, text, y)
     }, parent)
 end
 
+-- Công tắc
 local function Toggle(page, text, def, cb)
     local f = ItemFrame(page, 36)
     New("TextLabel", {
@@ -857,6 +869,7 @@ local function Toggle(page, text, def, cb)
     end
 end
 
+-- Thanh trượt
 local function Slider(page, text, min, max, def, step, fmt, cb)
     local f = ItemFrame(page, 50)
     ItemLabel(f, text, 4)
@@ -935,6 +948,7 @@ local function Slider(page, text, min, max, def, step, fmt, cb)
     set(def)
 end
 
+-- Bảng màu
 local function Palette(page, text, defIdx, cb)
     local f = ItemFrame(page, 62)
     ItemLabel(f, text, 4)
@@ -962,6 +976,7 @@ local function Palette(page, text, defIdx, cb)
     cb(PaletteColors[defIdx], defIdx)
 end
 
+-- Lựa chọn nhiều nút
 local function Choice(page, text, options, defIdx, cb)
     local f = ItemFrame(page, 62)
     ItemLabel(f, text, 4)
@@ -995,6 +1010,7 @@ local function Choice(page, text, options, defIdx, cb)
     cb(defIdx, options[defIdx])
 end
 
+-- Nút bấm
 local function Button(page, text, color, cb)
     local b = New("TextButton", {
         Size = UDim2.new(1, 0, 0, 36),
@@ -1367,6 +1383,7 @@ local function ApplyESP(p)
     local color = S.ESPColor
     if S.ESPTeamColor and p.Team then color = p.TeamColor.Color end
 
+    -- Highlight
     local hl = char:FindFirstChild("SkyESP")
     if S.Chams then
         if not hl then
@@ -1383,6 +1400,7 @@ local function ApplyESP(p)
         hl:Destroy()
     end
 
+    -- Tag tên / khoảng cách / máu
     local tag = head:FindFirstChild("SkyTag")
     if S.ShowName or S.ShowDist or S.ShowHP then
         local lines = {}
@@ -1434,7 +1452,7 @@ task.spawn(function()
     end
 end)
 
--- ===== ESP 2D BOX / HEALTH / TRACER =====
+-- ===== ESP 2D BOX / HEALTH / TRACER (CS:GO style) =====
 local ESP2D = {}
 
 local function GetOrCreateESP2D(p)
@@ -1585,47 +1603,115 @@ local function UpdateESP2D()
 end
 
 -- ===== ẨN TÊN TOÀN GAME (FIXED) =====
-local function EscapePattern(s)
-    return (s:gsub("[%^%$%(%)%%%.%[%]%*%+%-%?]", "%%%1"))
+local function TrySpoofText(text, realName, display)
+    if not text or text == "" then return text end
+    local n = text
+    if realName and #realName > 0 and n:find(realName, 1, true) then
+        n = n:gsub(realName, "Lucacdz")
+    end
+    if display and #display > 0 and display ~= realName and n:find(display, 1, true) then
+        n = n:gsub(display, "Lucacdz")
+    end
+    return n
 end
 
-local function SpoofText(obj)
-    if not obj or not obj.Text then return end
-    for _, p in ipairs(Players:GetPlayers()) do
-        local realName = p.Name
-        local display = p.DisplayName
-        if realName and realName ~= "" and obj.Text:find(realName, 1, true) then
-            obj.Text = obj.Text:gsub(EscapePattern(realName), "Lucacdz")
-        end
-        if display and display ~= "" and display ~= realName and obj.Text:find(display, 1, true) then
-            obj.Text = obj.Text:gsub(EscapePattern(display), "Lucacdz")
+local function ScanAndSpoof(obj, realName, display, depth)
+    if depth > 8 or not obj then return end
+    local ok, class = pcall(function() return obj.ClassName end)
+    if not ok then return end
+
+    if class == "TextLabel" or class == "TextButton" or class == "TextBox" then
+        pcall(function()
+            local t = obj.Text
+            if t and t ~= "" then
+                local nt = TrySpoofText(t, realName, display)
+                if nt ~= t then obj.Text = nt end
+            end
+            if class == "TextBox" then
+                local ph = obj.PlaceholderText
+                if ph and ph ~= "" then
+                    local nph = TrySpoofText(ph, realName, display)
+                    if nph ~= ph then obj.PlaceholderText = nph end
+                end
+            end
+        end)
+    end
+
+    local ok2, children = pcall(function() return obj:GetChildren() end)
+    if ok2 then
+        for _, c in ipairs(children) do
+            pcall(ScanAndSpoof, c, realName, display, depth + 1)
         end
     end
 end
 
-local function ScanForNames(root)
-    if not root then return end
+local function SpoofNames()
+    if not S.HideName then return end
+    local list = {}
+    for _, p in ipairs(Players:GetPlayers()) do
+        if p ~= LocalPlayer then
+            table.insert(list, {n = p.Name, d = p.DisplayName})
+        end
+    end
+    if #list == 0 then return end
+
+    local function scanGuiAll(gui)
+        if not gui then return end
+        for _, info in ipairs(list) do
+            pcall(ScanAndSpoof, gui, info.n, info.d, 0)
+        end
+    end
+
+    -- PlayerGui của mình
+    pcall(function() scanGuiAll(LocalPlayer.PlayerGui) end)
+
+    -- PlayerGui của tất cả mọi người
     pcall(function()
-        for _, d in ipairs(root:GetDescendants()) do
-            if d:IsA("TextLabel") or d:IsA("TextButton") or d:IsA("TextBox") then
-                SpoofText(d)
+        for _, plr in ipairs(Players:GetPlayers()) do
+            local pg = plr:FindFirstChildOfClass("PlayerGui")
+            if pg and pg ~= LocalPlayer.PlayerGui then
+                scanGuiAll(pg)
+            end
+        end
+    end)
+
+    -- CoreGui (chat, player list, ...)
+    pcall(function() scanGuiAll(game:GetService("CoreGui")) end)
+
+    -- ⭐ Nametag mặc định Roblox (BillboardGui trên Head)
+    pcall(function()
+        for _, obj in ipairs(workspace:GetChildren()) do
+            if obj:FindFirstChildOfClass("Humanoid") then
+                local p = Players:GetPlayerFromCharacter(obj)
+                if p and p ~= LocalPlayer then
+                    local head = obj:FindFirstChild("Head")
+                    if head then
+                        for _, child in ipairs(head:GetChildren()) do
+                            if child:IsA("BillboardGui") and child.Name ~= "SkyTag" then
+                                pcall(ScanAndSpoof, child, p.Name, p.DisplayName, 0)
+                            end
+                        end
+                    end
+                end
+            end
+        end
+    end)
+
+    -- Chat mới (TextChatService)
+    pcall(function()
+        local tcs = game:GetService("TextChatService")
+        for _, ch in ipairs(tcs:GetDescendants()) do
+            if ch:IsA("TextLabel") or ch:IsA("TextButton") then
+                scanGuiAll(ch)
             end
         end
     end)
 end
 
-local function SpoofNames()
-    if not S.HideName then return end
-    ScanForNames(workspace)
-    ScanForNames(LocalPlayer.PlayerGui)
-    pcall(function() ScanForNames(game:GetService("CoreGui")) end)
-    pcall(function() ScanForNames(game:GetService("ReplicatedStorage")) end)
-end
-
 task.spawn(function()
     while Gui.Parent do
         pcall(SpoofNames)
-        task.wait(0.5)
+        task.wait(0.3)
     end
 end)
 
@@ -1644,9 +1730,17 @@ task.spawn(function()
 end)
 
 -- ===== MOVEMENT =====
-local MoveState = {WS = nil, JP = nil, ToolRef = nil, ToolBaseGrip = nil, ToolStartTime = 0}
+local MoveState = {WS = nil, JP = nil}
 local Conns = _G.SkyHubProConns
 
+-- ⭐ STATE CHO TOOL SPIN
+local ToolSpinState = {
+    tool = nil,
+    originalGrip = nil,
+    angle = 0,
+}
+
+-- ESP 2D update
 table.insert(Conns, RunService.RenderStepped:Connect(function()
     pcall(UpdateESP2D)
 end))
@@ -1668,17 +1762,11 @@ local function RestoreMovement()
             end
         end
     end
-    -- Restore tool grip nếu đang xoay
-    if MoveState.ToolRef and MoveState.ToolBaseGrip then
-        pcall(function() MoveState.ToolRef.Grip = MoveState.ToolBaseGrip end)
-    end
     MoveState.WS = nil
     MoveState.JP = nil
-    MoveState.ToolRef = nil
-    MoveState.ToolBaseGrip = nil
-    MoveState.ToolStartTime = 0
 end
 
+-- Nhảy vô hạn
 table.insert(Conns, UserInputService.JumpRequest:Connect(function()
     if S.InfJump then
         local hum = GetHum()
@@ -1686,6 +1774,7 @@ table.insert(Conns, UserInputService.JumpRequest:Connect(function()
     end
 end))
 
+-- Tốc độ / sức mạnh nhảy / spin
 table.insert(Conns, RunService.Heartbeat:Connect(function(dt)
     local char = LocalPlayer.Character
     local hum = char and char:FindFirstChildOfClass("Humanoid")
@@ -1725,38 +1814,45 @@ table.insert(Conns, RunService.Heartbeat:Connect(function(dt)
         end
     end
 
+    -- Swim
     if S.Swim then
         hum:ChangeState(Enum.HumanoidStateType.Swimming)
     end
 
-    -- Tool Spin (FIXED): xoay đúng 360 độ lặp lại, không cộng dồn vô hạn
+    -- ⭐ Tool Spin (FIXED: reset từng frame, luôn xoay liên tục, khôi phục grip gốc)
     if S.ToolSpin then
         local tool = char:FindFirstChildOfClass("Tool")
         if tool then
-            if MoveState.ToolRef ~= tool or not MoveState.ToolBaseGrip then
-                MoveState.ToolRef = tool
-                MoveState.ToolBaseGrip = tool.Grip
-                MoveState.ToolStartTime = tick()
+            if ToolSpinState.tool ~= tool then
+                if ToolSpinState.tool and ToolSpinState.tool.Parent and ToolSpinState.originalGrip then
+                    pcall(function() ToolSpinState.tool.Grip = ToolSpinState.originalGrip end)
+                end
+                ToolSpinState.tool = tool
+                ToolSpinState.originalGrip = tool.Grip
+                ToolSpinState.angle = 0
             end
-            local elapsed = tick() - MoveState.ToolStartTime
-            local angle = math.rad(S.ToolSpinSpeed * elapsed) % (math.pi * 2)
-            tool.Grip = MoveState.ToolBaseGrip * CFrame.Angles(0, angle, 0)
+
+            ToolSpinState.angle = (ToolSpinState.angle + math.rad(S.ToolSpinSpeed * dt)) % (2 * math.pi)
+
+            pcall(function()
+                tool.Grip = ToolSpinState.originalGrip * CFrame.Angles(0, ToolSpinState.angle, 0)
+            end)
         else
-            if MoveState.ToolRef then
-                pcall(function() MoveState.ToolRef.Grip = MoveState.ToolBaseGrip end)
-            end
-            MoveState.ToolRef = nil
-            MoveState.ToolBaseGrip = nil
-            MoveState.ToolStartTime = 0
+            ToolSpinState.tool = nil
+            ToolSpinState.originalGrip = nil
+            ToolSpinState.angle = 0
         end
-    elseif MoveState.ToolRef then
-        pcall(function() MoveState.ToolRef.Grip = MoveState.ToolBaseGrip end)
-        MoveState.ToolRef = nil
-        MoveState.ToolBaseGrip = nil
-        MoveState.ToolStartTime = 0
+    elseif ToolSpinState.tool then
+        if ToolSpinState.originalGrip then
+            pcall(function() ToolSpinState.tool.Grip = ToolSpinState.originalGrip end)
+        end
+        ToolSpinState.tool = nil
+        ToolSpinState.originalGrip = nil
+        ToolSpinState.angle = 0
     end
 end))
 
+-- Noclip
 table.insert(Conns, RunService.Stepped:Connect(function()
     if not S.Noclip then return end
     local char = LocalPlayer.Character
@@ -1768,6 +1864,7 @@ table.insert(Conns, RunService.Stepped:Connect(function()
     end
 end))
 
+-- Fake Lag
 task.spawn(function()
     while Gui.Parent do
         if S.FakeLag then
@@ -1804,6 +1901,7 @@ local function CreateAura(root)
         e.SpreadAngle = Vector2.new(180, 180)
         e.Parent = root
         table.insert(AuraObjects, e)
+
     elseif typ == 2 then
         local ring = Instance.new("Part")
         ring.Name = "SkyAuraRing"
@@ -1818,6 +1916,7 @@ local function CreateAura(root)
         ring.CFrame = root.CFrame * CFrame.new(0, -2.5, 0) * CFrame.Angles(0, 0, math.rad(90))
         ring.Parent = root
         table.insert(AuraObjects, ring)
+
     elseif typ == 3 then
         local hl = Instance.new("Highlight")
         hl.Name = "SkyAuraGlow"
@@ -1828,6 +1927,7 @@ local function CreateAura(root)
         hl.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
         hl.Parent = root.Parent
         table.insert(AuraObjects, hl)
+
     elseif typ == 4 then
         local fire = Instance.new("Fire")
         fire.Name = "SkyAuraFire"
@@ -1837,12 +1937,14 @@ local function CreateAura(root)
         fire.SecondaryColor = Color3.fromRGB(255, 180, 0)
         fire.Parent = root
         table.insert(AuraObjects, fire)
+
     elseif typ == 5 then
         local spark = Instance.new("Sparkles")
         spark.Name = "SkyAuraSpark"
         spark.SparkleColor = T.Accent
         spark.Parent = root
         table.insert(AuraObjects, spark)
+
     elseif typ == 6 then
         local e = Instance.new("ParticleEmitter")
         e.Name = "SkyAuraRainbow"
@@ -1898,7 +2000,7 @@ task.spawn(function()
     ClearAura()
 end)
 
--- FPS / Ping / Third Person / FOV
+-- Cập nhật FPS & Ping + Third Person
 local fpsFrames = 0
 local lastFpsTime = tick()
 local oldMinZoom, oldMaxZoom = nil, nil
@@ -1975,6 +2077,15 @@ CloseBtn.MouseButton1Click:Connect(function()
     S.Aura = false
     S.ThirdPerson = false
     S.FOVEnabled = false
+
+    -- Khôi phục tool grip trước khi thoát
+    if ToolSpinState.tool and ToolSpinState.originalGrip then
+        pcall(function() ToolSpinState.tool.Grip = ToolSpinState.originalGrip end)
+    end
+    ToolSpinState.tool = nil
+    ToolSpinState.originalGrip = nil
+    ToolSpinState.angle = 0
+
     RestoreMovement()
     ClearAura()
     for p, _ in pairs(ESP2D) do

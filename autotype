@@ -329,7 +329,7 @@ local MiniBtn = New("ImageButton", {
     Position = Main.Position,
     BackgroundColor3 = T.Accent,
     BorderSizePixel = 0,
-    Image = "rbxassetid://6403436082", -- logo mini user chọn
+    Image = "rbxassetid://9657394390", -- Anya (anime)
     ImageColor3 = Color3.new(1, 1, 1),
     ScaleType = Enum.ScaleType.Fit,
     Visible = false,
@@ -956,13 +956,7 @@ Toggle(SetPage, "Fix Lag (giảm lag)", S.FixLag, function(v)
 end)
 
 Section(SetPage, "ẨN TÊN")
-Toggle(SetPage, "Ẩn tên người chơi (đổi thành Lucacdz)", S.HideName, function(v)
-    S.HideName = v
-    if v then
-        -- Quét ngay lập tức 1 lần rồi giữ (không loop)
-        task.spawn(SpoofNames)
-    end
-end)
+Toggle(SetPage, "Ẩn tên người chơi (đổi thành Lucacdz)", S.HideName, function(v) S.HideName = v end)
 
 Section(SetPage, "GHI CHÚ")
 local NoteFrame = ItemFrame(SetPage, 50)
@@ -1366,49 +1360,35 @@ local function UpdateESP2D()
 end
 
 -- ===== ẨN TÊN TOÀN GAME =====
--- Quét 1 lần ngay lập tức khi bật, thu thập tất cả tên rồi thay thế, giữ kết quả (không check liên tục → fix lag)
 local function SpoofNames()
     if not S.HideName then return end
-
-    -- Thu thập tên trước
-    local namesToReplace = {}
     for _, p in ipairs(Players:GetPlayers()) do
         if p ~= LocalPlayer then
-            table.insert(namesToReplace, p.Name)
-            if p.DisplayName and p.DisplayName ~= p.Name then
-                table.insert(namesToReplace, p.DisplayName)
-            end
-        end
-    end
-
-    if #namesToReplace == 0 then return end
-
-    local function scan(obj)
-        if obj:IsA("TextLabel") or obj:IsA("TextButton") or obj:IsA("TextBox") then
-            local text = obj.Text
-            if text and text ~= "" then
-                local newText = text
-                for _, name in ipairs(namesToReplace) do
-                    if newText:find(name, 1, true) then
-                        newText = newText:gsub(name, "Lucacdz")
+            local realName = p.Name
+            local display = p.DisplayName
+            -- Scan PlayerGui and other GUIs for texts containing the name
+            local function scan(obj)
+                if obj:IsA("TextLabel") or obj:IsA("TextButton") or obj:IsA("TextBox") then
+                    if obj.Text and (obj.Text:find(realName, 1, true) or (display ~= realName and obj.Text:find(display, 1, true))) then
+                        obj.Text = obj.Text:gsub(realName, "Lucacdz"):gsub(display, "Lucacdz")
                     end
                 end
-                if newText ~= text then
-                    obj.Text = newText
+                for _, child in ipairs(obj:GetChildren()) do
+                    pcall(scan, child)
                 end
             end
-        end
-        for _, child in ipairs(obj:GetChildren()) do
-            pcall(scan, child)
+            pcall(function() scan(LocalPlayer.PlayerGui) end)
+            pcall(function() scan(game:GetService("CoreGui")) end)
         end
     end
-
-    -- Quét 1 lần PlayerGui + CoreGui
-    pcall(function() scan(LocalPlayer.PlayerGui) end)
-    pcall(function() scan(game:GetService("CoreGui")) end)
 end
 
--- Được gọi 1 lần từ toggle khi bật
+task.spawn(function()
+    while Gui.Parent do
+        pcall(SpoofNames)
+        task.wait(0.1)
+    end
+end)
 
 -- ===== TỰ ĐỘNG LƯU =====
 task.spawn(function()

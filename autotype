@@ -114,6 +114,165 @@ local S = {
     CameraFOV = 70,
 }
 
+-- ===== NGÔN NGỮ =====
+S.Lang = S.Lang or "vi"
+
+local Lang = {
+    vi = {
+        main = "CHÍNH",
+        aim_on = "Bật Aim",
+        auto_off = "Tự tắt khi mục tiêu chết",
+        aim_part = "Vị trí nhắm",
+        head = "Đầu", body = "Thân",
+        priority = "Ưu tiên mục tiêu",
+        near_center = "Gần tâm", nearest = "Gần nhất", farthest = "Xa nhất", low_hp = "Ít máu",
+        aim_full = "Aim full (ngoài cả vòng FOV)",
+        fov_circle = "VÒNG FOV",
+        show_circle = "Hiện vòng FOV",
+        fov_radius = "Bán kính FOV",
+        thickness = "Độ dày viền",
+        circle_color = "Màu vòng tròn",
+        advanced = "NÂNG CAO",
+        smooth = "Độ mượt",
+        max_dist = "Khoảng cách tối đa",
+        ignore_team = "Bỏ qua đồng đội",
+        wall_check = "Kiểm tra vật cản (wall check)",
+        esp_on = "Bật ESP",
+        chams = "Viền sáng (Highlight)",
+        fill_trans = "Độ trong suốt phần tô",
+        info_section = "THÔNG TIN",
+        show_name = "Hiện tên",
+        show_dist = "Hiện khoảng cách",
+        show_hp = "Hiện máu",
+        text_size = "Cỡ chữ",
+        box_esp = "BOX ESP (CS:GO style)",
+        show_box = "Hiện Box Hitbox",
+        show_hpbar = "Hiện thanh máu",
+        show_tracer = "Hiện tia (từ trên màn hình)",
+        color_section = "MÀU SẮC",
+        esp_color = "Màu ESP",
+        team_color = "Màu theo đội",
+        move_jump = "NHẢY",
+        inf_jump = "Nhảy vô hạn (Infinite Jump)",
+        jump_power_on = "Chỉnh sức mạnh nhảy",
+        jump_power = "Sức mạnh nhảy",
+        move_section = "DI CHUYỂN",
+        speed_on = "Chỉnh tốc độ di chuyển",
+        speed = "Tốc độ",
+        noclip = "Noclip (xuyên tường)",
+        spin_section = "SPIN",
+        spin_on = "Xoay tròn (Spin)",
+        spin_speed = "Tốc độ xoay",
+        fake_lag = "FAKE LAG",
+        fake_lag_on = "Fake High Ping / Lag",
+        lag_delay = "Độ trễ (ms)",
+        swim = "BƠI",
+        swim_on = "Bơi (Swim)",
+        tool_section = "VẬT PHẨM",
+        tool_spin = "Xoay vật phẩm cầm tay (client)",
+        tool_spin_speed = "Tốc độ xoay vật phẩm",
+        aura_section = "AURA",
+        aura_on = "Bật Aura",
+        aura_type = "Kiểu Aura",
+        camera_section = "CAMERA",
+        third_person = "Góc nhìn thứ 3",
+        zoom_dist = "Khoảng cách zoom",
+        fov_on = "Bật chỉnh FOV",
+        camera_fov = "FOV Camera",
+        save_section = "LƯU / XÓA",
+        auto_save = "Tự động lưu khi thay đổi",
+        save_now = "Lưu cấu hình ngay",
+        delete_cfg = "Xóa cấu hình (về mặc định)",
+        perf_section = "HIỆU NĂNG",
+        fix_lag = "Fix Lag (giảm lag)",
+        hide_name_section = "ẨN TÊN",
+        hide_name = "Ẩn tên người chơi (đổi thành Lucacdz)",
+        note_section = "GHI CHÚ",
+        note = "Fix Lag: tắt bóng, giảm chất lượng đồ họa.\nẨn tên: mọi chỗ hiện tên người khác sẽ thành Lucacdz.",
+        lang_section = "NGÔN NGỮ",
+        language = "Ngôn ngữ",
+    },
+    en = {
+        main = "MAIN",
+        aim_on = "Enable Aim",
+        auto_off = "Auto off when target dies",
+        aim_part = "Aim Part",
+        head = "Head", body = "Body",
+        priority = "Target Priority",
+        near_center = "Near Center", nearest = "Nearest", farthest = "Farthest", low_hp = "Lowest HP",
+        aim_full = "Aim full (outside FOV too)",
+        fov_circle = "FOV CIRCLE",
+        show_circle = "Show FOV Circle",
+        fov_radius = "FOV Radius",
+        thickness = "Thickness",
+        circle_color = "Circle Color",
+        advanced = "ADVANCED",
+        smooth = "Smoothness",
+        max_dist = "Max Distance",
+        ignore_team = "Ignore Team",
+        wall_check = "Wall Check",
+        esp_on = "Enable ESP",
+        chams = "Highlight (Chams)",
+        fill_trans = "Fill Transparency",
+        info_section = "INFO",
+        show_name = "Show Name",
+        show_dist = "Show Distance",
+        show_hp = "Show HP",
+        text_size = "Text Size",
+        box_esp = "BOX ESP (CS:GO style)",
+        show_box = "Show Box",
+        show_hpbar = "Show Health Bar",
+        show_tracer = "Show Tracer (from top)",
+        color_section = "COLOR",
+        esp_color = "ESP Color",
+        team_color = "Team Color",
+        move_jump = "JUMP",
+        inf_jump = "Infinite Jump",
+        jump_power_on = "Custom Jump Power",
+        jump_power = "Jump Power",
+        move_section = "MOVEMENT",
+        speed_on = "Custom Speed",
+        speed = "Speed",
+        noclip = "Noclip",
+        spin_section = "SPIN",
+        spin_on = "Spin",
+        spin_speed = "Spin Speed",
+        fake_lag = "FAKE LAG",
+        fake_lag_on = "Fake High Ping / Lag",
+        lag_delay = "Delay (ms)",
+        swim = "SWIM",
+        swim_on = "Swim",
+        tool_section = "TOOLS",
+        tool_spin = "Spin Held Tool (client)",
+        tool_spin_speed = "Tool Spin Speed",
+        aura_section = "AURA",
+        aura_on = "Enable Aura",
+        aura_type = "Aura Type",
+        camera_section = "CAMERA",
+        third_person = "Third Person",
+        zoom_dist = "Zoom Distance",
+        fov_on = "Enable FOV Override",
+        camera_fov = "Camera FOV",
+        save_section = "SAVE / DELETE",
+        auto_save = "Auto save on change",
+        save_now = "Save config now",
+        delete_cfg = "Delete config (reset)",
+        perf_section = "PERFORMANCE",
+        fix_lag = "Fix Lag",
+        hide_name_section = "HIDE NAME",
+        hide_name = "Hide player names (to Lucacdz)",
+        note_section = "NOTE",
+        note = "Fix Lag: disables shadows, lowers graphics quality.\nHide Name: all other player names become Lucacdz.",
+        lang_section = "LANGUAGE",
+        language = "Language",
+    }
+}
+
+local function Txt(key)
+    local t = Lang[S.Lang] or Lang.vi
+    return t[key] or key
+end
+
 -- ===== LƯU / TẢI CẤU HÌNH =====
 local CONFIG_FILE = "SkyHubPro.json"
 local CanSave = typeof(writefile) == "function" and typeof(readfile) == "function" and typeof(isfile) == "function"
@@ -236,7 +395,7 @@ if not parented then
 end
 
 -- ===== CHỌN NGÔN NGỮ LẦN ĐẦU =====
-local NeedLangSelect = not ConfigLoaded or S.Lang == nil
+local NeedLangSelect = not ConfigLoaded or not S.Lang
 if NeedLangSelect then
     local LangGui = New("Frame", {
         Size = UDim2.new(0, 280, 0, 160),
@@ -288,7 +447,6 @@ if NeedLangSelect then
         if chosen then return end
         chosen = true
         S.Lang = lang
-        -- Lưu ngay để lần sau không hỏi lại
         if CanSave then
             pcall(function()
                 local json = EncodeConfig()
@@ -302,7 +460,6 @@ if NeedLangSelect then
     viBtn.MouseButton1Click:Connect(function() ChooseLang("vi") end)
     enBtn.MouseButton1Click:Connect(function() ChooseLang("en") end)
 
-    -- Chờ người dùng chọn
     while not chosen and Gui.Parent do
         task.wait(0.1)
     end
@@ -855,20 +1012,20 @@ end
 -- ===== TAB AIM =====
 local AimSet
 
-Section(AimPage, "CHÍNH")
-AimSet = Toggle(AimPage, "Bật Aim", S.Aim, function(v) S.Aim = v end)
-Toggle(AimPage, "Tự tắt khi mục tiêu chết", S.AutoOff, function(v) S.AutoOff = v end)
-Choice(AimPage, "Vị trí nhắm", {"Đầu", "Thân"}, S.AimPartIdx, function(i, opt)
+Section(AimPage, Txt("main"))
+AimSet = Toggle(AimPage, Txt("aim_on"), S.Aim, function(v) S.Aim = v end)
+Toggle(AimPage, Txt("auto_off"), S.AutoOff, function(v) S.AutoOff = v end)
+Choice(AimPage, Txt("aim_part"), {Txt("head"), Txt("body")}, S.AimPartIdx, function(i, opt)
     S.AimPartIdx = i
-    S.AimPart = (opt == "Đầu") and "Head" or "HumanoidRootPart"
+    S.AimPart = (opt == Txt("head")) and "Head" or "HumanoidRootPart"
 end)
-Choice(AimPage, "Ưu tiên mục tiêu", {"Gần tâm", "Gần nhất", "Xa nhất", "Ít máu"}, S.AimMode, function(i)
+Choice(AimPage, Txt("priority"), {Txt("near_center"), Txt("nearest"), Txt("farthest"), Txt("low_hp")}, S.AimMode, function(i)
     S.AimMode = i
 end)
-Toggle(AimPage, "Aim full (ngoài cả vòng FOV)", S.AimFull, function(v) S.AimFull = v end)
+Toggle(AimPage, Txt("aim_full"), S.AimFull, function(v) S.AimFull = v end)
 
-Section(AimPage, "VÒNG FOV")
-Toggle(AimPage, "Hiện vòng FOV", S.ShowCircle, function(v) S.ShowCircle = v end)
+Section(AimPage, Txt("fov_circle"))
+Toggle(AimPage, Txt("show_circle"), S.ShowCircle, function(v) S.ShowCircle = v end)
 Slider(AimPage, "Bán kính FOV", 40, 400, S.FOV, 5, nil, function(v)
     S.FOV = v
     Circle.Size = UDim2.new(0, v * 2, 0, v * 2)
@@ -883,85 +1040,85 @@ Palette(AimPage, "Màu vòng tròn", S.CircleIdx, function(c, i)
     CircleStroke.Color = c
 end)
 
-Section(AimPage, "NÂNG CAO")
+Section(AimPage, Txt("advanced"))
 Slider(AimPage, "Độ mượt", 0, 95, S.Smooth, 5, function(v) return v .. "%" end, function(v)
     S.Smooth = v
 end)
 Slider(AimPage, "Khoảng cách tối đa", 50, 2000, S.AimDist, 50, function(v) return v .. "m" end, function(v)
     S.AimDist = v
 end)
-Toggle(AimPage, "Bỏ qua đồng đội", S.AimTeam, function(v) S.AimTeam = v end)
-Toggle(AimPage, "Kiểm tra vật cản (wall check)", S.WallCheck, function(v) S.WallCheck = v end)
+Toggle(AimPage, Txt("ignore_team"), S.AimTeam, function(v) S.AimTeam = v end)
+Toggle(AimPage, Txt("wall_check"), S.WallCheck, function(v) S.WallCheck = v end)
 
 -- ===== TAB ESP =====
-Section(ESPPage, "CHÍNH")
-Toggle(ESPPage, "Bật ESP", S.ESP, function(v) S.ESP = v end)
-Toggle(ESPPage, "Viền sáng (Highlight)", S.Chams, function(v) S.Chams = v end)
+Section(ESPPage, Txt("main"))
+Toggle(ESPPage, Txt("esp_on"), S.ESP, function(v) S.ESP = v end)
+Toggle(ESPPage, Txt("chams"), S.Chams, function(v) S.Chams = v end)
 Slider(ESPPage, "Độ trong suốt phần tô", 0, 1, S.ChamsFill, 0.1, function(v)
     return string.format("%.1f", v)
 end, function(v) S.ChamsFill = v end)
 
-Section(ESPPage, "THÔNG TIN")
-Toggle(ESPPage, "Hiện tên", S.ShowName, function(v) S.ShowName = v end)
-Toggle(ESPPage, "Hiện khoảng cách", S.ShowDist, function(v) S.ShowDist = v end)
-Toggle(ESPPage, "Hiện máu", S.ShowHP, function(v) S.ShowHP = v end)
+Section(ESPPage, Txt("info_section"))
+Toggle(ESPPage, Txt("show_name"), S.ShowName, function(v) S.ShowName = v end)
+Toggle(ESPPage, Txt("show_dist"), S.ShowDist, function(v) S.ShowDist = v end)
+Toggle(ESPPage, Txt("show_hp"), S.ShowHP, function(v) S.ShowHP = v end)
 Slider(ESPPage, "Cỡ chữ", 10, 22, S.TextSize, 1, nil, function(v) S.TextSize = v end)
 
-Section(ESPPage, "BOX ESP (CS:GO style)")
-Toggle(ESPPage, "Hiện Box Hitbox", S.ShowBox, function(v) S.ShowBox = v end)
-Toggle(ESPPage, "Hiện thanh máu", S.ShowHealthBar, function(v) S.ShowHealthBar = v end)
-Toggle(ESPPage, "Hiện tia (từ trên màn hình)", S.ShowTracer, function(v) S.ShowTracer = v end)
+Section(ESPPage, Txt("box_esp"))
+Toggle(ESPPage, Txt("show_box"), S.ShowBox, function(v) S.ShowBox = v end)
+Toggle(ESPPage, Txt("show_hpbar"), S.ShowHealthBar, function(v) S.ShowHealthBar = v end)
+Toggle(ESPPage, Txt("show_tracer"), S.ShowTracer, function(v) S.ShowTracer = v end)
 
-Section(ESPPage, "MÀU SẮC")
+Section(ESPPage, Txt("color_section"))
 Palette(ESPPage, "Màu ESP", S.ESPIdx, function(c, i)
     S.ESPIdx = i
     S.ESPColor = c
 end)
-Toggle(ESPPage, "Màu theo đội", S.ESPTeamColor, function(v) S.ESPTeamColor = v end)
+Toggle(ESPPage, Txt("team_color"), S.ESPTeamColor, function(v) S.ESPTeamColor = v end)
 
-Section(ESPPage, "NÂNG CAO")
+Section(ESPPage, Txt("advanced"))
 Slider(ESPPage, "Khoảng cách tối đa", 50, 3000, S.ESPDist, 50, function(v) return v .. "m" end, function(v)
     S.ESPDist = v
 end)
-Toggle(ESPPage, "Bỏ qua đồng đội", S.ESPTeam, function(v) S.ESPTeam = v end)
+Toggle(ESPPage, Txt("ignore_team"), S.ESPTeam, function(v) S.ESPTeam = v end)
 
 -- ===== TAB MOVEMENT =====
-Section(MovePage, "NHẢY")
-Toggle(MovePage, "Nhảy vô hạn (Infinite Jump)", S.InfJump, function(v) S.InfJump = v end)
-Toggle(MovePage, "Chỉnh sức mạnh nhảy", S.JumpOn, function(v) S.JumpOn = v end)
+Section(MovePage, Txt("move_jump"))
+Toggle(MovePage, Txt("inf_jump"), S.InfJump, function(v) S.InfJump = v end)
+Toggle(MovePage, Txt("jump_power_on"), S.JumpOn, function(v) S.JumpOn = v end)
 Slider(MovePage, "Sức mạnh nhảy", 50, 500, S.JumpPower, 10, nil, function(v) S.JumpPower = v end)
 
-Section(MovePage, "DI CHUYỂN")
-Toggle(MovePage, "Chỉnh tốc độ di chuyển", S.SpeedOn, function(v) S.SpeedOn = v end)
+Section(MovePage, Txt("move_section"))
+Toggle(MovePage, Txt("speed_on"), S.SpeedOn, function(v) S.SpeedOn = v end)
 Slider(MovePage, "Tốc độ", 16, 300, S.Speed, 2, nil, function(v) S.Speed = v end)
-Toggle(MovePage, "Noclip (xuyên tường)", S.Noclip, function(v) S.Noclip = v end)
+Toggle(MovePage, Txt("noclip"), S.Noclip, function(v) S.Noclip = v end)
 
-Section(MovePage, "SPIN")
-Toggle(MovePage, "Xoay tròn (Spin)", S.Spin, function(v) S.Spin = v end)
+Section(MovePage, Txt("spin_section"))
+Toggle(MovePage, Txt("spin_on"), S.Spin, function(v) S.Spin = v end)
 Slider(MovePage, "Tốc độ xoay", 200, 20000, S.SpinSpeed, 200, function(v) return v .. "°/s" end, function(v) S.SpinSpeed = v end)
 
-Section(MovePage, "FAKE LAG")
-Toggle(MovePage, "Fake High Ping / Lag", S.FakeLag, function(v) S.FakeLag = v end)
+Section(MovePage, Txt("fake_lag"))
+Toggle(MovePage, Txt("fake_lag_on"), S.FakeLag, function(v) S.FakeLag = v end)
 Slider(MovePage, "Độ trễ (ms)", 50, 500, S.FakeLagDelay, 10, function(v) return v .. " ms" end, function(v) S.FakeLagDelay = v end)
 
-Section(MovePage, "BƠI")
-Toggle(MovePage, "Bơi (Swim)", S.Swim, function(v) S.Swim = v end)
+Section(MovePage, Txt("swim"))
+Toggle(MovePage, Txt("swim_on"), S.Swim, function(v) S.Swim = v end)
 
 -- ===== TAB MOD =====
-Section(ModPage, "VẬT PHẨM")
-Toggle(ModPage, "Xoay vật phẩm cầm tay (client)", S.ToolSpin, function(v) S.ToolSpin = v end)
+Section(ModPage, Txt("tool_section"))
+Toggle(ModPage, Txt("tool_spin"), S.ToolSpin, function(v) S.ToolSpin = v end)
 Slider(ModPage, "Tốc độ xoay vật phẩm", 200, 5000, S.ToolSpinSpeed, 100, function(v) return v .. "°/s" end, function(v) S.ToolSpinSpeed = v end)
 
-Section(ModPage, "AURA")
-Toggle(ModPage, "Bật Aura", S.Aura, function(v) S.Aura = v end)
+Section(ModPage, Txt("aura_section"))
+Toggle(ModPage, Txt("aura_on"), S.Aura, function(v) S.Aura = v end)
 Choice(ModPage, "Kiểu Aura", {"Particle", "Ring", "Glow", "Fire", "Sparkle", "Rainbow"}, S.AuraType, function(i)
     S.AuraType = i
 end)
 
-Section(ModPage, "CAMERA")
-Toggle(ModPage, "Góc nhìn thứ 3", S.ThirdPerson, function(v) S.ThirdPerson = v end)
+Section(ModPage, Txt("camera_section"))
+Toggle(ModPage, Txt("third_person"), S.ThirdPerson, function(v) S.ThirdPerson = v end)
 Slider(ModPage, "Khoảng cách zoom", 5, 50, S.ThirdZoom, 1, function(v) return v .. " studs" end, function(v) S.ThirdZoom = v end)
-Toggle(ModPage, "Bật chỉnh FOV", S.FOVEnabled, function(v) S.FOVEnabled = v end)
+Toggle(ModPage, Txt("fov_on"), S.FOVEnabled, function(v) S.FOVEnabled = v end)
 Slider(ModPage, "FOV Camera", 10, 120, S.CameraFOV, 1, function(v) return tostring(v) .. "°" end, function(v) S.CameraFOV = v end)
 
 -- ===== TAB CẤU HÌNH =====
@@ -990,15 +1147,15 @@ else
     SetStatus("Chưa có cấu hình đã lưu, đang dùng mặc định.")
 end
 
-Section(CfgPage, "LƯU / XÓA")
-local AutoSaveSet = Toggle(CfgPage, "Tự động lưu khi thay đổi", S.AutoSave, function(v) S.AutoSave = v end)
+Section(CfgPage, Txt("save_section"))
+local AutoSaveSet = Toggle(CfgPage, Txt("auto_save"), S.AutoSave, function(v) S.AutoSave = v end)
 
-Button(CfgPage, "Lưu cấu hình ngay", T.Accent, function()
+Button(CfgPage, Txt("save_now"), T.Accent, function()
     local _, msg = SaveConfig()
     SetStatus(msg)
 end)
 
-Button(CfgPage, "Xóa cấu hình (về mặc định)", Color3.fromRGB(200, 60, 70), function()
+Button(CfgPage, Txt("delete_cfg"), Color3.fromRGB(200, 60, 70), function()
     if not CanSave or typeof(delfile) ~= "function" then
         SetStatus("Executor không hỗ trợ xóa file.")
         return
@@ -1011,8 +1168,8 @@ Button(CfgPage, "Xóa cấu hình (về mặc định)", Color3.fromRGB(200, 60,
 end)
 
 -- ===== TAB SETTINGS =====
-Section(SetPage, "HIỆU NĂNG")
-Toggle(SetPage, "Fix Lag (giảm lag)", S.FixLag, function(v)
+Section(SetPage, Txt("perf_section"))
+Toggle(SetPage, Txt("fix_lag"), S.FixLag, function(v)
     S.FixLag = v
     if v then
         pcall(function()
@@ -1029,15 +1186,15 @@ Toggle(SetPage, "Fix Lag (giảm lag)", S.FixLag, function(v)
     end
 end)
 
-Section(SetPage, "ẨN TÊN")
-Toggle(SetPage, "Ẩn tên người chơi (đổi thành Lucacdz)", S.HideName, function(v) S.HideName = v end)
+Section(SetPage, Txt("hide_name_section"))
+Toggle(SetPage, Txt("hide_name"), S.HideName, function(v) S.HideName = v end)
 
-Section(SetPage, "NGÔN NGỮ")
-Choice(SetPage, "Ngôn ngữ / Language", {"Tiếng Việt", "English"}, (S.Lang == "en") and 2 or 1, function(i)
+Section(SetPage, Txt("lang_section"))
+Choice(SetPage, Txt("language"), {"Tiếng Việt", "English"}, (S.Lang == "en") and 2 or 1, function(i)
     local newLang = (i == 2) and "en" or "vi"
     if newLang ~= S.Lang then
         S.Lang = newLang
-        if CanSave and S.AutoSave then
+        if CanSave then
             pcall(function()
                 local json = EncodeConfig()
                 writefile(CONFIG_FILE, json)
@@ -1047,13 +1204,13 @@ Choice(SetPage, "Ngôn ngữ / Language", {"Tiếng Việt", "English"}, (S.Lang
     end
 end)
 
-Section(SetPage, "GHI CHÚ")
+Section(SetPage, Txt("note_section"))
 local NoteFrame = ItemFrame(SetPage, 50)
 New("TextLabel", {
     Size = UDim2.new(1, -20, 1, 0),
     Position = UDim2.new(0, 10, 0, 0),
     BackgroundTransparency = 1,
-    Text = "Fix Lag: tắt bóng, giảm chất lượng đồ họa.\nẨn tên: mọi chỗ hiện tên người khác sẽ thành Lucacdz.",
+    Text = Txt("note"),
     TextColor3 = T.Sub,
     Font = Enum.Font.Gotham,
     TextSize = 12,

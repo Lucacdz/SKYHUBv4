@@ -66,6 +66,13 @@ local S = {
     FakeLag = false, FakeLagDelay = 150, Swim = false,
     ToolSpin = false, ToolSpinSpeed = 800, Aura = false, AuraType = 1,
     ThirdPerson = false, ThirdZoom = 12, FOVEnabled = false, CameraFOV = 70,
+    -- Teleport
+    Teleport = false,
+    TPBackDelay = 80,
+    TPDelay = 200,
+    TPMaxDist = 500,
+    TPMode = 1,
+    TPTeam = false,
 }
 
 -- ===== NGÔN NGỮ =====
@@ -112,6 +119,10 @@ local Lang = {
         no_saved = "Chưa có cấu hình đã lưu, đang dùng mặc định.",
         no_delete = "Executor không hỗ trợ xóa file.",
         deleted = "Đã xóa cấu hình và tắt tự động lưu. Chạy lại script để dùng mặc định.",
+        tp_section = "TELEPORT", tp_on = "Teleport đến địch rồi về",
+        tp_mode = "Chọn mục tiêu TP", tp_nearest = "Gần nhất", tp_center = "Gần tâm",
+        tp_max_dist = "Khoảng cách tối đa TP", tp_hold = "Đứng cạnh địch (ms)",
+        tp_delay = "Delay giữa các lần (ms)", tp_team = "Bỏ qua đồng đội (TP)",
     },
     en = {
         main = "MAIN", aim_on = "Enable Aim", auto_off = "Auto off when target dies",
@@ -153,6 +164,10 @@ local Lang = {
         no_saved = "No saved config, using defaults.",
         no_delete = "Executor does not support file deletion.",
         deleted = "Config deleted and auto-save disabled. Restart script to use defaults.",
+        tp_section = "TELEPORT", tp_on = "Teleport to enemy and back",
+        tp_mode = "TP Target Mode", tp_nearest = "Nearest", tp_center = "Near Center",
+        tp_max_dist = "Max TP Distance", tp_hold = "Hold near enemy (ms)",
+        tp_delay = "Delay between loops (ms)", tp_team = "Ignore Team (TP)",
     }
 }
 
@@ -177,6 +192,7 @@ local function EncodeConfig()
     data.Aim = false; data.AimFull = false; data.Spin = false; data.Noclip = false
     data.FakeLag = false; data.ToolSpin = false; data.Aura = false; data.Swim = false
     data.ThirdPerson = false; data.FOVEnabled = false
+    data.Teleport = false
     return HttpService:JSONEncode(data)
 end
 
@@ -207,12 +223,14 @@ local function LoadConfig()
         S.AimPartIdx = math.clamp(math.floor(S.AimPartIdx), 1, 2)
         S.AimMode = math.clamp(math.floor(S.AimMode), 1, 4)
         S.AuraType = math.clamp(math.floor(S.AuraType or 1), 1, 6)
+        S.TPMode = math.clamp(math.floor(S.TPMode or 1), 1, 2)
         S.CircleColor = PaletteColors[S.CircleIdx]
         S.ESPColor = PaletteColors[S.ESPIdx]
         S.AimPart = (S.AimPartIdx == 1) and "Head" or "HumanoidRootPart"
         S.Aim = false; S.AimFull = false; S.Spin = false; S.Noclip = false
         S.FakeLag = false; S.ToolSpin = false; S.Aura = false; S.Swim = false
         S.ThirdPerson = false; S.FOVEnabled = false
+        S.Teleport = false
     end
     return ok
 end
@@ -556,6 +574,13 @@ local function NextOrder()
     return orderCounter
 end
 
+local TextRegistry = {}
+local function RegText(obj, key)
+    if obj and key then
+        table.insert(TextRegistry, {obj = obj, key = key})
+    end
+end
+
 local function Section(page, text, textKey)
     local lbl = New("TextLabel", {
         Size = UDim2.new(1,0,0,20), BackgroundTransparency = 1,
@@ -563,10 +588,7 @@ local function Section(page, text, textKey)
         TextSize = 11, TextXAlignment = Enum.TextXAlignment.Left,
         LayoutOrder = NextOrder(),
     }, page)
-    if textKey then
-        lbl:SetAttribute("StaticLabel", true)
-        lbl:SetAttribute("TextKey", textKey)
-    end
+    if textKey then RegText(lbl, textKey) end
     return lbl
 end
 
@@ -587,10 +609,7 @@ local function ItemLabel(parent, text, y, textKey)
         Font = Enum.Font.Gotham, TextSize = 13,
         TextXAlignment = Enum.TextXAlignment.Left,
     }, parent)
-    if textKey then
-        lbl:SetAttribute("StaticLabel", true)
-        lbl:SetAttribute("TextKey", textKey)
-    end
+    if textKey then RegText(lbl, textKey) end
     return lbl
 end
 
@@ -602,10 +621,7 @@ local function Toggle(page, text, def, cb, textKey)
         Font = Enum.Font.Gotham, TextSize = 13,
         TextXAlignment = Enum.TextXAlignment.Left,
     }, f)
-    if textKey then
-        lbl:SetAttribute("StaticLabel", true)
-        lbl:SetAttribute("TextKey", textKey)
-    end
+    if textKey then RegText(lbl, textKey) end
 
     local sw = New("Frame", {
         Size = UDim2.new(0,40,0,20), Position = UDim2.new(1,-50,0.5,-10),
@@ -734,7 +750,6 @@ local function Palette(page, text, defIdx, cb, textKey)
     cb(PaletteColors[defIdx], defIdx)
 end
 
--- ⭐ Choice: label lấy từ Txt() mỗi lần build, đổi ngôn ngữ sẽ dịch được
 local function Choice(page, text, opts, defIdx, cb, textKey)
     local f = ItemFrame(page, 62)
     ItemLabel(f, text, 4, textKey)
@@ -756,10 +771,7 @@ local function Choice(page, text, opts, defIdx, cb, textKey)
             AutoButtonColor = false,
         }, f)
         Round(b, 6)
-        if opt.key then
-            b:SetAttribute("StaticLabel", true)
-            b:SetAttribute("TextKey", opt.key)
-        end
+        if opt.key then RegText(b, opt.key) end
         buttons[i] = b
         b.MouseButton1Click:Connect(function()
             render(i)
@@ -780,10 +792,7 @@ local function Button(page, text, color, cb, textKey)
         LayoutOrder = NextOrder(),
     }, page)
     Round(b, 8)
-    if textKey then
-        b:SetAttribute("StaticLabel", true)
-        b:SetAttribute("TextKey", textKey)
-    end
+    if textKey then RegText(b, textKey) end
     b.MouseButton1Click:Connect(function() cb(b) end)
     return b
 end
@@ -894,6 +903,25 @@ Slider(MovePage, "Độ trễ (ms)", 50, 500, S.FakeLagDelay, 10, function(v) re
 Section(MovePage, "BƠI", "swim")
 Toggle(MovePage, "Bơi (Swim)", S.Swim, function(v) S.Swim = v end, "swim_on")
 
+Section(MovePage, "TELEPORT", "tp_section")
+local TeleportSet = Toggle(MovePage, "Teleport đến địch rồi về", S.Teleport, function(v) S.Teleport = v end, "tp_on")
+Choice(MovePage, "Chọn mục tiêu TP", {
+    {key = "tp_nearest"},
+    {key = "tp_center"},
+}, S.TPMode, function(i)
+    S.TPMode = i
+end, "tp_mode")
+Slider(MovePage, "Khoảng cách tối đa TP", 20, 2000, S.TPMaxDist, 20, function(v) return v .. "m" end, function(v)
+    S.TPMaxDist = v
+end, "tp_max_dist")
+Slider(MovePage, "Đứng cạnh địch (ms)", 30, 500, S.TPBackDelay, 10, function(v) return v .. " ms" end, function(v)
+    S.TPBackDelay = v
+end, "tp_hold")
+Slider(MovePage, "Delay giữa các lần (ms)", 50, 2000, S.TPDelay, 50, function(v) return v .. " ms" end, function(v)
+    S.TPDelay = v
+end, "tp_delay")
+Toggle(MovePage, "Bỏ qua đồng đội (TP)", S.TPTeam, function(v) S.TPTeam = v end, "tp_team")
+
 -- ===== TAB MOD =====
 Section(ModPage, "VẬT PHẨM", "tool_section")
 Toggle(ModPage, "Xoay vật phẩm cầm tay (client)", S.ToolSpin, function(v) S.ToolSpin = v end, "tool_spin")
@@ -986,25 +1014,13 @@ Section(SetPage, Txt("lang_section"), "lang_section")
 local LangOptions = {"Tiếng Việt", "English"}
 local LangCodes = {"vi", "en"}
 
--- ⭐ ReloadText: cập nhật mọi label có StaticLabel
 local function ReloadText()
-    local function refreshObj(child)
-        if not (child:IsA("TextLabel") or child:IsA("TextButton") or child:IsA("TextBox")) then
-            return
+    local langTbl = Lang[S.Lang] or Lang.vi
+    for _, entry in ipairs(TextRegistry) do
+        local obj, key = entry.obj, entry.key
+        if obj and obj.Parent and key and langTbl[key] then
+            pcall(function() obj.Text = langTbl[key] end)
         end
-        if child:GetAttribute("StaticLabel") then
-            local key = child:GetAttribute("TextKey")
-            if key and Lang[S.Lang] and Lang[S.Lang][key] then
-                child.Text = Lang[S.Lang][key]
-            end
-        end
-    end
-    for _, pg in ipairs({AimPage, ESPPage, MovePage, ModPage, InfoPage, CfgPage, SetPage}) do
-        pcall(function()
-            for _, child in ipairs(pg:GetDescendants()) do
-                refreshObj(child)
-            end
-        end)
     end
 end
 
@@ -1047,6 +1063,8 @@ for i, opt in ipairs(LangOptions) do
     end)
 end
 renderLang(LangCurrent)
+
+pcall(ReloadText)
 
 -- ===== TAB INFO =====
 local PingVal, FpsVal
@@ -1558,7 +1576,6 @@ table.insert(Conns, UserInputService.JumpRequest:Connect(function()
     end
 end))
 
--- ⭐ Stepped: bắt tool equip ngay frame đầu, lưu grip gốc
 table.insert(Conns, RunService.Stepped:Connect(function()
     if not S.ToolSpin then return end
     local char = LocalPlayer.Character
@@ -1614,7 +1631,6 @@ table.insert(Conns, RunService.Heartbeat:Connect(function(dt)
         hum:ChangeState(Enum.HumanoidStateType.Swimming)
     end
 
-    -- ⭐ Tool Spin (FIXED v2: luôn xoay liên tục, giữ angle, tự phục hồi khi reset)
     if S.ToolSpin then
         local tool = char:FindFirstChildOfClass("Tool")
         if tool and tool:FindFirstChild("Handle") then
@@ -1625,13 +1641,7 @@ table.insert(Conns, RunService.Heartbeat:Connect(function(dt)
                 ToolSpinState.tool = tool
                 ToolSpinState.originalGrip = tool.Grip
             end
-
             ToolSpinState.angle = (ToolSpinState.angle + math.rad(S.ToolSpinSpeed * dt)) % (2 * math.pi)
-            local desiredGrip = ToolSpinState.originalGrip * CFrame.Angles(0, ToolSpinState.angle, 0)
-
-            pcall(function()
-                tool.Grip = desiredGrip
-            end)
         else
             if ToolSpinState.tool and ToolSpinState.originalGrip and ToolSpinState.tool.Parent then
                 pcall(function() ToolSpinState.tool.Grip = ToolSpinState.originalGrip end)
@@ -1647,6 +1657,28 @@ table.insert(Conns, RunService.Heartbeat:Connect(function(dt)
         ToolSpinState.originalGrip = nil
         ToolSpinState.angle = 0
     end
+end))
+
+table.insert(Conns, RunService.Stepped:Connect(function()
+    if not S.ToolSpin then return end
+    local char = LocalPlayer.Character
+    if not char then return end
+    local tool = char:FindFirstChildOfClass("Tool")
+    if not tool or ToolSpinState.tool ~= tool or not ToolSpinState.originalGrip then return end
+    pcall(function()
+        tool.Grip = ToolSpinState.originalGrip * CFrame.Angles(0, ToolSpinState.angle, 0)
+    end)
+end))
+
+table.insert(Conns, RunService.RenderStepped:Connect(function()
+    if not S.ToolSpin then return end
+    local char = LocalPlayer.Character
+    if not char then return end
+    local tool = char:FindFirstChildOfClass("Tool")
+    if not tool or ToolSpinState.tool ~= tool or not ToolSpinState.originalGrip then return end
+    pcall(function()
+        tool.Grip = ToolSpinState.originalGrip * CFrame.Angles(0, ToolSpinState.angle, 0)
+    end)
 end))
 
 table.insert(Conns, RunService.Stepped:Connect(function()
@@ -1846,12 +1878,125 @@ task.spawn(function()
     end
 end)
 
+-- ===== TELEPORT =====
+local TPState = {
+    originalCFrame = nil,
+    running = false,
+    lastChar = nil,
+}
+
+local function GetTPTarget()
+    local best, bestScore = nil, math.huge
+    local vp = Camera.ViewportSize
+    local center = Vector2.new(vp.X / 2, vp.Y / 2)
+    local myChar = LocalPlayer.Character
+    local myRoot = myChar and myChar:FindFirstChild("HumanoidRootPart")
+    if not myRoot then return nil end
+    local myPos = myRoot.Position
+
+    for _, p in ipairs(Players:GetPlayers()) do
+        if p ~= LocalPlayer and p.Character and IsAlive(p.Character) then
+            if not (S.TPTeam and IsTeammate(p)) then
+                local root = p.Character:FindFirstChild("HumanoidRootPart")
+                if root then
+                    local dist = (root.Position - myPos).Magnitude
+                    if dist <= S.TPMaxDist then
+                        local score
+                        if S.TPMode == 2 then
+                            local pos, onScreen = Camera:WorldToViewportPoint(root.Position)
+                            if not onScreen or pos.Z <= 0 then continue end
+                            score = (Vector2.new(pos.X, pos.Y) - center).Magnitude
+                        else
+                            score = dist
+                        end
+                        if score < bestScore then
+                            bestScore = score
+                            best = root
+                        end
+                    end
+                end
+            end
+        end
+    end
+    return best
+end
+
+local function StopTeleport()
+    TPState.running = false
+    if TPState.originalCFrame then
+        local char = LocalPlayer.Character
+        local root = char and char:FindFirstChild("HumanoidRootPart")
+        if root then
+            pcall(function() root.CFrame = TPState.originalCFrame end)
+        end
+    end
+    TPState.originalCFrame = nil
+end
+
+task.spawn(function()
+    while Gui.Parent do
+        task.wait(0.1)
+        if not S.Teleport then
+            if TPState.running then StopTeleport() end
+            TPState.lastChar = nil
+            continue
+        end
+
+        local char = LocalPlayer.Character
+        local hum = char and char:FindFirstChildOfClass("Humanoid")
+        local root = char and char:FindFirstChild("HumanoidRootPart")
+        if not char or not hum or not root or hum.Health <= 0 then
+            if TPState.running then StopTeleport() end
+            TPState.lastChar = nil
+            continue
+        end
+
+        if TPState.lastChar ~= char then
+            TPState.lastChar = char
+            TPState.originalCFrame = nil
+            TPState.running = false
+        end
+
+        local target = GetTPTarget()
+        if not target then
+            if TPState.running then StopTeleport() end
+            continue
+        end
+
+        if not TPState.originalCFrame then
+            TPState.originalCFrame = root.CFrame
+        end
+
+        TPState.running = true
+
+        local targetPos = target.Position
+        local offset = (root.Position - targetPos).Unit * 3
+        if offset.Magnitude < 0.1 then offset = Vector3.new(0, 0, 3) end
+        local tpPos = targetPos + offset + Vector3.new(0, 1, 0)
+
+        pcall(function()
+            root.CFrame = CFrame.new(tpPos, targetPos)
+        end)
+
+        task.wait(S.TPBackDelay / 1000)
+
+        if TPState.originalCFrame then
+            pcall(function()
+                root.CFrame = TPState.originalCFrame
+            end)
+        end
+
+        task.wait(S.TPDelay / 1000)
+    end
+end)
+
 -- Nút đóng hẳn
 CloseBtn.MouseButton1Click:Connect(function()
     S.Aim = false; S.AimFull = false; S.InfJump = false; S.Noclip = false
     S.Spin = false; S.SpeedOn = false; S.JumpOn = false; S.FakeLag = false
     S.Swim = false; S.ToolSpin = false; S.Aura = false
     S.ThirdPerson = false; S.FOVEnabled = false
+    S.Teleport = false
 
     if ToolSpinState.tool and ToolSpinState.originalGrip then
         pcall(function() ToolSpinState.tool.Grip = ToolSpinState.originalGrip end)
@@ -1860,6 +2005,7 @@ CloseBtn.MouseButton1Click:Connect(function()
     ToolSpinState.originalGrip = nil
     ToolSpinState.angle = 0
 
+    StopTeleport()
     RestoreMovement()
     ClearAura()
     for p, _ in pairs(ESP2D) do ClearESP2D(p) end

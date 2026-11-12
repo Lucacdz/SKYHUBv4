@@ -294,7 +294,7 @@ local Logo = New("ImageLabel", {
     Size = UDim2.new(0, 32, 0, 32),
     Position = UDim2.new(0, 10, 0.5, -16),
     BackgroundTransparency = 1,
-    Image = "rbxassetid://10709761813", -- aperture icon
+    Image = "rbxassetid://10709761813", -- aperture icon (public Lucide)
     ImageColor3 = T.Accent,
     ScaleType = Enum.ScaleType.Fit,
 }, Header)
@@ -329,7 +329,7 @@ local MiniBtn = New("ImageButton", {
     Position = Main.Position,
     BackgroundColor3 = T.Accent,
     BorderSizePixel = 0,
-    Image = "rbxassetid://9657394390", -- Anya (anime)
+    Image = "rbxassetid://10709752996", -- alert-circle icon (khác)
     ImageColor3 = Color3.new(1, 1, 1),
     ScaleType = Enum.ScaleType.Fit,
     Visible = false,
@@ -1386,7 +1386,7 @@ end
 task.spawn(function()
     while Gui.Parent do
         pcall(SpoofNames)
-        task.wait(0.1)
+        task.wait(0.5)
     end
 end)
 

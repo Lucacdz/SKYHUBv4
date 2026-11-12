@@ -57,6 +57,7 @@ local S = {
     AutoOff = true,
     AimPart = "Head",
     AimMode = 1, -- 1 gần tâm, 2 gần nhất, 3 xa nhất, 4 ít máu nhất
+    AimFull = false, -- aim ngoài cả vòng FOV
     ShowCircle = true,
     FOV = 150,
     CircleThickness = 2,
@@ -125,6 +126,7 @@ local function EncodeConfig()
     end
     -- Không lưu trạng thái đang chạy của các chức năng nguy hiểm
     data.Aim = false
+    data.AimFull = false
     data.Spin = false
     data.Noclip = false
     data.FakeLag = false
@@ -167,6 +169,7 @@ local function LoadConfig()
         S.ESPColor = PaletteColors[S.ESPIdx]
         S.AimPart = (S.AimPartIdx == 1) and "Head" or "HumanoidRootPart"
         S.Aim = false
+        S.AimFull = false
         S.Spin = false
         S.Noclip = false
         S.FakeLag = false
@@ -761,6 +764,7 @@ end)
 Choice(AimPage, "Ưu tiên mục tiêu", {"Gần tâm", "Gần nhất", "Xa nhất", "Ít máu"}, S.AimMode, function(i)
     S.AimMode = i
 end)
+Toggle(AimPage, "Aim full (ngoài cả vòng FOV)", S.AimFull, function(v) S.AimFull = v end)
 
 Section(AimPage, "VÒNG FOV")
 Toggle(AimPage, "Hiện vòng FOV", S.ShowCircle, function(v) S.ShowCircle = v end)
@@ -844,7 +848,7 @@ Toggle(MovePage, "Bơi (Swim)", S.Swim, function(v) S.Swim = v end)
 
 -- ===== TAB MOD =====
 Section(ModPage, "VẬT PHẨM")
-Toggle(ModPage, "Xoay vật phẩm cầm tay", S.ToolSpin, function(v) S.ToolSpin = v end)
+Toggle(ModPage, "Xoay vật phẩm cầm tay (client)", S.ToolSpin, function(v) S.ToolSpin = v end)
 Slider(ModPage, "Tốc độ xoay vật phẩm", 200, 5000, S.ToolSpinSpeed, 100, function(v) return v .. "°/s" end, function(v) S.ToolSpinSpeed = v end)
 
 Section(ModPage, "AURA")
@@ -979,7 +983,8 @@ local function GetTarget()
                     if onScreen and pos.Z > 0 then
                         local d2 = (Vector2.new(pos.X, pos.Y) - center).Magnitude
                         local d3 = (part.Position - camPos).Magnitude
-                        if d2 <= S.FOV and d3 <= S.AimDist then
+                        local inFov = S.AimFull or (d2 <= S.FOV)
+                        if inFov and d3 <= S.AimDist then
                             local score
                             if S.AimMode == 2 then
                                 score = d3                -- gần nhất (theo khoảng cách thật)
@@ -1615,6 +1620,7 @@ end)
 -- Nút đóng hẳn
 CloseBtn.MouseButton1Click:Connect(function()
     S.Aim = false
+    S.AimFull = false
     S.InfJump = false
     S.Noclip = false
     S.Spin = false

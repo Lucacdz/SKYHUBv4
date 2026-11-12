@@ -56,8 +56,8 @@ local S = {
     Aim = false,
     AutoOff = true,
     AimPart = "Head",
-    AimMode = 1, -- 1 gần tâm, 2 gần nhất, 3 xa nhất, 4 ít máu nhất
-    AimFull = false, -- aim ngoài cả vòng FOV
+    AimMode = 1,
+    AimFull = false,
     ShowCircle = true,
     FOV = 150,
     CircleThickness = 2,
@@ -81,7 +81,7 @@ local S = {
     ESPTeamColor = false,
     ESPDist = 1500,
     ESPTeam = false,
-    -- Chỉ số lựa chọn (để lưu cấu hình)
+    -- Chỉ số lựa chọn
     CircleIdx = 1,
     ESPIdx = 4,
     AimPartIdx = 1,
@@ -97,14 +97,14 @@ local S = {
     Speed = 50,
     Noclip = false,
     Spin = false,
-    SpinSpeed = 3000, -- độ/giây
+    SpinSpeed = 3000,
     -- Fake Lag & Swim
     FakeLag = false,
-    FakeLagDelay = 150, -- ms
+    FakeLagDelay = 150,
     Swim = false,
     -- Mod
     ToolSpin = false,
-    ToolSpinSpeed = 800, -- độ/giây
+    ToolSpinSpeed = 800,
     Aura = false,
     AuraType = 1,
     -- Camera
@@ -304,7 +304,6 @@ local function EncodeConfig()
             data[k] = v
         end
     end
-    -- Không lưu trạng thái đang chạy của các chức năng nguy hiểm
     data.Aim = false
     data.AimFull = false
     data.Spin = false
@@ -538,12 +537,11 @@ New("TextLabel", {
     TextXAlignment = Enum.TextXAlignment.Left,
 }, Header)
 
--- Logo icon (dùng asset có sẵn)
 local Logo = New("ImageLabel", {
     Size = UDim2.new(0, 32, 0, 32),
     Position = UDim2.new(0, 10, 0.5, -16),
     BackgroundTransparency = 1,
-    Image = "rbxassetid://10709761813", -- aperture icon (public Lucide)
+    Image = "rbxassetid://10709761813",
     ImageColor3 = T.Accent,
     ScaleType = Enum.ScaleType.Fit,
 }, Header)
@@ -572,20 +570,18 @@ local CloseBtn = New("TextButton", {
 }, Header)
 Round(CloseBtn, 8)
 
--- Nút nhỏ khi thu gọn
 local MiniBtn = New("ImageButton", {
     Size = UDim2.new(0, 46, 0, 46),
     Position = Main.Position,
     BackgroundColor3 = T.Accent,
     BorderSizePixel = 0,
-    Image = "rbxassetid://10709752996", -- alert-circle icon (khác)
+    Image = "rbxassetid://10709752996",
     ImageColor3 = Color3.new(1, 1, 1),
     ScaleType = Enum.ScaleType.Fit,
     Visible = false,
 }, Gui)
 Round(MiniBtn, 23)
 
--- Kéo khung bằng thanh tiêu đề
 do
     local dragging, dragStart, startPos = false, nil, nil
     Header.InputBegan:Connect(function(input)
@@ -781,8 +777,9 @@ local function NextOrder()
     return orderCounter
 end
 
-local function Section(page, text)
-    New("TextLabel", {
+-- ⭐ Section có hỗ trợ textKey để reload ngôn ngữ
+local function Section(page, text, textKey)
+    local lbl = New("TextLabel", {
         Size = UDim2.new(1, 0, 0, 20),
         BackgroundTransparency = 1,
         Text = text,
@@ -792,6 +789,11 @@ local function Section(page, text)
         TextXAlignment = Enum.TextXAlignment.Left,
         LayoutOrder = NextOrder(),
     }, page)
+    if textKey then
+        lbl:SetAttribute("StaticLabel", true)
+        lbl:SetAttribute("TextKey", textKey)
+    end
+    return lbl
 end
 
 local function ItemFrame(page, height)
@@ -805,8 +807,8 @@ local function ItemFrame(page, height)
     return f
 end
 
-local function ItemLabel(parent, text, y)
-    return New("TextLabel", {
+local function ItemLabel(parent, text, y, textKey)
+    local lbl = New("TextLabel", {
         Size = UDim2.new(0.65, 0, 0, 22),
         Position = UDim2.new(0, 10, 0, y or 0),
         BackgroundTransparency = 1,
@@ -816,12 +818,17 @@ local function ItemLabel(parent, text, y)
         TextSize = 13,
         TextXAlignment = Enum.TextXAlignment.Left,
     }, parent)
+    if textKey then
+        lbl:SetAttribute("StaticLabel", true)
+        lbl:SetAttribute("TextKey", textKey)
+    end
+    return lbl
 end
 
--- Công tắc
-local function Toggle(page, text, def, cb)
+-- Công tắc (có textKey)
+local function Toggle(page, text, def, cb, textKey)
     local f = ItemFrame(page, 36)
-    New("TextLabel", {
+    local lbl = New("TextLabel", {
         Size = UDim2.new(1, -70, 1, 0),
         Position = UDim2.new(0, 10, 0, 0),
         BackgroundTransparency = 1,
@@ -831,6 +838,10 @@ local function Toggle(page, text, def, cb)
         TextSize = 13,
         TextXAlignment = Enum.TextXAlignment.Left,
     }, f)
+    if textKey then
+        lbl:SetAttribute("StaticLabel", true)
+        lbl:SetAttribute("TextKey", textKey)
+    end
 
     local sw = New("Frame", {
         Size = UDim2.new(0, 40, 0, 20),
@@ -869,10 +880,10 @@ local function Toggle(page, text, def, cb)
     end
 end
 
--- Thanh trượt
-local function Slider(page, text, min, max, def, step, fmt, cb)
+-- Thanh trượt (có textKey cho label)
+local function Slider(page, text, min, max, def, step, fmt, cb, textKey)
     local f = ItemFrame(page, 50)
-    ItemLabel(f, text, 4)
+    ItemLabel(f, text, 4, textKey)
     local val = New("TextLabel", {
         Size = UDim2.new(0.35, 0, 0, 22),
         Position = UDim2.new(0.65, -10, 0, 4),
@@ -949,9 +960,9 @@ local function Slider(page, text, min, max, def, step, fmt, cb)
 end
 
 -- Bảng màu
-local function Palette(page, text, defIdx, cb)
+local function Palette(page, text, defIdx, cb, textKey)
     local f = ItemFrame(page, 62)
-    ItemLabel(f, text, 4)
+    ItemLabel(f, text, 4, textKey)
     local strokes = {}
     local function render(idx)
         for i, st in ipairs(strokes) do st.Enabled = (i == idx) end
@@ -977,9 +988,9 @@ local function Palette(page, text, defIdx, cb)
 end
 
 -- Lựa chọn nhiều nút
-local function Choice(page, text, options, defIdx, cb)
+local function Choice(page, text, options, defIdx, cb, textKey)
     local f = ItemFrame(page, 62)
-    ItemLabel(f, text, 4)
+    ItemLabel(f, text, 4, textKey)
     local buttons = {}
     local n = #options
     local function render(idx)
@@ -1010,8 +1021,8 @@ local function Choice(page, text, options, defIdx, cb)
     cb(defIdx, options[defIdx])
 end
 
--- Nút bấm
-local function Button(page, text, color, cb)
+-- Nút bấm (có textKey)
+local function Button(page, text, color, cb, textKey)
     local b = New("TextButton", {
         Size = UDim2.new(1, 0, 0, 36),
         BackgroundColor3 = color or T.Accent,
@@ -1023,6 +1034,10 @@ local function Button(page, text, color, cb)
         LayoutOrder = NextOrder(),
     }, page)
     Round(b, 8)
+    if textKey then
+        b:SetAttribute("StaticLabel", true)
+        b:SetAttribute("TextKey", textKey)
+    end
     b.MouseButton1Click:Connect(function() cb(b) end)
     return b
 end
@@ -1030,114 +1045,114 @@ end
 -- ===== TAB AIM =====
 local AimSet
 
-Section(AimPage, "CHÍNH")
-AimSet = Toggle(AimPage, "Bật Aim", S.Aim, function(v) S.Aim = v end)
-Toggle(AimPage, "Tự tắt khi mục tiêu chết", S.AutoOff, function(v) S.AutoOff = v end)
+Section(AimPage, "CHÍNH", "main")
+AimSet = Toggle(AimPage, "Bật Aim", S.Aim, function(v) S.Aim = v end, "aim_on")
+Toggle(AimPage, "Tự tắt khi mục tiêu chết", S.AutoOff, function(v) S.AutoOff = v end, "auto_off")
 Choice(AimPage, "Vị trí nhắm", {"Đầu", "Thân"}, S.AimPartIdx, function(i, opt)
     S.AimPartIdx = i
     S.AimPart = (opt == "Đầu") and "Head" or "HumanoidRootPart"
-end)
+end, "aim_part")
 Choice(AimPage, "Ưu tiên mục tiêu", {"Gần tâm", "Gần nhất", "Xa nhất", "Ít máu"}, S.AimMode, function(i)
     S.AimMode = i
-end)
-Toggle(AimPage, "Aim full (ngoài cả vòng FOV)", S.AimFull, function(v) S.AimFull = v end)
+end, "priority")
+Toggle(AimPage, "Aim full (ngoài cả vòng FOV)", S.AimFull, function(v) S.AimFull = v end, "aim_full")
 
-Section(AimPage, "VÒNG FOV")
-Toggle(AimPage, "Hiện vòng FOV", S.ShowCircle, function(v) S.ShowCircle = v end)
+Section(AimPage, "VÒNG FOV", "fov_circle")
+Toggle(AimPage, "Hiện vòng FOV", S.ShowCircle, function(v) S.ShowCircle = v end, "show_circle")
 Slider(AimPage, "Bán kính FOV", 40, 400, S.FOV, 5, nil, function(v)
     S.FOV = v
     Circle.Size = UDim2.new(0, v * 2, 0, v * 2)
-end)
+end, "fov_radius")
 Slider(AimPage, "Độ dày viền", 1, 6, S.CircleThickness, 1, nil, function(v)
     S.CircleThickness = v
     CircleStroke.Thickness = v
-end)
+end, "thickness")
 Palette(AimPage, "Màu vòng tròn", S.CircleIdx, function(c, i)
     S.CircleIdx = i
     S.CircleColor = c
     CircleStroke.Color = c
-end)
+end, "circle_color")
 
-Section(AimPage, "NÂNG CAO")
+Section(AimPage, "NÂNG CAO", "advanced")
 Slider(AimPage, "Độ mượt", 0, 95, S.Smooth, 5, function(v) return v .. "%" end, function(v)
     S.Smooth = v
-end)
+end, "smooth")
 Slider(AimPage, "Khoảng cách tối đa", 50, 2000, S.AimDist, 50, function(v) return v .. "m" end, function(v)
     S.AimDist = v
-end)
-Toggle(AimPage, "Bỏ qua đồng đội", S.AimTeam, function(v) S.AimTeam = v end)
-Toggle(AimPage, "Kiểm tra vật cản (wall check)", S.WallCheck, function(v) S.WallCheck = v end)
+end, "max_dist")
+Toggle(AimPage, "Bỏ qua đồng đội", S.AimTeam, function(v) S.AimTeam = v end, "ignore_team")
+Toggle(AimPage, "Kiểm tra vật cản (wall check)", S.WallCheck, function(v) S.WallCheck = v end, "wall_check")
 
 -- ===== TAB ESP =====
-Section(ESPPage, "CHÍNH")
-Toggle(ESPPage, "Bật ESP", S.ESP, function(v) S.ESP = v end)
-Toggle(ESPPage, "Viền sáng (Highlight)", S.Chams, function(v) S.Chams = v end)
+Section(ESPPage, "CHÍNH", "main")
+Toggle(ESPPage, "Bật ESP", S.ESP, function(v) S.ESP = v end, "esp_on")
+Toggle(ESPPage, "Viền sáng (Highlight)", S.Chams, function(v) S.Chams = v end, "chams")
 Slider(ESPPage, "Độ trong suốt phần tô", 0, 1, S.ChamsFill, 0.1, function(v)
     return string.format("%.1f", v)
-end, function(v) S.ChamsFill = v end)
+end, function(v) S.ChamsFill = v end, "fill_trans")
 
-Section(ESPPage, "THÔNG TIN")
-Toggle(ESPPage, "Hiện tên", S.ShowName, function(v) S.ShowName = v end)
-Toggle(ESPPage, "Hiện khoảng cách", S.ShowDist, function(v) S.ShowDist = v end)
-Toggle(ESPPage, "Hiện máu", S.ShowHP, function(v) S.ShowHP = v end)
-Slider(ESPPage, "Cỡ chữ", 10, 22, S.TextSize, 1, nil, function(v) S.TextSize = v end)
+Section(ESPPage, "THÔNG TIN", "info_section")
+Toggle(ESPPage, "Hiện tên", S.ShowName, function(v) S.ShowName = v end, "show_name")
+Toggle(ESPPage, "Hiện khoảng cách", S.ShowDist, function(v) S.ShowDist = v end, "show_dist")
+Toggle(ESPPage, "Hiện máu", S.ShowHP, function(v) S.ShowHP = v end, "show_hp")
+Slider(ESPPage, "Cỡ chữ", 10, 22, S.TextSize, 1, nil, function(v) S.TextSize = v end, "text_size")
 
-Section(ESPPage, "BOX ESP (CS:GO style)")
-Toggle(ESPPage, "Hiện Box Hitbox", S.ShowBox, function(v) S.ShowBox = v end)
-Toggle(ESPPage, "Hiện thanh máu", S.ShowHealthBar, function(v) S.ShowHealthBar = v end)
-Toggle(ESPPage, "Hiện tia (từ trên màn hình)", S.ShowTracer, function(v) S.ShowTracer = v end)
+Section(ESPPage, "BOX ESP (CS:GO style)", "box_esp")
+Toggle(ESPPage, "Hiện Box Hitbox", S.ShowBox, function(v) S.ShowBox = v end, "show_box")
+Toggle(ESPPage, "Hiện thanh máu", S.ShowHealthBar, function(v) S.ShowHealthBar = v end, "show_hpbar")
+Toggle(ESPPage, "Hiện tia (từ trên màn hình)", S.ShowTracer, function(v) S.ShowTracer = v end, "show_tracer")
 
-Section(ESPPage, "MÀU SẮC")
+Section(ESPPage, "MÀU SẮC", "color_section")
 Palette(ESPPage, "Màu ESP", S.ESPIdx, function(c, i)
     S.ESPIdx = i
     S.ESPColor = c
-end)
-Toggle(ESPPage, "Màu theo đội", S.ESPTeamColor, function(v) S.ESPTeamColor = v end)
+end, "esp_color")
+Toggle(ESPPage, "Màu theo đội", S.ESPTeamColor, function(v) S.ESPTeamColor = v end, "team_color")
 
-Section(ESPPage, "NÂNG CAO")
+Section(ESPPage, "NÂNG CAO", "advanced")
 Slider(ESPPage, "Khoảng cách tối đa", 50, 3000, S.ESPDist, 50, function(v) return v .. "m" end, function(v)
     S.ESPDist = v
-end)
-Toggle(ESPPage, "Bỏ qua đồng đội", S.ESPTeam, function(v) S.ESPTeam = v end)
+end, "max_dist")
+Toggle(ESPPage, "Bỏ qua đồng đội", S.ESPTeam, function(v) S.ESPTeam = v end, "ignore_team")
 
 -- ===== TAB MOVEMENT =====
-Section(MovePage, "NHẢY")
-Toggle(MovePage, "Nhảy vô hạn (Infinite Jump)", S.InfJump, function(v) S.InfJump = v end)
-Toggle(MovePage, "Chỉnh sức mạnh nhảy", S.JumpOn, function(v) S.JumpOn = v end)
-Slider(MovePage, "Sức mạnh nhảy", 50, 500, S.JumpPower, 10, nil, function(v) S.JumpPower = v end)
+Section(MovePage, "NHẢY", "move_jump")
+Toggle(MovePage, "Nhảy vô hạn (Infinite Jump)", S.InfJump, function(v) S.InfJump = v end, "inf_jump")
+Toggle(MovePage, "Chỉnh sức mạnh nhảy", S.JumpOn, function(v) S.JumpOn = v end, "jump_power_on")
+Slider(MovePage, "Sức mạnh nhảy", 50, 500, S.JumpPower, 10, nil, function(v) S.JumpPower = v end, "jump_power")
 
-Section(MovePage, "DI CHUYỂN")
-Toggle(MovePage, "Chỉnh tốc độ di chuyển", S.SpeedOn, function(v) S.SpeedOn = v end)
-Slider(MovePage, "Tốc độ", 16, 300, S.Speed, 2, nil, function(v) S.Speed = v end)
-Toggle(MovePage, "Noclip (xuyên tường)", S.Noclip, function(v) S.Noclip = v end)
+Section(MovePage, "DI CHUYỂN", "move_section")
+Toggle(MovePage, "Chỉnh tốc độ di chuyển", S.SpeedOn, function(v) S.SpeedOn = v end, "speed_on")
+Slider(MovePage, "Tốc độ", 16, 300, S.Speed, 2, nil, function(v) S.Speed = v end, "speed")
+Toggle(MovePage, "Noclip (xuyên tường)", S.Noclip, function(v) S.Noclip = v end, "noclip")
 
-Section(MovePage, "SPIN")
-Toggle(MovePage, "Xoay tròn (Spin)", S.Spin, function(v) S.Spin = v end)
-Slider(MovePage, "Tốc độ xoay", 200, 20000, S.SpinSpeed, 200, function(v) return v .. "°/s" end, function(v) S.SpinSpeed = v end)
+Section(MovePage, "SPIN", "spin_section")
+Toggle(MovePage, "Xoay tròn (Spin)", S.Spin, function(v) S.Spin = v end, "spin_on")
+Slider(MovePage, "Tốc độ xoay", 200, 20000, S.SpinSpeed, 200, function(v) return v .. "°/s" end, function(v) S.SpinSpeed = v end, "spin_speed")
 
-Section(MovePage, "FAKE LAG")
-Toggle(MovePage, "Fake High Ping / Lag", S.FakeLag, function(v) S.FakeLag = v end)
-Slider(MovePage, "Độ trễ (ms)", 50, 500, S.FakeLagDelay, 10, function(v) return v .. " ms" end, function(v) S.FakeLagDelay = v end)
+Section(MovePage, "FAKE LAG", "fake_lag")
+Toggle(MovePage, "Fake High Ping / Lag", S.FakeLag, function(v) S.FakeLag = v end, "fake_lag_on")
+Slider(MovePage, "Độ trễ (ms)", 50, 500, S.FakeLagDelay, 10, function(v) return v .. " ms" end, function(v) S.FakeLagDelay = v end, "lag_delay")
 
-Section(MovePage, "BƠI")
-Toggle(MovePage, "Bơi (Swim)", S.Swim, function(v) S.Swim = v end)
+Section(MovePage, "BƠI", "swim")
+Toggle(MovePage, "Bơi (Swim)", S.Swim, function(v) S.Swim = v end, "swim_on")
 
 -- ===== TAB MOD =====
-Section(ModPage, "VẬT PHẨM")
-Toggle(ModPage, "Xoay vật phẩm cầm tay (client)", S.ToolSpin, function(v) S.ToolSpin = v end)
-Slider(ModPage, "Tốc độ xoay vật phẩm", 200, 5000, S.ToolSpinSpeed, 100, function(v) return v .. "°/s" end, function(v) S.ToolSpinSpeed = v end)
+Section(ModPage, "VẬT PHẨM", "tool_section")
+Toggle(ModPage, "Xoay vật phẩm cầm tay (client)", S.ToolSpin, function(v) S.ToolSpin = v end, "tool_spin")
+Slider(ModPage, "Tốc độ xoay vật phẩm", 200, 5000, S.ToolSpinSpeed, 100, function(v) return v .. "°/s" end, function(v) S.ToolSpinSpeed = v end, "tool_spin_speed")
 
-Section(ModPage, "AURA")
-Toggle(ModPage, "Bật Aura", S.Aura, function(v) S.Aura = v end)
+Section(ModPage, "AURA", "aura_section")
+Toggle(ModPage, "Bật Aura", S.Aura, function(v) S.Aura = v end, "aura_on")
 Choice(ModPage, "Kiểu Aura", {"Particle", "Ring", "Glow", "Fire", "Sparkle", "Rainbow"}, S.AuraType, function(i)
     S.AuraType = i
-end)
+end, "aura_type")
 
-Section(ModPage, "CAMERA")
-Toggle(ModPage, "Góc nhìn thứ 3", S.ThirdPerson, function(v) S.ThirdPerson = v end)
-Slider(ModPage, "Khoảng cách zoom", 5, 50, S.ThirdZoom, 1, function(v) return v .. " studs" end, function(v) S.ThirdZoom = v end)
-Toggle(ModPage, "Bật chỉnh FOV", S.FOVEnabled, function(v) S.FOVEnabled = v end)
-Slider(ModPage, "FOV Camera", 10, 120, S.CameraFOV, 1, function(v) return tostring(v) .. "°" end, function(v) S.CameraFOV = v end)
+Section(ModPage, "CAMERA", "camera_section")
+Toggle(ModPage, "Góc nhìn thứ 3", S.ThirdPerson, function(v) S.ThirdPerson = v end, "third_person")
+Slider(ModPage, "Khoảng cách zoom", 5, 50, S.ThirdZoom, 1, function(v) return v .. " studs" end, function(v) S.ThirdZoom = v end, "zoom_dist")
+Toggle(ModPage, "Bật chỉnh FOV", S.FOVEnabled, function(v) S.FOVEnabled = v end, "fov_on")
+Slider(ModPage, "FOV Camera", 10, 120, S.CameraFOV, 1, function(v) return tostring(v) .. "°" end, function(v) S.CameraFOV = v end, "camera_fov")
 
 -- ===== TAB CẤU HÌNH =====
 local StatusFrame = ItemFrame(CfgPage, 44)
@@ -1165,13 +1180,13 @@ else
     SetStatus(Txt("no_saved"))
 end
 
-Section(CfgPage, Txt("save_section"))
-local AutoSaveSet = Toggle(CfgPage, Txt("auto_save"), S.AutoSave, function(v) S.AutoSave = v end)
+Section(CfgPage, Txt("save_section"), "save_section")
+local AutoSaveSet = Toggle(CfgPage, Txt("auto_save"), S.AutoSave, function(v) S.AutoSave = v end, "auto_save")
 
 Button(CfgPage, Txt("save_now"), T.Accent, function()
     local _, msg = SaveConfig()
     SetStatus(msg)
-end)
+end, "save_now")
 
 Button(CfgPage, Txt("delete_cfg"), Color3.fromRGB(200, 60, 70), function()
     if not CanSave or typeof(delfile) ~= "function" then
@@ -1183,11 +1198,11 @@ Button(CfgPage, Txt("delete_cfg"), Color3.fromRGB(200, 60, 70), function()
     end)
     AutoSaveSet(false)
     SetStatus(Txt("deleted"))
-end)
+end, "delete_cfg")
 
 -- ===== TAB SETTINGS =====
-Section(SetPage, "HIỆU NĂNG")
-Toggle(SetPage, "Fix Lag (giảm lag)", S.FixLag, function(v)
+Section(SetPage, Txt("perf_section"), "perf_section")
+Toggle(SetPage, Txt("fix_lag"), S.FixLag, function(v)
     S.FixLag = v
     if v then
         pcall(function()
@@ -1201,12 +1216,12 @@ Toggle(SetPage, "Fix Lag (giảm lag)", S.FixLag, function(v)
             settings().Rendering.QualityLevel = Enum.QualityLevel.Automatic
         end)
     end
-end)
+end, "fix_lag")
 
-Section(SetPage, "ẨN TÊN")
-Toggle(SetPage, "Ẩn tên người chơi (đổi thành Lucacdz)", S.HideName, function(v) S.HideName = v end)
+Section(SetPage, Txt("hide_name_section"), "hide_name_section")
+Toggle(SetPage, Txt("hide_name"), S.HideName, function(v) S.HideName = v end, "hide_name")
 
-Section(SetPage, "GHI CHÚ")
+Section(SetPage, Txt("note_section"), "note_section")
 local NoteFrame = ItemFrame(SetPage, 50)
 New("TextLabel", {
     Size = UDim2.new(1, -20, 1, 0),
@@ -1219,6 +1234,74 @@ New("TextLabel", {
     TextWrapped = true,
     TextXAlignment = Enum.TextXAlignment.Left,
 }, NoteFrame)
+
+-- ⭐ CHỌN NGÔN NGỮ (TAB SET)
+Section(SetPage, Txt("lang_section"), "lang_section")
+
+local LangOptions = {"Tiếng Việt", "English"}
+local LangCodes = {"vi", "en"}
+
+-- Hàm reload text toàn bộ UI theo ngôn ngữ hiện tại
+local function ReloadText()
+    local function refreshPage(page)
+        for _, child in ipairs(page:GetDescendants()) do
+            if child:IsA("TextLabel") or child:IsA("TextButton") then
+                if child:GetAttribute("StaticLabel") then
+                    local key = child:GetAttribute("TextKey")
+                    if key then
+                        child.Text = Txt(key)
+                    end
+                end
+            end
+        end
+    end
+    for _, pg in ipairs({AimPage, ESPPage, MovePage, ModPage, InfoPage, CfgPage, SetPage}) do
+        pcall(refreshPage, pg)
+    end
+end
+
+local function ApplyLang(code)
+    S.Lang = code
+    if CanSave then
+        pcall(function()
+            local json = EncodeConfig()
+            writefile(CONFIG_FILE, json)
+            lastSaved = json
+        end)
+    end
+    ReloadText()
+end
+
+local LangCurrent = (S.Lang == "en") and 2 or 1
+local langBtns = {}
+local function renderLang(idx)
+    for i, b in ipairs(langBtns) do
+        b.BackgroundColor3 = (i == idx) and T.Accent or T.Off
+    end
+end
+
+local LangFrame = ItemFrame(SetPage, 62)
+ItemLabel(LangFrame, Txt("language"), 4, "language")
+for i, opt in ipairs(LangOptions) do
+    local b = New("TextButton", {
+        Size = UDim2.new(0.5, -8, 0, 26),
+        Position = UDim2.new((i - 1) * 0.5, 6, 0, 30),
+        BackgroundColor3 = T.Off,
+        BorderSizePixel = 0,
+        Text = opt,
+        TextColor3 = T.Text,
+        Font = Enum.Font.Gotham,
+        TextSize = 13,
+        AutoButtonColor = false,
+    }, LangFrame)
+    Round(b, 6)
+    langBtns[i] = b
+    b.MouseButton1Click:Connect(function()
+        renderLang(i)
+        ApplyLang(LangCodes[i])
+    end)
+end
+renderLang(LangCurrent)
 
 -- ===== TAB INFO =====
 local PingVal, FpsVal
@@ -1249,7 +1332,7 @@ local function InfoRow(page, labelText, valueText)
     return val
 end
 
-Section(InfoPage, Txt("info_title"))
+Section(InfoPage, Txt("info_title"), "info_title")
 PingVal = InfoRow(InfoPage, "Ping", Txt("loading"))
 FpsVal = InfoRow(InfoPage, "FPS", Txt("loading"))
 InfoRow(InfoPage, "Server ID", game.JobId ~= "" and game.JobId or Txt("no_server"))
@@ -1383,7 +1466,6 @@ local function ApplyESP(p)
     local color = S.ESPColor
     if S.ESPTeamColor and p.Team then color = p.TeamColor.Color end
 
-    -- Highlight
     local hl = char:FindFirstChild("SkyESP")
     if S.Chams then
         if not hl then
@@ -1400,7 +1482,6 @@ local function ApplyESP(p)
         hl:Destroy()
     end
 
-    -- Tag tên / khoảng cách / máu
     local tag = head:FindFirstChild("SkyTag")
     if S.ShowName or S.ShowDist or S.ShowHP then
         local lines = {}
@@ -1452,7 +1533,7 @@ task.spawn(function()
     end
 end)
 
--- ===== ESP 2D BOX / HEALTH / TRACER (CS:GO style) =====
+-- ===== ESP 2D BOX / HEALTH / TRACER =====
 local ESP2D = {}
 
 local function GetOrCreateESP2D(p)
@@ -1662,10 +1743,8 @@ local function SpoofNames()
         end
     end
 
-    -- PlayerGui của mình
     pcall(function() scanGuiAll(LocalPlayer.PlayerGui) end)
 
-    -- PlayerGui của tất cả mọi người
     pcall(function()
         for _, plr in ipairs(Players:GetPlayers()) do
             local pg = plr:FindFirstChildOfClass("PlayerGui")
@@ -1675,10 +1754,8 @@ local function SpoofNames()
         end
     end)
 
-    -- CoreGui (chat, player list, ...)
     pcall(function() scanGuiAll(game:GetService("CoreGui")) end)
 
-    -- ⭐ Nametag mặc định Roblox (BillboardGui trên Head)
     pcall(function()
         for _, obj in ipairs(workspace:GetChildren()) do
             if obj:FindFirstChildOfClass("Humanoid") then
@@ -1697,7 +1774,6 @@ local function SpoofNames()
         end
     end)
 
-    -- Chat mới (TextChatService)
     pcall(function()
         local tcs = game:GetService("TextChatService")
         for _, ch in ipairs(tcs:GetDescendants()) do
@@ -1733,14 +1809,12 @@ end)
 local MoveState = {WS = nil, JP = nil}
 local Conns = _G.SkyHubProConns
 
--- ⭐ STATE CHO TOOL SPIN
 local ToolSpinState = {
     tool = nil,
     originalGrip = nil,
     angle = 0,
 }
 
--- ESP 2D update
 table.insert(Conns, RunService.RenderStepped:Connect(function()
     pcall(UpdateESP2D)
 end))
@@ -1766,7 +1840,6 @@ local function RestoreMovement()
     MoveState.JP = nil
 end
 
--- Nhảy vô hạn
 table.insert(Conns, UserInputService.JumpRequest:Connect(function()
     if S.InfJump then
         local hum = GetHum()
@@ -1774,7 +1847,6 @@ table.insert(Conns, UserInputService.JumpRequest:Connect(function()
     end
 end))
 
--- Tốc độ / sức mạnh nhảy / spin
 table.insert(Conns, RunService.Heartbeat:Connect(function(dt)
     local char = LocalPlayer.Character
     local hum = char and char:FindFirstChildOfClass("Humanoid")
@@ -1814,12 +1886,11 @@ table.insert(Conns, RunService.Heartbeat:Connect(function(dt)
         end
     end
 
-    -- Swim
     if S.Swim then
         hum:ChangeState(Enum.HumanoidStateType.Swimming)
     end
 
-    -- ⭐ Tool Spin (FIXED: reset từng frame, luôn xoay liên tục, khôi phục grip gốc)
+    -- ⭐ Tool Spin (FIXED)
     if S.ToolSpin then
         local tool = char:FindFirstChildOfClass("Tool")
         if tool then
@@ -1852,7 +1923,6 @@ table.insert(Conns, RunService.Heartbeat:Connect(function(dt)
     end
 end))
 
--- Noclip
 table.insert(Conns, RunService.Stepped:Connect(function()
     if not S.Noclip then return end
     local char = LocalPlayer.Character
@@ -1864,7 +1934,6 @@ table.insert(Conns, RunService.Stepped:Connect(function()
     end
 end))
 
--- Fake Lag
 task.spawn(function()
     while Gui.Parent do
         if S.FakeLag then
@@ -2000,7 +2069,7 @@ task.spawn(function()
     ClearAura()
 end)
 
--- Cập nhật FPS & Ping + Third Person
+-- FPS & Ping & Third Person & FOV
 local fpsFrames = 0
 local lastFpsTime = tick()
 local oldMinZoom, oldMaxZoom = nil, nil
@@ -2078,7 +2147,6 @@ CloseBtn.MouseButton1Click:Connect(function()
     S.ThirdPerson = false
     S.FOVEnabled = false
 
-    -- Khôi phục tool grip trước khi thoát
     if ToolSpinState.tool and ToolSpinState.originalGrip then
         pcall(function() ToolSpinState.tool.Grip = ToolSpinState.originalGrip end)
     end

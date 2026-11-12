@@ -86,6 +86,9 @@ local S = {
     ESPIdx = 4,
     AimPartIdx = 1,
     AutoSave = true,
+    -- Settings
+    FixLag = false,
+    HideName = false,
     -- Movement
     InfJump = false,
     JumpOn = false,
@@ -275,8 +278,8 @@ local Header = New("Frame", {
 Round(Header, 12)
 
 New("TextLabel", {
-    Size = UDim2.new(1, -90, 1, 0),
-    Position = UDim2.new(0, 14, 0, 0),
+    Size = UDim2.new(1, -120, 1, 0),
+    Position = UDim2.new(0, 50, 0, 0),
     BackgroundTransparency = 1,
     RichText = true,
     Text = 'SKY <font color="#6078ff">HUB</font>  <font size="11" color="#96969c">PRO</font>',
@@ -284,6 +287,16 @@ New("TextLabel", {
     Font = Enum.Font.GothamBold,
     TextSize = 16,
     TextXAlignment = Enum.TextXAlignment.Left,
+}, Header)
+
+-- Logo icon (dùng asset có sẵn)
+local Logo = New("ImageLabel", {
+    Size = UDim2.new(0, 32, 0, 32),
+    Position = UDim2.new(0, 10, 0.5, -16),
+    BackgroundTransparency = 1,
+    Image = "rbxassetid://10709761813", -- aperture icon (public Lucide)
+    ImageColor3 = T.Accent,
+    ScaleType = Enum.ScaleType.Fit,
 }, Header)
 
 local MinBtn = New("TextButton", {
@@ -311,15 +324,14 @@ local CloseBtn = New("TextButton", {
 Round(CloseBtn, 8)
 
 -- Nút nhỏ khi thu gọn
-local MiniBtn = New("TextButton", {
+local MiniBtn = New("ImageButton", {
     Size = UDim2.new(0, 46, 0, 46),
     Position = Main.Position,
     BackgroundColor3 = T.Accent,
     BorderSizePixel = 0,
-    Text = "S",
-    TextColor3 = Color3.new(1, 1, 1),
-    Font = Enum.Font.GothamBold,
-    TextSize = 22,
+    Image = "rbxassetid://10709769406", -- award / star-like icon
+    ImageColor3 = Color3.new(1, 1, 1),
+    ScaleType = Enum.ScaleType.Fit,
     Visible = false,
 }, Gui)
 Round(MiniBtn, 23)
@@ -364,61 +376,71 @@ local TabBar = New("Frame", {
 }, Main)
 
 local TabAim = New("TextButton", {
-    Size = UDim2.new(1 / 6, 0, 1, -3),
+    Size = UDim2.new(1 / 7, 0, 1, -3),
     BackgroundTransparency = 1,
     Text = "AIM",
     Font = Enum.Font.GothamBold,
-    TextSize = 12,
+    TextSize = 11,
     TextColor3 = T.Text,
 }, TabBar)
 
 local TabESP = New("TextButton", {
-    Size = UDim2.new(1 / 6, 0, 1, -3),
-    Position = UDim2.new(1 / 6, 0, 0, 0),
+    Size = UDim2.new(1 / 7, 0, 1, -3),
+    Position = UDim2.new(1 / 7, 0, 0, 0),
     BackgroundTransparency = 1,
     Text = "ESP",
     Font = Enum.Font.GothamBold,
-    TextSize = 12,
+    TextSize = 11,
     TextColor3 = T.Sub,
 }, TabBar)
 
 local TabMove = New("TextButton", {
-    Size = UDim2.new(1 / 6, 0, 1, -3),
-    Position = UDim2.new(2 / 6, 0, 0, 0),
+    Size = UDim2.new(1 / 7, 0, 1, -3),
+    Position = UDim2.new(2 / 7, 0, 0, 0),
     BackgroundTransparency = 1,
     Text = "MOVE",
     Font = Enum.Font.GothamBold,
-    TextSize = 12,
+    TextSize = 11,
     TextColor3 = T.Sub,
 }, TabBar)
 
 local TabMod = New("TextButton", {
-    Size = UDim2.new(1 / 6, 0, 1, -3),
-    Position = UDim2.new(3 / 6, 0, 0, 0),
+    Size = UDim2.new(1 / 7, 0, 1, -3),
+    Position = UDim2.new(3 / 7, 0, 0, 0),
     BackgroundTransparency = 1,
     Text = "MOD",
     Font = Enum.Font.GothamBold,
-    TextSize = 12,
+    TextSize = 11,
     TextColor3 = T.Sub,
 }, TabBar)
 
 local TabInfo = New("TextButton", {
-    Size = UDim2.new(1 / 6, 0, 1, -3),
-    Position = UDim2.new(4 / 6, 0, 0, 0),
+    Size = UDim2.new(1 / 7, 0, 1, -3),
+    Position = UDim2.new(4 / 7, 0, 0, 0),
     BackgroundTransparency = 1,
     Text = "INFO",
     Font = Enum.Font.GothamBold,
-    TextSize = 12,
+    TextSize = 11,
     TextColor3 = T.Sub,
 }, TabBar)
 
 local TabCfg = New("TextButton", {
-    Size = UDim2.new(1 / 6, 0, 1, -3),
-    Position = UDim2.new(5 / 6, 0, 0, 0),
+    Size = UDim2.new(1 / 7, 0, 1, -3),
+    Position = UDim2.new(5 / 7, 0, 0, 0),
     BackgroundTransparency = 1,
     Text = "CFG",
     Font = Enum.Font.GothamBold,
-    TextSize = 12,
+    TextSize = 11,
+    TextColor3 = T.Sub,
+}, TabBar)
+
+local TabSet = New("TextButton", {
+    Size = UDim2.new(1 / 7, 0, 1, -3),
+    Position = UDim2.new(6 / 7, 0, 0, 0),
+    BackgroundTransparency = 1,
+    Text = "SET",
+    Font = Enum.Font.GothamBold,
+    TextSize = 11,
     TextColor3 = T.Sub,
 }, TabBar)
 
@@ -430,7 +452,7 @@ New("Frame", {
 }, TabBar)
 
 local Indicator = New("Frame", {
-    Size = UDim2.new(1 / 6, 0, 0, 3),
+    Size = UDim2.new(1 / 7, 0, 0, 3),
     Position = UDim2.new(0, 0, 1, -3),
     BackgroundColor3 = T.Accent,
     BorderSizePixel = 0,
@@ -465,6 +487,7 @@ local MovePage = MakePage(false)
 local ModPage = MakePage(false)
 local InfoPage = MakePage(false)
 local CfgPage = MakePage(false)
+local SetPage = MakePage(false)
 
 local function SetScroll(enabled)
     AimPage.ScrollingEnabled = enabled
@@ -473,6 +496,7 @@ local function SetScroll(enabled)
     ModPage.ScrollingEnabled = enabled
     InfoPage.ScrollingEnabled = enabled
     CfgPage.ScrollingEnabled = enabled
+    SetPage.ScrollingEnabled = enabled
 end
 
 local function SwitchTab(name)
@@ -482,14 +506,16 @@ local function SwitchTab(name)
     ModPage.Visible = name == "Mod"
     InfoPage.Visible = name == "Info"
     CfgPage.Visible = name == "Cfg"
+    SetPage.Visible = name == "Set"
     TabAim.TextColor3 = name == "Aim" and T.Text or T.Sub
     TabESP.TextColor3 = name == "ESP" and T.Text or T.Sub
     TabMove.TextColor3 = name == "Move" and T.Text or T.Sub
     TabMod.TextColor3 = name == "Mod" and T.Text or T.Sub
     TabInfo.TextColor3 = name == "Info" and T.Text or T.Sub
     TabCfg.TextColor3 = name == "Cfg" and T.Text or T.Sub
-    local idx = (name == "Aim" and 0) or (name == "ESP" and 1) or (name == "Move" and 2) or (name == "Mod" and 3) or (name == "Info" and 4) or 5
-    Indicator.Position = UDim2.new(idx / 6, 0, 1, -3)
+    TabSet.TextColor3 = name == "Set" and T.Text or T.Sub
+    local idx = (name == "Aim" and 0) or (name == "ESP" and 1) or (name == "Move" and 2) or (name == "Mod" and 3) or (name == "Info" and 4) or (name == "Cfg" and 5) or 6
+    Indicator.Position = UDim2.new(idx / 7, 0, 1, -3)
 end
 TabAim.MouseButton1Click:Connect(function() SwitchTab("Aim") end)
 TabESP.MouseButton1Click:Connect(function() SwitchTab("ESP") end)
@@ -497,6 +523,7 @@ TabMove.MouseButton1Click:Connect(function() SwitchTab("Move") end)
 TabMod.MouseButton1Click:Connect(function() SwitchTab("Mod") end)
 TabInfo.MouseButton1Click:Connect(function() SwitchTab("Info") end)
 TabCfg.MouseButton1Click:Connect(function() SwitchTab("Cfg") end)
+TabSet.MouseButton1Click:Connect(function() SwitchTab("Set") end)
 
 -- ===== THÀNH PHẦN GIAO DIỆN =====
 local orderCounter = 0
@@ -909,6 +936,42 @@ Button(CfgPage, "Xóa cấu hình (về mặc định)", Color3.fromRGB(200, 60,
     SetStatus("Đã xóa cấu hình và tắt tự động lưu. Chạy lại script để dùng mặc định.")
 end)
 
+-- ===== TAB SETTINGS =====
+Section(SetPage, "HIỆU NĂNG")
+Toggle(SetPage, "Fix Lag (giảm lag)", S.FixLag, function(v)
+    S.FixLag = v
+    if v then
+        pcall(function()
+            game.Lighting.GlobalShadows = false
+            game.Lighting.FogEnd = 9e9
+            settings().Rendering.QualityLevel = Enum.QualityLevel.Level01
+            -- Thêm các tối ưu khác nếu cần
+        end)
+    else
+        pcall(function()
+            game.Lighting.GlobalShadows = true
+            settings().Rendering.QualityLevel = Enum.QualityLevel.Automatic
+        end)
+    end
+end)
+
+Section(SetPage, "ẨN TÊN")
+Toggle(SetPage, "Ẩn tên người chơi (đổi thành Lucacdz)", S.HideName, function(v) S.HideName = v end)
+
+Section(SetPage, "GHI CHÚ")
+local NoteFrame = ItemFrame(SetPage, 50)
+New("TextLabel", {
+    Size = UDim2.new(1, -20, 1, 0),
+    Position = UDim2.new(0, 10, 0, 0),
+    BackgroundTransparency = 1,
+    Text = "Fix Lag: tắt bóng, giảm chất lượng đồ họa.\nẨn tên: mọi chỗ hiện tên người khác sẽ thành Lucacdz.",
+    TextColor3 = T.Sub,
+    Font = Enum.Font.Gotham,
+    TextSize = 12,
+    TextWrapped = true,
+    TextXAlignment = Enum.TextXAlignment.Left,
+}, NoteFrame)
+
 -- ===== TAB INFO =====
 local PingVal, FpsVal
 
@@ -1093,7 +1156,7 @@ local function ApplyESP(p)
     local tag = head:FindFirstChild("SkyTag")
     if S.ShowName or S.ShowDist or S.ShowHP then
         local lines = {}
-        if S.ShowName then table.insert(lines, p.Name) end
+        if S.ShowName then table.insert(lines, S.HideName and "Lucacdz" or p.Name) end
         local info = {}
         if S.ShowDist then table.insert(info, math.floor(d) .. "m") end
         if S.ShowHP then table.insert(info, "HP " .. math.floor(hum.Health)) end
@@ -1393,12 +1456,11 @@ table.insert(Conns, RunService.Heartbeat:Connect(function(dt)
         hum:ChangeState(Enum.HumanoidStateType.Swimming)
     end
 
-    -- Tool Spin
+    -- Tool Spin (chỉ xoay vật phẩm, không ảnh hưởng nhân vật)
     if S.ToolSpin then
         local tool = char:FindFirstChildOfClass("Tool")
-        if tool and tool:FindFirstChild("Handle") then
-            local handle = tool.Handle
-            handle.CFrame = handle.CFrame * CFrame.Angles(0, math.rad(S.ToolSpinSpeed * dt), 0)
+        if tool then
+            tool.Grip = tool.Grip * CFrame.Angles(0, math.rad(S.ToolSpinSpeed * dt), 0)
         end
     end
 end))

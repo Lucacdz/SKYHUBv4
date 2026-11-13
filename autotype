@@ -67,12 +67,12 @@ local S = {
     ToolSpin = false, ToolSpinSpeed = 800, Aura = false, AuraType = 1,
     ThirdPerson = false, ThirdZoom = 12, FOVEnabled = false, CameraFOV = 70,
     -- Teleport
-    Teleport = false,
-    TPBackDelay = 80,
-    TPDelay = 200,
-    TPMaxDist = 500,
-    TPMode = 1,
-    TPTeam = false,
+    Teleport = false, TPBackDelay = 80, TPDelay = 200,
+    TPMaxDist = 500, TPMode = 1, TPTeam = false,
+    TPModeExtra = 0, TPBehindOffset = 3,
+    TPOrbitRadius = 8, TPOrbitSpeed = 180, TPOrbitLoops = 1,
+    -- Auto Fire
+    AutoFire = false, AutoFireDelay = 100,
 }
 
 -- ===== NGÔN NGỮ =====
@@ -123,6 +123,18 @@ local Lang = {
         tp_mode = "Chọn mục tiêu TP", tp_nearest = "Gần nhất", tp_center = "Gần tâm",
         tp_max_dist = "Khoảng cách tối đa TP", tp_hold = "Đứng cạnh địch (ms)",
         tp_delay = "Delay giữa các lần (ms)", tp_team = "Bỏ qua đồng đội (TP)",
+        autofire_section = "TỰ ĐỘNG BẮN",
+        autofire_on = "Tự động bắn",
+        autofire_delay = "Delay giữa các lần bắn (ms)",
+        tp_extra_section = "TELEPORT NÂNG CAO",
+        tp_extra_mode = "Chế độ dịch chuyển",
+        tp_extra_off = "Tắt",
+        tp_extra_behind = "Ra sau lưng địch",
+        tp_extra_orbit = "Xoay vòng tròn địch",
+        tp_behind_offset = "Khoảng cách sau lưng",
+        tp_orbit_radius = "Bán kính xoay quanh",
+        tp_orbit_speed = "Tốc độ xoay (°/s)",
+        tp_orbit_loops = "Số vòng xoay",
     },
     en = {
         main = "MAIN", aim_on = "Enable Aim", auto_off = "Auto off when target dies",
@@ -168,6 +180,18 @@ local Lang = {
         tp_mode = "TP Target Mode", tp_nearest = "Nearest", tp_center = "Near Center",
         tp_max_dist = "Max TP Distance", tp_hold = "Hold near enemy (ms)",
         tp_delay = "Delay between loops (ms)", tp_team = "Ignore Team (TP)",
+        autofire_section = "AUTO FIRE",
+        autofire_on = "Auto Fire",
+        autofire_delay = "Delay between shots (ms)",
+        tp_extra_section = "ADVANCED TELEPORT",
+        tp_extra_mode = "Teleport Mode",
+        tp_extra_off = "Off",
+        tp_extra_behind = "Behind enemy",
+        tp_extra_orbit = "Orbit around enemy",
+        tp_behind_offset = "Behind Offset",
+        tp_orbit_radius = "Orbit Radius",
+        tp_orbit_speed = "Orbit Speed (°/s)",
+        tp_orbit_loops = "Orbit Loops",
     }
 }
 
@@ -192,7 +216,7 @@ local function EncodeConfig()
     data.Aim = false; data.AimFull = false; data.Spin = false; data.Noclip = false
     data.FakeLag = false; data.ToolSpin = false; data.Aura = false; data.Swim = false
     data.ThirdPerson = false; data.FOVEnabled = false
-    data.Teleport = false
+    data.Teleport = false; data.AutoFire = false
     return HttpService:JSONEncode(data)
 end
 
@@ -224,13 +248,14 @@ local function LoadConfig()
         S.AimMode = math.clamp(math.floor(S.AimMode), 1, 4)
         S.AuraType = math.clamp(math.floor(S.AuraType or 1), 1, 6)
         S.TPMode = math.clamp(math.floor(S.TPMode or 1), 1, 2)
+        S.TPModeExtra = math.clamp(math.floor(S.TPModeExtra or 0), 0, 2)
         S.CircleColor = PaletteColors[S.CircleIdx]
         S.ESPColor = PaletteColors[S.ESPIdx]
         S.AimPart = (S.AimPartIdx == 1) and "Head" or "HumanoidRootPart"
         S.Aim = false; S.AimFull = false; S.Spin = false; S.Noclip = false
         S.FakeLag = false; S.ToolSpin = false; S.Aura = false; S.Swim = false
         S.ThirdPerson = false; S.FOVEnabled = false
-        S.Teleport = false
+        S.Teleport = false; S.AutoFire = false
     end
     return ok
 end
@@ -849,6 +874,12 @@ end, "max_dist")
 Toggle(AimPage, "Bỏ qua đồng đội", S.AimTeam, function(v) S.AimTeam = v end, "ignore_team")
 Toggle(AimPage, "Kiểm tra vật cản (wall check)", S.WallCheck, function(v) S.WallCheck = v end, "wall_check")
 
+Section(AimPage, "TỰ ĐỘNG BẮN", "autofire_section")
+Toggle(AimPage, "Tự động bắn", S.AutoFire, function(v) S.AutoFire = v end, "autofire_on")
+Slider(AimPage, "Delay giữa các lần bắn (ms)", 30, 1000, S.AutoFireDelay, 10, function(v) return v .. " ms" end, function(v)
+    S.AutoFireDelay = v
+end, "autofire_delay")
+
 -- ===== TAB ESP =====
 Section(ESPPage, "CHÍNH", "main")
 Toggle(ESPPage, "Bật ESP", S.ESP, function(v) S.ESP = v end, "esp_on")
@@ -921,6 +952,27 @@ Slider(MovePage, "Delay giữa các lần (ms)", 50, 2000, S.TPDelay, 50, functi
     S.TPDelay = v
 end, "tp_delay")
 Toggle(MovePage, "Bỏ qua đồng đội (TP)", S.TPTeam, function(v) S.TPTeam = v end, "tp_team")
+
+Section(MovePage, "TELEPORT NÂNG CAO", "tp_extra_section")
+Choice(MovePage, "Chế độ dịch chuyển", {
+    {key = "tp_extra_off"},
+    {key = "tp_extra_behind"},
+    {key = "tp_extra_orbit"},
+}, (S.TPModeExtra or 0) + 1, function(i)
+    S.TPModeExtra = i - 1
+end, "tp_extra_mode")
+Slider(MovePage, "Khoảng cách sau lưng", 1, 20, S.TPBehindOffset, 1, function(v) return v .. " studs" end, function(v)
+    S.TPBehindOffset = v
+end, "tp_behind_offset")
+Slider(MovePage, "Bán kính xoay quanh", 2, 30, S.TPOrbitRadius, 1, function(v) return v .. " studs" end, function(v)
+    S.TPOrbitRadius = v
+end, "tp_orbit_radius")
+Slider(MovePage, "Tốc độ xoay (°/s)", 60, 1440, S.TPOrbitSpeed, 20, function(v) return v .. "°/s" end, function(v)
+    S.TPOrbitSpeed = v
+end, "tp_orbit_speed")
+Slider(MovePage, "Số vòng xoay", 1, 10, S.TPOrbitLoops, 1, nil, function(v)
+    S.TPOrbitLoops = v
+end, "tp_orbit_loops")
 
 -- ===== TAB MOD =====
 Section(ModPage, "VẬT PHẨM", "tool_section")
@@ -1117,7 +1169,6 @@ local function IsVisible(part)
     return workspace:Raycast(origin, part.Position - origin, rayParams) == nil
 end
 
--- ⭐ GetTarget FIXED: bật Aim full sẽ aim được cả địch sau lưng
 local function GetTarget()
     local best, bestDist = nil, math.huge
     local vp = Camera.ViewportSize
@@ -1138,8 +1189,6 @@ local function GetTarget()
                             d2 = (Vector2.new(pos.X, pos.Y) - center).Magnitude
                         end
 
-                        -- ⭐ Bật Aim full: aim mọi địch trong phạm vi (kể cả sau lưng)
-                        -- Tắt Aim full: chỉ aim địch hiện trên màn hình + trong FOV
                         local valid = false
                         if S.AimFull then
                             valid = true
@@ -1893,7 +1942,7 @@ task.spawn(function()
     end
 end)
 
--- ===== TELEPORT =====
+-- ===== TELEPORT (nâng cao) =====
 local TPState = {
     originalCFrame = nil,
     running = false,
@@ -1948,6 +1997,42 @@ local function StopTeleport()
     TPState.originalCFrame = nil
 end
 
+local function GetBehindCFrame(targetRoot, offset)
+    local targetLook = targetRoot.CFrame.LookVector
+    local behindPos = targetRoot.Position - targetLook * (offset or 3) + Vector3.new(0, 1, 0)
+    return CFrame.new(behindPos, targetRoot.Position)
+end
+
+local function OrbitAround(targetRoot, radius, speedDeg, loops)
+    local char = LocalPlayer.Character
+    local root = char and char:FindFirstChild("HumanoidRootPart")
+    if not root then return end
+
+    local targetPos = targetRoot.Position
+    local startAngle = math.atan2(root.Position.Z - targetPos.Z, root.Position.X - targetPos.X)
+    local totalAngle = math.rad(360 * math.max(1, math.floor(loops or 1)))
+    local speedRad = math.rad(speedDeg or 180)
+    local elapsed = 0
+
+    while elapsed < totalAngle do
+        if not S.Teleport then return end
+        if not targetRoot or not targetRoot.Parent then return end
+        if not LocalPlayer.Character or LocalPlayer.Character ~= char then return end
+
+        local dt = task.wait() or 0.016
+        elapsed = elapsed + speedRad * dt
+        local angle = startAngle + elapsed
+
+        local offsetX = math.cos(angle) * radius
+        local offsetZ = math.sin(angle) * radius
+        local newPos = targetPos + Vector3.new(offsetX, 1, offsetZ)
+
+        pcall(function()
+            root.CFrame = CFrame.new(newPos, targetRoot.Position)
+        end)
+    end
+end
+
 task.spawn(function()
     while Gui.Parent do
         task.wait(0.1)
@@ -1984,24 +2069,76 @@ task.spawn(function()
 
         TPState.running = true
 
-        local targetPos = target.Position
-        local offset = (root.Position - targetPos).Unit * 3
-        if offset.Magnitude < 0.1 then offset = Vector3.new(0, 0, 3) end
-        local tpPos = targetPos + offset + Vector3.new(0, 1, 0)
+        local mode = S.TPModeExtra or 0
 
-        pcall(function()
-            root.CFrame = CFrame.new(tpPos, targetPos)
-        end)
-
-        task.wait(S.TPBackDelay / 1000)
-
-        if TPState.originalCFrame then
+        if mode == 2 then
             pcall(function()
-                root.CFrame = TPState.originalCFrame
+                OrbitAround(target, S.TPOrbitRadius, S.TPOrbitSpeed, S.TPOrbitLoops)
             end)
+            task.wait(S.TPBackDelay / 1000)
+            if TPState.originalCFrame then
+                pcall(function() root.CFrame = TPState.originalCFrame end)
+            end
+        elseif mode == 1 then
+            local behindCF = GetBehindCFrame(target, S.TPBehindOffset)
+            pcall(function() root.CFrame = behindCF end)
+            task.wait(S.TPBackDelay / 1000)
+            if TPState.originalCFrame then
+                pcall(function() root.CFrame = TPState.originalCFrame end)
+            end
+        else
+            local targetPos = target.Position
+            local offset = (root.Position - targetPos).Unit * 3
+            if offset.Magnitude < 0.1 then offset = Vector3.new(0, 0, 3) end
+            local tpPos = targetPos + offset + Vector3.new(0, 1, 0)
+            pcall(function() root.CFrame = CFrame.new(tpPos, targetPos) end)
+            task.wait(S.TPBackDelay / 1000)
+            if TPState.originalCFrame then
+                pcall(function() root.CFrame = TPState.originalCFrame end)
+            end
         end
 
         task.wait(S.TPDelay / 1000)
+    end
+end)
+
+-- ===== AUTO FIRE =====
+local AutoFireBusy = false
+local lastFireTime = 0
+
+local function TryFireTool(tool)
+    if not tool then return end
+    pcall(function()
+        if tool:IsA("Tool") then
+            local re = tool:FindFirstChildOfClass("RemoteEvent")
+            if re then re:FireServer() end
+            local rf = tool:FindFirstChildOfClass("RemoteFunction")
+            if rf then rf:InvokeServer() end
+            local act = tool:FindFirstChild("Activated")
+            if act then act:Fire() end
+        end
+    end)
+end
+
+task.spawn(function()
+    while Gui.Parent do
+        task.wait(0.03)
+        if not S.AutoFire then
+            AutoFireBusy = false
+            continue
+        end
+        local now = tick()
+        if now - lastFireTime < (S.AutoFireDelay or 100) / 1000 then
+            continue
+        end
+        local char = LocalPlayer.Character
+        if not char then continue end
+        local tool = char:FindFirstChildOfClass("Tool")
+        if not tool then continue end
+        if lastTarget and lastTarget.Parent and IsAlive(lastTarget.Parent) then
+            lastFireTime = now
+            TryFireTool(tool)
+        end
     end
 end)
 
@@ -2011,7 +2148,7 @@ CloseBtn.MouseButton1Click:Connect(function()
     S.Spin = false; S.SpeedOn = false; S.JumpOn = false; S.FakeLag = false
     S.Swim = false; S.ToolSpin = false; S.Aura = false
     S.ThirdPerson = false; S.FOVEnabled = false
-    S.Teleport = false
+    S.Teleport = false; S.AutoFire = false
 
     if ToolSpinState.tool and ToolSpinState.originalGrip then
         pcall(function() ToolSpinState.tool.Grip = ToolSpinState.originalGrip end)

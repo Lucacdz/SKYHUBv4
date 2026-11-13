@@ -1,4 +1,4 @@
--- Script by Grok | Speed + AntiHit+ + Fly (Fixed Buttons)
+-- Script by Grok | Unlimited Speed (Anti-Snap) + Fly + AntiHit+
 local Players = game:GetService("Players")
 local UIS = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
@@ -13,7 +13,6 @@ local speed = 16
 local flySpeed = 50
 
 local connections = {}
-local bv, bg
 
 local function clearConnections()
     for _, c in ipairs(connections) do
@@ -27,11 +26,6 @@ local function setupChar(c)
     hum = c:WaitForChild("Humanoid")
     root = c:WaitForChild("HumanoidRootPart")
     clearConnections()
-    if flying then
-        flying = false
-        if bv then bv:Destroy() end
-        if bg then bg:Destroy() end
-    end
     if antiHit then applyAntiHit() end
 end
 
@@ -56,8 +50,8 @@ function applyAntiHit()
     table.insert(connections, RunService.Heartbeat:Connect(function()
         if root and antiHit then
             local vel = root.AssemblyLinearVelocity
-            if vel.Magnitude > 80 then
-                root.AssemblyLinearVelocity = Vector3.new(vel.X * 0.1, math.min(vel.Y, 10), vel.Z * 0.1)
+            if vel.Magnitude > 120 then
+                root.AssemblyLinearVelocity = Vector3.new(vel.X * 0.03, math.clamp(vel.Y, -10, 15), vel.Z * 0.03)
             end
         end
     end))
@@ -71,9 +65,9 @@ function applyAntiHit()
     end))
 
     pcall(function()
-        if hum.MaxHealth < 1000 then
-            hum.MaxHealth = 1000
-            hum.Health = 1000
+        if hum.MaxHealth < 5000 then
+            hum.MaxHealth = 5000
+            hum.Health = 5000
         end
     end)
 end
@@ -83,14 +77,14 @@ player.CharacterAdded:Connect(setupChar)
 
 -- GUI
 local gui = Instance.new("ScreenGui")
-gui.Name = "SpeedAntiHitFly_Fixed"
+gui.Name = "AntiSnap_Speed_Fly"
 gui.ResetOnSpawn = false
 gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 gui.Parent = player:WaitForChild("PlayerGui")
 
 local frame = Instance.new("Frame")
-frame.Size = UDim2.new(0, 230, 0, 300)
-frame.Position = UDim2.new(0.02, 0, 0.3, 0)
+frame.Size = UDim2.new(0, 240, 0, 310)
+frame.Position = UDim2.new(0.02, 0, 0.25, 0)
 frame.BackgroundColor3 = Color3.fromRGB(25, 25, 35)
 frame.BorderSizePixel = 0
 frame.Active = true
@@ -105,10 +99,10 @@ corner.Parent = frame
 local title = Instance.new("TextLabel")
 title.Size = UDim2.new(1, 0, 0, 40)
 title.BackgroundColor3 = Color3.fromRGB(40, 40, 55)
-title.Text = "Speed | AntiHit+ | Fly"
+title.Text = "Anti-Snap Speed + Fly"
 title.TextColor3 = Color3.fromRGB(255, 255, 255)
 title.Font = Enum.Font.GothamBold
-title.TextSize = 16
+title.TextSize = 15
 title.ZIndex = 2
 title.Parent = frame
 
@@ -116,7 +110,6 @@ local titleCorner = Instance.new("UICorner")
 titleCorner.CornerRadius = UDim.new(0, 12)
 titleCorner.Parent = title
 
--- Speed Label + Box
 local speedLabel = Instance.new("TextLabel")
 speedLabel.Size = UDim2.new(1, -20, 0, 25)
 speedLabel.Position = UDim2.new(0, 10, 0, 50)
@@ -145,16 +138,14 @@ sc.Parent = speedBox
 
 speedBox.FocusLost:Connect(function()
     local val = tonumber(speedBox.Text)
-    if val and val >= 16 and val <= 500 then
+    if val and val > 0 then
         speed = val
-        if hum and not flying then hum.WalkSpeed = speed end
         speedLabel.Text = "Speed: " .. speed
     else
         speedBox.Text = tostring(speed)
     end
 end)
 
--- Fly Speed
 local flyLabel = Instance.new("TextLabel")
 flyLabel.Size = UDim2.new(1, -20, 0, 25)
 flyLabel.Position = UDim2.new(0, 10, 0, 115)
@@ -183,7 +174,7 @@ fc.Parent = flyBox
 
 flyBox.FocusLost:Connect(function()
     local val = tonumber(flyBox.Text)
-    if val and val >= 10 and val <= 300 then
+    if val and val > 0 then
         flySpeed = val
         flyLabel.Text = "Fly Speed: " .. flySpeed
     else
@@ -191,7 +182,6 @@ flyBox.FocusLost:Connect(function()
     end
 end)
 
--- Button function (fixed click)
 local function createButton(text, posY)
     local btn = Instance.new("TextButton")
     btn.Size = UDim2.new(1, -20, 0, 38)
@@ -205,50 +195,28 @@ local function createButton(text, posY)
     btn.Active = true
     btn.ZIndex = 5
     btn.Parent = frame
-
     local c = Instance.new("UICorner")
     c.CornerRadius = UDim.new(0, 8)
     c.Parent = btn
-
     return btn
 end
 
 local flyBtn = createButton("Fly: OFF", 185)
 local antiBtn = createButton("Anti Hit+: OFF", 235)
 
--- Fly Button
 flyBtn.MouseButton1Click:Connect(function()
     flying = not flying
     flyBtn.Text = flying and "Fly: ON" or "Fly: OFF"
     flyBtn.BackgroundColor3 = flying and Color3.fromRGB(40, 160, 70) or Color3.fromRGB(70, 70, 100)
-
-    if flying then
-        if root then
-            if bv then bv:Destroy() end
-            if bg then bg:Destroy() end
-            bv = Instance.new("BodyVelocity")
-            bv.MaxForce = Vector3.new(9e9, 9e9, 9e9)
-            bv.Velocity = Vector3.zero
-            bv.Parent = root
-
-            bg = Instance.new("BodyGyro")
-            bg.MaxTorque = Vector3.new(9e9, 9e9, 9e9)
-            bg.P = 10000
-            bg.Parent = root
-        end
-    else
-        if bv then bv:Destroy() bv = nil end
-        if bg then bg:Destroy() bg = nil end
-        if hum then hum.WalkSpeed = speed end
+    if hum then
+        hum.PlatformStand = flying
     end
 end)
 
--- Anti Hit Button
 antiBtn.MouseButton1Click:Connect(function()
     antiHit = not antiHit
     antiBtn.Text = antiHit and "Anti Hit+: ON" or "Anti Hit+: OFF"
     antiBtn.BackgroundColor3 = antiHit and Color3.fromRGB(180, 50, 50) or Color3.fromRGB(70, 70, 100)
-
     if antiHit then
         applyAntiHit()
     else
@@ -258,45 +226,47 @@ antiBtn.MouseButton1Click:Connect(function()
                 hum.MaxHealth = 100
                 hum.Health = 100
                 hum:SetStateEnabled(Enum.HumanoidStateType.Ragdoll, true)
-                hum:SetStateEnabled(Enum.HumanoidStateType.FallingDown, true)
             end
         end)
     end
 end)
 
--- Main loop
-RunService.Heartbeat:Connect(function()
+-- CFrame Speed + Fly (chống giật)
+RunService.Heartbeat:Connect(function(dt)
     if not char or not hum or not root then return end
 
-    if not flying then
-        hum.WalkSpeed = speed
+    local moveDir = Vector3.zero
+    local camCF = camera.CFrame
+
+    if UIS:IsKeyDown(Enum.KeyCode.W) then moveDir += camCF.LookVector end
+    if UIS:IsKeyDown(Enum.KeyCode.S) then moveDir -= camCF.LookVector end
+    if UIS:IsKeyDown(Enum.KeyCode.A) then moveDir -= camCF.RightVector end
+    if UIS:IsKeyDown(Enum.KeyCode.D) then moveDir += camCF.RightVector end
+
+    if UIS.TouchEnabled and hum.MoveDirection.Magnitude > 0.1 then
+        moveDir = hum.MoveDirection
     end
 
-    if flying and bv and bg then
-        local moveDir = Vector3.zero
-        local camCF = camera.CFrame
-
-        if UIS:IsKeyDown(Enum.KeyCode.W) then moveDir += camCF.LookVector end
-        if UIS:IsKeyDown(Enum.KeyCode.S) then moveDir -= camCF.LookVector end
-        if UIS:IsKeyDown(Enum.KeyCode.A) then moveDir -= camCF.RightVector end
-        if UIS:IsKeyDown(Enum.KeyCode.D) then moveDir += camCF.RightVector end
+    if flying then
         if UIS:IsKeyDown(Enum.KeyCode.Space) then moveDir += Vector3.new(0, 1, 0) end
         if UIS:IsKeyDown(Enum.KeyCode.LeftShift) or UIS:IsKeyDown(Enum.KeyCode.LeftControl) then
             moveDir -= Vector3.new(0, 1, 0)
         end
 
-        if UIS.TouchEnabled and hum.MoveDirection.Magnitude > 0.1 then
-            moveDir = hum.MoveDirection
-        end
-
         if moveDir.Magnitude > 0 then
-            bv.Velocity = moveDir.Unit * flySpeed
-        else
-            bv.Velocity = Vector3.zero
+            root.CFrame = root.CFrame + moveDir.Unit * flySpeed * dt * 55
         end
-
-        bg.CFrame = camCF
+        root.AssemblyLinearVelocity = Vector3.zero
+        root.AssemblyAngularVelocity = Vector3.zero
+    else
+        -- Speed thường dùng CFrame để giảm giật
+        if moveDir.Magnitude > 0 then
+            root.CFrame = root.CFrame + moveDir.Unit * speed * dt * 55
+            root.AssemblyLinearVelocity = Vector3.zero
+            root.AssemblyAngularVelocity = Vector3.zero
+        end
+        hum.WalkSpeed = 16
     end
 end)
 
-print("Fixed Buttons Script loaded!")
+print("Anti-Snap Speed + Fly loaded!")

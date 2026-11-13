@@ -1117,6 +1117,7 @@ local function IsVisible(part)
     return workspace:Raycast(origin, part.Position - origin, rayParams) == nil
 end
 
+-- ⭐ GetTarget FIXED: bật Aim full sẽ aim được cả địch sau lưng
 local function GetTarget()
     local best, bestDist = nil, math.huge
     local vp = Camera.ViewportSize
@@ -1128,12 +1129,25 @@ local function GetTarget()
             if not (S.AimTeam and IsTeammate(p)) then
                 local part = p.Character:FindFirstChild(S.AimPart) or p.Character:FindFirstChild("Head")
                 if part then
-                    local pos, onScreen = Camera:WorldToViewportPoint(part.Position)
-                    if onScreen and pos.Z > 0 then
-                        local d2 = (Vector2.new(pos.X, pos.Y) - center).Magnitude
-                        local d3 = (part.Position - camPos).Magnitude
-                        local inFov = S.AimFull or (d2 <= S.FOV)
-                        if inFov and d3 <= S.AimDist then
+                    local d3 = (part.Position - camPos).Magnitude
+                    if d3 <= S.AimDist then
+                        local pos, onScreen = Camera:WorldToViewportPoint(part.Position)
+                        local inFront = (pos.Z > 0)
+                        local d2 = math.huge
+                        if onScreen and inFront then
+                            d2 = (Vector2.new(pos.X, pos.Y) - center).Magnitude
+                        end
+
+                        -- ⭐ Bật Aim full: aim mọi địch trong phạm vi (kể cả sau lưng)
+                        -- Tắt Aim full: chỉ aim địch hiện trên màn hình + trong FOV
+                        local valid = false
+                        if S.AimFull then
+                            valid = true
+                        else
+                            valid = onScreen and inFront and d2 <= S.FOV
+                        end
+
+                        if valid then
                             local score
                             if S.AimMode == 2 then
                                 score = d3
@@ -1141,10 +1155,11 @@ local function GetTarget()
                                 score = -d3
                             elseif S.AimMode == 4 then
                                 local hum = p.Character:FindFirstChildOfClass("Humanoid")
-                                score = (hum and hum.Health or 100) + d2 / 10000
+                                score = (hum and hum.Health or 100) + (d2 == math.huge and 0 or d2) / 10000
                             else
-                                score = d2
+                                score = (d2 == math.huge) and (1e6 + d3) or d2
                             end
+
                             if score < bestDist and (not S.WallCheck or IsVisible(part)) then
                                 bestDist = score
                                 best = part
